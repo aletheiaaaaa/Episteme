@@ -185,7 +185,7 @@ namespace episteme::search {
 
                 if (should_stop) return 0;
 
-                if (score < new_beta) extension = (!is_PV && score < new_beta - 90) ? 2 : 1;
+                if (score < new_beta) extension = (!is_PV && score < new_beta - 40) ? 2 : 1;
                 else if (new_beta >= beta && std::abs(score) < MATE - MAX_SEARCH_PLY) return new_beta;
             }
 
