@@ -31,12 +31,19 @@ namespace episteme::hist {
             [[nodiscard]] inline int16_t get_cont_hist(stack::Stack& stack, Piece piece, Move move, int16_t ply) {
                 int16_t value = 0;
 
-                if (ply > 0) {
-                    Move prev_move = stack[ply - 1].move;
-                    Piece prev_piece = stack[ply - 1].piece;
+                auto get_hist = [&](int16_t diff) {
+                    int16_t ply_value = 0;
+                    if (ply > diff - 1) {
+                        Move prev_move = stack[ply - diff].move;
+                        Piece prev_piece = stack[ply - diff].piece;
 
-                    if (prev_piece != Piece::None) value += cont_hist[piece_idx(piece)][sq_idx(move.to_square())][piece_idx(prev_piece)][sq_idx(prev_move.to_square())].value;
-                }
+                        if (prev_piece != Piece::None) ply_value += cont_hist[piece_idx(piece)][sq_idx(move.to_square())][piece_idx(prev_piece)][sq_idx(prev_move.to_square())].value;
+                    }
+                    return ply_value;
+                };
+
+                value += get_hist(1);
+                value += get_hist(2);
 
                 return value;
             }
@@ -46,12 +53,17 @@ namespace episteme::hist {
             }
 
             inline void update_cont_hist(stack::Stack& stack, Piece piece, Move move, int16_t bonus, int16_t ply) {
-                if (ply > 0) {
-                    Move prev_move = stack[ply - 1].move;
-                    Piece prev_piece = stack[ply - 1].piece;
+                auto update_hist = [&](int16_t diff) {
+                    if (ply > diff - 1) {
+                        Move prev_move = stack[ply - diff].move;
+                        Piece prev_piece = stack[ply - diff].piece;
 
-                    if (prev_piece != Piece::None) cont_hist[piece_idx(piece)][sq_idx(move.to_square())][piece_idx(prev_piece)][sq_idx(prev_move.to_square())].update(bonus);
-                }
+                        if (prev_piece != Piece::None) cont_hist[piece_idx(piece)][sq_idx(move.to_square())][piece_idx(prev_piece)][sq_idx(prev_move.to_square())].update(bonus);
+                    }
+                };
+
+                update_hist(1);
+                update_hist(2);
             }
 
             inline void reset() {
