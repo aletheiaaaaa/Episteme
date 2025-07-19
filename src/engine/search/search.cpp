@@ -144,6 +144,9 @@ namespace episteme::search {
         tt::NodeType node_type = tt::NodeType::AllNode;
         int32_t num_legal = 0;
 
+        stack[ply].move = Move();
+        stack[ply].piece = Piece::None;
+
         for (size_t i = 0; i < move_list.count; i++) { 
             pick_move(move_list, i);
             Move move = move_list.list[i].move;
