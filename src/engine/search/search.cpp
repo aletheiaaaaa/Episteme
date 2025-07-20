@@ -369,7 +369,7 @@ namespace episteme::search {
             pick_move(captures_list, i);
             Move move = captures_list.list[i].move;
 
-            if (captures_list.list[i].score < 0) continue;
+            if (!eval::SEE(position, move, 0)) continue;
 
             accumulator = eval::update(position, move, accumulator);
             accum_history.emplace_back(accumulator);
