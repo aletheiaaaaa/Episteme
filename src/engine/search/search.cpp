@@ -261,7 +261,7 @@ namespace episteme::search {
                         for (size_t j = 0; j < explored_quiets.count; j++) {
                             if (explored_quiets.list[j].data() == move.data()) continue;
 
-                            Piece prev_piece = position.mailbox(explored_quiets.list[j].to_square());
+                            Piece prev_piece = position.mailbox(explored_quiets.list[j].from_square());
 
                             history.update_quiet_hist(position.STM(), explored_quiets.list[j], -bonus);
                             history.update_cont_hist(stack, prev_piece, explored_quiets.list[j], -bonus, ply);
