@@ -203,7 +203,8 @@ namespace episteme::search {
             stack[ply].move = move;
             stack[ply].piece = from_pc;
 
-            if (is_quiet) explored_quiets.add(move) else explored_noisies.add(move);
+            if (is_quiet) explored_quiets.add(move);
+            else explored_noisies.add(move);
 
             if (limits.node_exceeded(nodes)) {
                 should_stop = true;
@@ -263,22 +264,26 @@ namespace episteme::search {
                         history.update_cont_hist(stack, from_pc, move, bonus, ply);
 
                         for (size_t j = 0; j < explored_quiets.count; j++) {
-                            if (explored_quiets.list[j].data() == move.data()) continue;
-                            Piece prev_from_pc = position.
+                            Move prev_move = explored_quiets.list[j];
+                            if (prev_move.data() == move.data()) continue;
 
-                            Piece prev_piece = position.mailbox(explored_quiets.list[j].from_square());
+                            Piece prev_from_pc = position.mailbox(prev_move.from_square());
 
-                            history.update_quiet_hist(position.STM(), explored_quiets.list[j], -bonus);
-                            history.update_cont_hist(stack, prev_piece, explored_quiets.list[j], -bonus, ply);
+                            history.update_quiet_hist(position.STM(), prev_move, -bonus);
+                            history.update_cont_hist(stack, prev_from_pc, prev_move, -bonus, ply);
                         }
                     } else {
                         history.update_capt_hist(from_pc, move, to_pc, bonus);
                     }
 
                     for (size_t j = 0; j < explored_noisies.count; j++) {
-                        if (explored_noisies.list[j].data() == move.data()) continue;
+                        Move prev_move = explored_noisies.list[j];
+                        if (prev_move.data() == move.data()) continue;
 
-                        history.update_capt_hist(from_pc, , )
+                        Piece prev_from_pc = position.mailbox(prev_move.from_square());
+                        Piece prev_to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(prev_move.to_square());
+
+                        history.update_capt_hist(prev_from_pc, prev_move, prev_to_pc, -bonus);
                     }
 
                     node_type = tt::NodeType::CutNode;
