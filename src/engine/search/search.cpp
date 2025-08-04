@@ -45,7 +45,7 @@ namespace episteme::search {
             int32_t dst_val = move.move_type() == MoveType::EnPassant ? piece_vals[piece_type_idx(PieceType::Pawn)] : piece_vals[piece_type_idx(dst)];
 
             scored_move.score += dst_val * 10 - src_val;
-            scored_move.score += history.get_capt_hist(position.mailbox(move.from_square()), move, position.mailbox(move.to_square()));
+            scored_move.score += history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
             if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
         } else {
             if (stack[*ply].killer.data() == move.data()) {
@@ -142,6 +142,7 @@ namespace episteme::search {
         int32_t best = -INF;
 
         MoveList explored_quiets;
+        MoveList explored_noisies;
         tt::NodeType node_type = tt::NodeType::AllNode;
         int32_t num_legal = 0;
 
@@ -202,7 +203,7 @@ namespace episteme::search {
             stack[ply].move = move;
             stack[ply].piece = from_pc;
 
-            if (is_quiet) explored_quiets.add(move);
+            if (is_quiet) explored_quiets.add(move) else explored_noisies.add(move);
 
             if (limits.node_exceeded(nodes)) {
                 should_stop = true;
@@ -263,6 +264,7 @@ namespace episteme::search {
 
                         for (size_t j = 0; j < explored_quiets.count; j++) {
                             if (explored_quiets.list[j].data() == move.data()) continue;
+                            Piece prev_from_pc = position.
 
                             Piece prev_piece = position.mailbox(explored_quiets.list[j].from_square());
 
@@ -271,6 +273,12 @@ namespace episteme::search {
                         }
                     } else {
                         history.update_capt_hist(from_pc, move, to_pc, bonus);
+                    }
+
+                    for (size_t j = 0; j < explored_noisies.count; j++) {
+                        if (explored_noisies.list[j].data() == move.data()) continue;
+
+                        history.update_capt_hist(from_pc, , )
                     }
 
                     node_type = tt::NodeType::CutNode;
