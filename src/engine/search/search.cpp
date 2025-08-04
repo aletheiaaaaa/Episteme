@@ -150,7 +150,9 @@ namespace episteme::search {
         for (size_t i = 0; i < move_list.count; i++) { 
             pick_move(move_list, i);
             Move move = move_list.list[i].move;
-            Piece piece = position.mailbox(move.from_square());
+
+            Piece from_pc = position.mailbox(move.from_square());
+            Piece to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(move.to_square());
 
             bool is_quiet = position.mailbox(move.to_square()) == Piece::None && move.move_type() != MoveType::EnPassant;
 
@@ -197,7 +199,7 @@ namespace episteme::search {
             nodes++;
             num_legal++;
             stack[ply].move = move;
-            stack[ply].piece = piece;
+            stack[ply].piece = from_pc;
 
             if (is_quiet) explored_quiets.add(move);
 
@@ -251,12 +253,12 @@ namespace episteme::search {
                 PV.update_line(move, candidate);
 
                 if (score >= beta) {
+                    int16_t bonus = hist::bonus(depth);
                     if (is_quiet) {
                         stack[ply].killer = move;
 
-                        int16_t bonus = hist::bonus(depth);
                         history.update_quiet_hist(position.STM(), move, bonus);
-                        history.update_cont_hist(stack, piece, move, bonus, ply);
+                        history.update_cont_hist(stack, from_pc, move, bonus, ply);
 
                         for (size_t j = 0; j < explored_quiets.count; j++) {
                             if (explored_quiets.list[j].data() == move.data()) continue;
@@ -266,6 +268,8 @@ namespace episteme::search {
                             history.update_quiet_hist(position.STM(), explored_quiets.list[j], -bonus);
                             history.update_cont_hist(stack, prev_piece, explored_quiets.list[j], -bonus, ply);
                         }
+                    } else {
+                        history.update_capt_hist(from_pc, move, to_pc, bonus);
                     }
 
                     node_type = tt::NodeType::CutNode;

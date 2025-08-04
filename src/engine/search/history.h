@@ -48,6 +48,10 @@ namespace episteme::hist {
                 return value;
             }
 
+            [[nodiscard]] inline int16_t get_capt_hist(Piece attacker, Move move, Piece victim) {
+                return capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_idx(victim)].value;
+            }
+
             inline void update_quiet_hist(Color stm, Move move, int16_t bonus) {
                 quiet_hist[color_idx(stm)][sq_idx(move.from_square())][sq_idx(move.to_square())].update(bonus);
             }
@@ -66,13 +70,19 @@ namespace episteme::hist {
                 update_hist(2);
             }
 
+            inline void update_capt_hist(Piece attacker, Move move, Piece victim, int16_t bonus) {
+                capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_idx(victim)].update(bonus);
+            }
+
             inline void reset() {
                 quiet_hist = {};
                 cont_hist = {};
+                capt_hist = {};
             }
 
         private:
             std::array<std::array<std::array<Entry, 64>, 64>, 2> quiet_hist{};
             std::array<std::array<std::array<std::array<Entry, 64>, 12>, 64>, 12> cont_hist{};
+            std::array<std::array<std::array<Entry, 12>, 64>, 12> capt_hist{};
     };
 }
