@@ -48,7 +48,17 @@ namespace episteme::hist {
                 return value;
             }
 
-            [[nodiscard]] inline int16_t get_capt_hist(Piece attacker, Move move, Piece victim) {
+            [[nodiscard]] inline int32_t get_hist(stack::Stack& stack, Piece attacker, Piece victim, Move move, Color stm, int16_t ply) {
+                int32_t value = 0;
+
+                value += get_quiet_hist(stm, move);
+                value += get_cont_hist(stack, attacker, move, ply);
+                if (victim != Piece::None) value += get_capt_hist(attacker, move, victim);
+
+                return value;
+            }
+
+            [[nodiscard]] inline int32_t get_capt_hist(Piece attacker, Move move, Piece victim) {
                 return capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].value;
             }
 
