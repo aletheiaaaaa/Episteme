@@ -159,7 +159,7 @@ namespace episteme::search {
             bool is_quiet = position.mailbox(move.to_square()) == Piece::None && move.move_type() != MoveType::EnPassant;
 
             if (ply > 0 && best > -MATE + MAX_SEARCH_PLY) {
-                const int32_t lmp_threshold = 6 + 2 * depth * depth;
+                const int32_t lmp_threshold = 3 + depth * depth;
                 if (is_quiet && num_legal >= lmp_threshold) break;
 
                 const int32_t fp_margin = depth * 250;
