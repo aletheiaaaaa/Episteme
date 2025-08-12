@@ -150,6 +150,9 @@ namespace episteme::search {
             }
         }
 
+        bool no_tt_move = tt_entry.hash != position.zobrist() || tt_entry.move.data() == 0x0000;
+        if (is_PV && no_tt_move && depth >= 4) depth--;
+
         ScoredList move_list = generate_scored_moves(position, tt_entry, ply);
         int32_t best = -INF;
 
