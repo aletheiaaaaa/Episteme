@@ -70,7 +70,7 @@ namespace episteme::search {
     }
 
     template<bool PV_node>
-    int32_t Worker::search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, SearchLimits limits) {
+    int32_t Worker::search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node, SearchLimits limits) {
         if (nodes % 2000 == 0 && limits.time_exceeded()) {
             should_stop = true;
             return 0;
@@ -125,7 +125,7 @@ namespace episteme::search {
                     stack[ply].piece = Piece::None;
 
                     position.make_null();
-                    int32_t score = -search<false>(position, null, depth - reduction, ply + 1, -beta, -beta + 1, limits);
+                    int32_t score = -search<false>(position, null, depth - reduction, ply + 1, -beta, -beta + 1, !cut_node, limits);
                     position.unmake_move();
 
                     if (should_stop) return 0;
@@ -180,7 +180,7 @@ namespace episteme::search {
                 const int16_t new_depth = (depth - 1) / 2;
 
                 stack[ply].excluded = move;
-                int32_t score = search<false>(position, PV, new_depth, ply, new_beta - 1, new_beta, limits);
+                int32_t score = search<false>(position, PV, new_depth, ply, new_beta - 1, new_beta, cut_node, limits);
                 stack[ply].excluded = Move();
 
                 if (should_stop) return 0;
@@ -221,22 +221,25 @@ namespace episteme::search {
 
             Line candidate = {};
             int32_t score = 0;
+            int16_t reduction = 0;
             int16_t new_depth = depth - 1 + extension;
 
             if (num_legal >= 4 && depth >= 3) {
-                int16_t reduction = lmr_table[depth][num_legal] + !improving;
+                reduction = lmr_table[depth][num_legal] + !improving;
+                if (cut_node) reduction++;
+
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
-                score = -search<false>(position, candidate, reduced, ply + 1, -alpha - 1, -alpha, limits);
+                score = -search<false>(position, candidate, reduced, ply + 1, -alpha - 1, -alpha, true, limits);
                 if (score > alpha && reduced < depth - 1) {
-                    score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, limits);
+                    score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node, limits);
                 }
             } else if (!is_PV || num_legal > 1) {
-                score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, limits);
+                score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node, limits);
             }
 
             if (is_PV && (num_legal == 1 || score > alpha)) {
-                score = -search<true>(position, candidate, new_depth, ply + 1, -beta, -alpha, limits);
+                score = -search<true>(position, candidate, new_depth, ply + 1, -beta, -alpha, false, limits);
             }
 
             position.unmake_move();
@@ -413,13 +416,13 @@ namespace episteme::search {
         int32_t beta = (depth == 1) ? MATE : last_score + delta;
 
         auto start = steady_clock::now();
-        int32_t score = search<true>(position, PV, depth, 0, alpha, beta, limits);
+        int32_t score = search<true>(position, PV, depth, 0, alpha, beta, false, limits);
 
         while (score <= alpha || score >= beta) {
             delta *= 2;
             alpha = last_score - delta;
             beta = last_score + delta;
-            score = search<true>(position, PV, depth, 0, alpha, beta, limits);
+            score = search<true>(position, PV, depth, 0, alpha, beta, false, limits);
         }
 
         int64_t elapsed = duration_cast<milliseconds>(steady_clock::now() - start).count();
@@ -459,7 +462,7 @@ namespace episteme::search {
             nodes = 0;
 
             auto start = steady_clock::now();
-            (void)search<true>(position, PV, depth, 0, -INF, INF);
+            (void)search<true>(position, PV, depth, 0, -INF, INF, false);
             auto end = steady_clock::now();
 
             elapsed += duration_cast<milliseconds>(end - start);
