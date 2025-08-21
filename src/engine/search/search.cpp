@@ -226,7 +226,7 @@ namespace episteme::search {
 
             if (num_legal >= 4 && depth >= 3) {
                 reduction = lmr_table[depth][num_legal] + !improving;
-                if (cut_node) reduction++;
+                if (cut_node) reduction += 2;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
