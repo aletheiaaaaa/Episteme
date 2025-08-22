@@ -63,7 +63,8 @@ namespace episteme {
         state.half_move_clock = std::stoi(tokens[4]);
         state.full_move_number = std::stoi(tokens[5]);
 
-        state.hash = explicit_zobrist();
+        state.hash = explicit_hash();
+        state.pawn_hash = explicit_pawn_hash();
 
         position_history.push_back(state);
     }
@@ -114,6 +115,7 @@ namespace episteme {
         state.ep_square = Square::None;
 
         state.hash = 0x33dc8684cf354d4a;
+        state.pawn_hash = 0xe35d4132f30b9a00;
 
         position_history.push_back(state);
     }
@@ -148,6 +150,17 @@ namespace episteme {
         }
 
         state.hash ^= zobrist::piecesquares[piecesquare(src, sq_src, false)];
+
+        if (piece_type(src) == PieceType::Pawn) {
+            state.pawn_hash ^= zobrist::piecesquares[piecesquare(src, sq_src, false)] ^ zobrist::piecesquares[piecesquare(src, sq_dst, false)];
+            if (move.move_type() == MoveType::EnPassant) {
+                int ep_offset = (side == Color::White) ? -8 : 8;
+                int capture_idx = sq_idx(sq_dst) + ep_offset;
+
+                Piece captured_pawn = piece_type_with_color(PieceType::Pawn, flip(side));
+                state.hash ^= zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
+            }
+        }
 
         switch (move.move_type()) {
             case MoveType::Normal: {
@@ -391,7 +404,7 @@ namespace episteme {
         return fen;
     }
 
-    uint64_t Position::explicit_zobrist() {
+    uint64_t Position::explicit_hash() {
         uint64_t hash = 0;
         for (size_t i = 0; i < 64; i++) {
             if (state.mailbox[i] != Piece::None) {
@@ -403,6 +416,17 @@ namespace episteme {
         if (state.ep_square != Square::None) hash ^= zobrist::ep_files[file(state.ep_square)];
 
         hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
+
+        return hash;
+    }
+
+    uint64_t Position::explicit_pawn_hash() {
+        uint64_t hash = 0;
+        for (size_t i = 0; i < 64; i++) {
+            if (piece_type(state.mailbox[i]) == PieceType::Pawn) {
+                hash ^= zobrist::piecesquares[piecesquare(state.mailbox[i], sq_from_idx(i), false)];
+            }
+        }
 
         return hash;
     }

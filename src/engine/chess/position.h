@@ -35,6 +35,7 @@ namespace episteme {
         Square ep_square = Square::None;
 
         uint64_t hash = 0;
+        uint64_t pawn_hash = 0;
     };
 
     class Position {
@@ -105,8 +106,12 @@ namespace episteme {
                 return state.mailbox;
             }
 
-            [[nodiscard]] inline uint64_t zobrist() const {
+            [[nodiscard]] inline uint64_t hash() const {
                 return state.hash;
+            }
+
+            [[nodiscard]] inline uint64_t pawn_hash() const {
+                return state.pawn_hash;
             }
 
             void from_FEN(const std::string& FEN);
@@ -120,7 +125,8 @@ namespace episteme {
             bool is_insufficient();
 
             std::string to_FEN() const; 
-            uint64_t explicit_zobrist();
+            uint64_t explicit_hash();
+            uint64_t explicit_pawn_hash();
         public:
             static const uint16_t COLOR_OFFSET = 6;
 

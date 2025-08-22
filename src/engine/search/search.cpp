@@ -84,7 +84,7 @@ namespace episteme::search {
 
         tt::Entry tt_entry{};
         if (!stack[ply].excluded.data()) {
-            tt_entry = ttable.probe(position.zobrist());
+            tt_entry = ttable.probe(position.hash());
             if (ply > 0 && (tt_entry.depth >= depth
                 && ((tt_entry.node_type == tt::NodeType::PVNode)
                     || (tt_entry.node_type == tt::NodeType::AllNode && tt_entry.score <= alpha)
@@ -302,7 +302,7 @@ namespace episteme::search {
 
         if (!stack[ply].excluded.data()) {
             ttable.add({
-                .hash = position.zobrist(),
+                .hash = position.hash(),
                 .move = PV.moves[0],
                 .score = best,
                 .depth = static_cast<uint8_t>(depth),
@@ -319,7 +319,7 @@ namespace episteme::search {
             return 0;
         };
         
-        tt::Entry tt_entry = ttable.probe(position.zobrist());
+        tt::Entry tt_entry = ttable.probe(position.hash());
         if ((tt_entry.node_type == tt::NodeType::PVNode)
             || (tt_entry.node_type == tt::NodeType::AllNode && tt_entry.score <= alpha)
             || (tt_entry.node_type == tt::NodeType::CutNode && tt_entry.score >= beta)
@@ -394,7 +394,7 @@ namespace episteme::search {
         }
 
         ttable.add({
-            .hash = position.zobrist(),
+            .hash = position.hash(),
             .move = PV.moves[0],
             .score = best,
             .depth = 0,

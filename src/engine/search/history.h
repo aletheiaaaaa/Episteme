@@ -88,11 +88,13 @@ namespace episteme::hist {
                 quiet_hist = {};
                 cont_hist = {};
                 capt_hist = {};
+                corr_hist = {};
             }
 
         private:
             std::array<std::array<std::array<Entry, 64>, 64>, 2> quiet_hist{};
             std::array<std::array<std::array<std::array<Entry, 64>, 12>, 64>, 12> cont_hist{};
             std::array<std::array<std::array<Entry, 6>, 64>, 12> capt_hist{};
+            std::array<std::array<Entry, 16384>, 2> corr_hist{};
     };
 }
