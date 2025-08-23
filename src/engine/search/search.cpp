@@ -99,7 +99,7 @@ namespace episteme::search {
 
         int32_t static_eval = -INF;
         if (!in_check(position, position.STM())) {
-            static_eval = eval::evaluate(accumulator, position.STM()) + 200 * history.get_corr_hist(position.pawn_hash(), position.STM());
+            static_eval = eval::evaluate(accumulator, position.STM()) + history.get_corr_hist(position.pawn_hash(), position.STM());
             stack[ply].eval = static_eval;
         } 
 
