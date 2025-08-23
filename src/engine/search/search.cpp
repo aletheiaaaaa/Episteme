@@ -346,7 +346,7 @@ namespace episteme::search {
             Move move = captures_list.list[i].move;
 
             if (!eval::SEE(position, move, 0)) continue;
-            if (eval + 200 <= alpha && best > -MATE + MAX_SEARCH_PLY && !in_check(position, position.STM())) continue;
+            if (eval + 200 <= alpha && best > -MATE + MAX_SEARCH_PLY && !in_check(position, position.STM()) && !eval::SEE(position, move, 1)) continue;
 
             accumulator = eval::update(position, move, accumulator);
             accum_history.emplace_back(accumulator);
