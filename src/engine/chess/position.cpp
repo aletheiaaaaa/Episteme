@@ -152,14 +152,11 @@ namespace episteme {
         state.hash ^= zobrist::piecesquares[piecesquare(src, sq_src, false)];
 
         if (piece_type(src) == PieceType::Pawn) {
-            state.pawn_hash ^= zobrist::piecesquares[piecesquare(src, sq_src, false)] ^ zobrist::piecesquares[piecesquare(src, sq_dst, false)];
-            if (move.move_type() == MoveType::EnPassant) {
-                int ep_offset = (side == Color::White) ? -8 : 8;
-                int capture_idx = sq_idx(sq_dst) + ep_offset;
+            state.pawn_hash ^= zobrist::piecesquares[piecesquare(src, sq_src, false)];
+        }
 
-                Piece captured_pawn = piece_type_with_color(PieceType::Pawn, flip(side));
-                state.hash ^= zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
-            }
+        if (piece_type(dst) == PieceType::Pawn) {
+            state.pawn_hash ^= zobrist::piecesquares[piecesquare(dst, sq_dst, false)];
         }
 
         switch (move.move_type()) {
@@ -203,6 +200,10 @@ namespace episteme {
                     int ep_offset = (side == Color::White) ? -8 : 8;
                     state.ep_square = sq_from_idx(sq_idx(sq_dst) + ep_offset);
                     state.hash ^= zobrist::ep_files[file(sq_dst)];
+                }
+
+                if (piece_type(src) == PieceType::Pawn) {
+                    state.pawn_hash ^= zobrist::piecesquares[piecesquare(src, sq_dst, false)];
                 }
 
                 state.hash ^= zobrist::piecesquares[piecesquare(src, sq_dst, false)];
@@ -254,6 +255,8 @@ namespace episteme {
                 Piece captured_pawn = piece_type_with_color(PieceType::Pawn, flip(side));
                 state.hash ^= zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
                 state.hash ^= zobrist::piecesquares[piecesquare(src, sq_dst, false)];
+                state.pawn_hash ^= zobrist::piecesquares[piecesquare(src, sq_dst, false)];
+                state.pawn_hash ^= zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)]; 
 
                 state.bitboards[piece_type_idx(PieceType::Pawn)] ^= bb_src ^ bb_dst ^ bb_cap;
                 state.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;

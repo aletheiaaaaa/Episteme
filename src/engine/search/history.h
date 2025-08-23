@@ -62,6 +62,10 @@ namespace episteme::hist {
                 return capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].value;
             }
 
+            [[nodiscard]] inline int32_t get_corr_hist(uint64_t pawn_hash, Color stm) {
+                return corr_hist[color_idx(stm)][pawn_hash % 16384].value;
+            }
+
             inline void update_quiet_hist(Color stm, Move move, int16_t bonus) {
                 quiet_hist[color_idx(stm)][sq_idx(move.from_square())][sq_idx(move.to_square())].update(bonus);
             }
@@ -82,6 +86,10 @@ namespace episteme::hist {
 
             inline void update_capt_hist(Piece attacker, Move move, Piece victim, int16_t bonus) {
                 capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].update(bonus);
+            }
+
+            inline void update_corr_hist(uint64_t pawn_hash, Color stm, int16_t diff) {
+                corr_hist[color_idx(stm)][pawn_hash % 16384].update(diff);
             }
 
             inline void reset() {

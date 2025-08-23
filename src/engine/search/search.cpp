@@ -99,7 +99,7 @@ namespace episteme::search {
 
         int32_t static_eval = -INF;
         if (!in_check(position, position.STM())) {
-            static_eval = eval::evaluate(accumulator, position.STM());
+            static_eval = eval::evaluate(accumulator, position.STM()) + 200 * history.get_corr_hist(position.pawn_hash(), position.STM());
             stack[ply].eval = static_eval;
         } 
 
@@ -299,6 +299,14 @@ namespace episteme::search {
         };
 
         if (num_legal == 0) return in_check(position, position.STM()) ? (-MATE + ply) : 0;
+
+        if (!in_check(position, position.STM()) 
+            && !(PV.moves[0].to_square() != Piece::None || PV.moves[0].move_type() == MoveType::EnPassant || PV.moves[0].move_type() == MoveType::Promotion)
+            && !(node_type == tt::NodeType::CutNode && best <= static_eval)
+            && !(node_type == tt::NodeType::AllNode && best >= static_eval) 
+        ) {
+            history.update_corr_hist(position.pawn_hash(), position.STM(), best - static_eval);
+        }
 
         if (!stack[ply].excluded.data()) {
             ttable.add({
