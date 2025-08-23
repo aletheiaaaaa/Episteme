@@ -63,7 +63,7 @@ namespace episteme::hist {
                 return capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].value;
             }
 
-            [[nodiscard]] inline int32_t get_corr_hist(uint64_t pawn_hash, Color stm) {
+            [[nodiscard]] inline int32_t get_pawn_corr_hist(uint64_t pawn_hash, Color stm) {
                 return corr_hist[color_idx(stm)][pawn_hash % 16384].value;
             }
 
