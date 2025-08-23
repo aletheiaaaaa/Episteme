@@ -9,7 +9,7 @@
 
 namespace episteme::hist {
     constexpr int MAX_HIST = 16384;
-    constexpr int MAX_CORR_HIST = 128;
+    constexpr int MAX_CORR_HIST = 256;
 
     [[nodiscard]] inline int16_t bonus(int16_t depth) {
         return static_cast<int16_t>(std::clamp(depth * 300, 0, 2500));
