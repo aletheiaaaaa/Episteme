@@ -301,7 +301,7 @@ namespace episteme::search {
         if (num_legal == 0) return in_check(position, position.STM()) ? (-MATE + ply) : 0;
 
         if (!in_check(position, position.STM()) 
-            && !(PV.moves[0].to_square() != Piece::None || PV.moves[0].move_type() == MoveType::EnPassant || PV.moves[0].move_type() == MoveType::Promotion)
+            && !(position.mailbox(PV.moves[0].to_square()) != Piece::None || PV.moves[0].move_type() == MoveType::EnPassant || PV.moves[0].move_type() == MoveType::Promotion)
             && !(node_type == tt::NodeType::CutNode && best <= static_eval)
             && !(node_type == tt::NodeType::AllNode && best >= static_eval) 
         ) {
