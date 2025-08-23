@@ -30,9 +30,9 @@ namespace episteme::search {
     int32_t Worker::correct_static_eval(int32_t eval, const Position& position) {
         int32_t correction = 0;
 
-        correction += 100 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
+        correction += 40 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
 
-        return eval + correction / 2048;
+        return eval + correction / 512;
     }
 
     ScoredMove Worker::score_move(const Position& position, const Move& move, const tt::Entry& tt_entry, std::optional<int32_t> ply) {
