@@ -16,7 +16,7 @@ namespace episteme::hist {
     }
 
     struct Entry {
-        int32_t value = 0;
+        int16_t value = 0;
 
         inline void update(int16_t bonus, int32_t max) {
             value += bonus - value * std::abs(bonus) / max;
