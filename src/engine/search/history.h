@@ -63,6 +63,10 @@ namespace episteme::hist {
                 return capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].value;
             }
 
+            [[nodiscard]] inline int32_t get_pawn_hist(Color stm, uint64_t pawn_hash, Piece piece, Move move) {
+                return pawn_hist[color_idx(stm)][pawn_hash % 16384][piece_type_idx(piece)][sq_idx(move.to_square())].value;
+            }
+
             [[nodiscard]] inline int32_t get_pawn_corr_hist(uint64_t pawn_hash, Color stm) {
                 return corr_hist[color_idx(stm)][pawn_hash % 16384].value;
             }
@@ -89,14 +93,19 @@ namespace episteme::hist {
                 capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].update(bonus, MAX_HIST);
             }
 
+            inline void update_pawn_hist(Color stm, uint64_t pawn_hash, Piece piece, Move move, int16_t bonus) {
+                pawn_hist[color_idx(stm)][pawn_hash % 16384][piece_type_idx(piece)][sq_idx(move.to_square())].update(bonus, MAX_HIST);
+            }
+
             inline void update_corr_hist(uint64_t pawn_hash, Color stm, int16_t diff) {
-                corr_hist[color_idx(stm)][pawn_hash % 16384].update(diff, MAX_CORR_HIST);
+                corr_hist[color_idx(stm)][pawn_hash % 1024].update(diff, MAX_CORR_HIST);
             }
 
             inline void reset() {
                 quiet_hist = {};
                 cont_hist = {};
                 capt_hist = {};
+                pawn_hist = {};
                 corr_hist = {};
             }
 
@@ -104,6 +113,7 @@ namespace episteme::hist {
             std::array<std::array<std::array<Entry, 64>, 64>, 2> quiet_hist{};
             std::array<std::array<std::array<std::array<Entry, 64>, 12>, 64>, 12> cont_hist{};
             std::array<std::array<std::array<Entry, 6>, 64>, 12> capt_hist{};
+            std::array<std::array<std::array<std::array<Entry, 64>, 6>, 1024>, 2> pawn_hist{};
             std::array<std::array<Entry, 16384>, 2> corr_hist{};
     };
 }
