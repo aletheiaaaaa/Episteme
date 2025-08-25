@@ -11,6 +11,7 @@
 #include <chrono>
 #include <algorithm>
 #include <iostream>
+#include <atomic>
 #include <optional>
 
 namespace episteme::search {
@@ -112,7 +113,7 @@ namespace episteme::search {
 
     class Worker {
         public:
-            Worker(tt::Table& ttable) : ttable(ttable), should_stop(false) {};
+            Worker(tt::Table& ttable) : ttable(ttable), nodes(0), should_stop(false) {};
 
             inline void reset_accum() {
                 accumulator = {};
@@ -174,9 +175,8 @@ namespace episteme::search {
             hist::Table history;
             stack::Stack stack;
 
-            uint64_t nodes;
-
-            bool should_stop;
+            std::atomic<uint64_t> nodes;
+            std::atomic<bool> should_stop;
     };
 
     struct Config {
@@ -188,7 +188,12 @@ namespace episteme::search {
 
     class Engine {
         public:
-            Engine(Config& cfg) : ttable(cfg.hash_size), params(cfg.params), worker(ttable) {};
+            Engine(const search::Config& cfg) : ttable(cfg.hash_size), params(cfg.params) {
+                workers.reserve(cfg.num_threads);
+                for (uint16_t i = 0; i < cfg.num_threads; ++i) {
+                    workers.emplace_back(std::make_unique<Worker>(ttable));
+                }
+            }
 
             inline void set_hash(search::Config& cfg) {
                 ttable.resize(cfg.hash_size);
@@ -198,16 +203,26 @@ namespace episteme::search {
                 params = new_params;
             }
 
+            inline void reset_nodes() {
+                for (auto& worker : workers) {
+                    worker->reset_nodes();
+                }
+            }
+
             inline void reset_go() {
-                worker.reset_history();
-                worker.reset_stop();
+                for (auto& worker : workers) {
+                    worker->reset_history();
+                    worker->reset_stop();
+                }
             }
 
             inline void reset_game() {
                 ttable.reset();
-                worker.reset_accum();
-                worker.reset_history();
-                worker.reset_stop();
+                for (auto& worker : workers) {
+                    worker->reset_history();
+                    worker->reset_accum();
+                    worker->reset_stop();
+                }
             }
 
             void run(Position& position);
@@ -219,6 +234,6 @@ namespace episteme::search {
             tt::Table ttable;
             Parameters params;
 
-            Worker worker;
+            std::vector<std::unique_ptr<Worker>> workers;
     };
 }

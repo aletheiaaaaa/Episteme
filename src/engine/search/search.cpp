@@ -445,7 +445,7 @@ namespace episteme::search {
         }
 
         int64_t elapsed = duration_cast<milliseconds>(steady_clock::now() - start).count();
-        int64_t nps = (elapsed > 0) ? (1000 * nodes) / elapsed : nodes;
+        int64_t nps = (elapsed > 0) ? (1000 * nodes.load()) / elapsed : nodes.load();
 
         score = (is_absolute) ? score * (!color_idx(position.STM()) ? 1 : -1) : score;
 
@@ -502,7 +502,7 @@ namespace episteme::search {
         if (target_nodes) limits.max_nodes = target_nodes;
         if (time)limits.end = steady_clock::now() + milliseconds(time / 20 + inc / 2);
 
-        worker.reset_nodes();
+        reset_nodes();
 
         Report last_report;
         int32_t last_score = 0;
@@ -511,8 +511,8 @@ namespace episteme::search {
             Parameters iter_params = params;
             iter_params.depth = depth;
 
-            Report report = worker.run(last_score, iter_params, position, limits, false);
-            if (worker.stopped()) break;
+            Report report = workers[0]->run(last_score, iter_params, position, limits, false);
+            if (workers[0]->stopped()) break;
 
             last_report = report;
             last_score = report.score;
@@ -544,7 +544,7 @@ namespace episteme::search {
         SearchLimits limits{};
         limits.max_nodes = hard_nodes;
 
-        worker.reset_nodes();
+        reset_nodes();
 
         Report last_report;
         int32_t last_score = 0;
@@ -553,13 +553,13 @@ namespace episteme::search {
             Parameters iter_params = params;
             iter_params.depth = depth;
 
-            Report report = worker.run(last_score, iter_params, position, limits, true);
-            if (worker.stopped()) break;
+            Report report = workers[0]->run(last_score, iter_params, position, limits, true);
+            if (workers[0]->stopped()) break;
 
             last_report = report;
             last_score = report.score;
 
-            if (worker.node_count() > soft_nodes) break;
+            if (workers[0]->node_count() > soft_nodes) break;
         }
 
         ScoredMove best{
@@ -571,10 +571,10 @@ namespace episteme::search {
     }
 
     void Engine::eval(Position& position) {
-        std::cout << "info score cp " << worker.eval(position) << std::endl;
+        std::cout << "info score cp " << workers[0]->eval(position) << std::endl;
     }
 
     void Engine::bench(int depth) {
-        worker.bench(depth);
+        workers[0]->bench(depth);
     }
 }
