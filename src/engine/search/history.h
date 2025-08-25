@@ -64,7 +64,7 @@ namespace episteme::hist {
             }
 
             [[nodiscard]] inline int32_t get_pawn_hist(Color stm, uint64_t pawn_hash, Piece piece, Move move) {
-                return pawn_hist[color_idx(stm)][pawn_hash % 16384][piece_type_idx(piece)][sq_idx(move.to_square())].value;
+                return pawn_hist[color_idx(stm)][pawn_hash % 1024][piece_type_idx(piece)][sq_idx(move.to_square())].value;
             }
 
             [[nodiscard]] inline int32_t get_pawn_corr_hist(uint64_t pawn_hash, Color stm) {
@@ -94,11 +94,11 @@ namespace episteme::hist {
             }
 
             inline void update_pawn_hist(Color stm, uint64_t pawn_hash, Piece piece, Move move, int16_t bonus) {
-                pawn_hist[color_idx(stm)][pawn_hash % 16384][piece_type_idx(piece)][sq_idx(move.to_square())].update(bonus, MAX_HIST);
+                pawn_hist[color_idx(stm)][pawn_hash % 1024][piece_type_idx(piece)][sq_idx(move.to_square())].update(bonus, MAX_HIST);
             }
 
             inline void update_corr_hist(uint64_t pawn_hash, Color stm, int16_t diff) {
-                corr_hist[color_idx(stm)][pawn_hash % 1024].update(diff, MAX_CORR_HIST);
+                corr_hist[color_idx(stm)][pawn_hash % 16384].update(diff, MAX_CORR_HIST);
             }
 
             inline void reset() {
