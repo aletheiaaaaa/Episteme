@@ -315,7 +315,8 @@ namespace episteme::search {
             && !(node_type == tt::NodeType::CutNode && best <= static_eval)
             && !(node_type == tt::NodeType::AllNode && best >= static_eval) 
         ) {
-            history.update_corr_hist(position.pawn_hash(), position.STM(), (best - static_eval) * depth / 8);
+            int16_t diff = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 4, hist::MAX_CORR_HIST / 4);
+            history.update_corr_hist(position.pawn_hash(), position.STM(), diff);
         }
 
         if (!stack[ply].excluded.data()) {
