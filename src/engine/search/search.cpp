@@ -174,7 +174,7 @@ namespace episteme::search {
                 if (is_quiet && num_legal >= lmp_threshold) break;
 
                 const int32_t fp_margin = depth * 250;
-                if (!is_PV && is_quiet && !in_check(position, position.STM()) && static_eval + fp_margin <= alpha) continue;
+                if (!is_PV && is_quiet && !in_check(position, position.STM()) && static_eval + fp_margin <= alpha) break;
 
                 const int32_t see_threshold = (is_quiet) ? -60 * depth : -30 * depth * depth;
                 if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
