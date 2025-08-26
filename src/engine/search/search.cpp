@@ -237,7 +237,9 @@ namespace episteme::search {
 
             if (num_legal >= 4 && depth >= 3) {
                 reduction = lmr_table[depth][num_legal] + !improving;
+
                 if (cut_node) reduction += 2;
+                if (is_quiet) reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply) / 8192;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
@@ -290,7 +292,6 @@ namespace episteme::search {
                             history.update_quiet_hist(position.STM(), prev_move, -bonus);
                             history.update_cont_hist(stack, prev_from_pc, prev_move, -bonus, ply);
                             history.update_pawn_hist(position.STM(), position.pawn_hash(), prev_from_pc, prev_move, -bonus);
-
                         }
                     } else {
                         history.update_capt_hist(from_pc, move, to_pc, bonus);
