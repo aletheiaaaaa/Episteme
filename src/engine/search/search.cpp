@@ -54,7 +54,7 @@ namespace episteme::search {
 
             scored_move.score += dst_val * 10 - src_val;
             scored_move.score += history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
-            if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
+            scored_move.score += (eval::SEE(position, move, 0)) ? 1000000 : -1000000;
         } else {
             if (stack[*ply].killer.data() == move.data()) {
                 scored_move.score = 800000;
