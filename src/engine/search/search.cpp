@@ -180,7 +180,7 @@ namespace episteme::search {
                 if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
 
                 const int32_t history_margin = depth * -2600 + 600;
-                if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply) <= history_margin) continue;
+                if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position.pawn_hash()) <= history_margin) continue;
             }
 
             if (move.data() == stack[ply].excluded.data()) continue;
@@ -239,7 +239,7 @@ namespace episteme::search {
                 reduction = lmr_table[depth][num_legal] + !improving;
 
                 if (cut_node) reduction += 2;
-                if (is_quiet) reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply) / 8192;
+                if (is_quiet) reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position.pawn_hash()) / 8192;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 

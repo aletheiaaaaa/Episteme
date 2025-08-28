@@ -49,11 +49,12 @@ namespace episteme::hist {
                 return value;
             }
 
-            [[nodiscard]] inline int32_t get_hist(stack::Stack& stack, Piece attacker, Piece victim, Move move, Color stm, int16_t ply) {
+            [[nodiscard]] inline int32_t get_hist(stack::Stack& stack, Piece attacker, Piece victim, Move move, Color stm, int16_t ply, uint64_t pawn_hash) {
                 int32_t value = 0;
 
                 value += get_quiet_hist(stm, move);
                 value += get_cont_hist(stack, attacker, move, ply);
+                value += get_pawn_hist(stm, pawn_hash, attacker, move);
                 if (victim != Piece::None) value += get_capt_hist(attacker, move, victim);
 
                 return value;
