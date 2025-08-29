@@ -114,7 +114,7 @@ namespace episteme::search {
             stack[ply].eval = static_eval;
         } 
 
-        bool tt_PV = tt_entry.tt_PV || is_PV;
+        bool tt_PV = tt_entry.tt_PV;
         bool improving = false;
 
         if (!in_check(position, position.STM())) {
