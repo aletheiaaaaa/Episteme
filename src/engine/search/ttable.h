@@ -15,6 +15,7 @@ namespace episteme::tt {
     struct Entry {
         uint64_t hash = 0; 
         Move move = {};
+        bool tt_PV = false;
         int32_t score = 0;
         uint8_t depth = 0;
         NodeType node_type = NodeType::None;

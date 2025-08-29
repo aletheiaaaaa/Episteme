@@ -159,6 +159,7 @@ namespace episteme::search {
             template<bool PV_node>
             int32_t search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node, SearchLimits limits = {});
 
+            template<bool PV_node>
             int32_t quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta, SearchLimits limits);
 
             Report run(int32_t last_score, const Parameters& params, Position& position, const SearchLimits& limits, bool is_absolute);

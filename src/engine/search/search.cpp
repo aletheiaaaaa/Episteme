@@ -88,7 +88,7 @@ namespace episteme::search {
         if (ply > 0 && position.is_threefold()) return 0;
 
         if (depth <= 0) {
-            return quiesce(position, PV, ply, alpha, beta, limits);
+            return quiesce<PV_node>(position, PV, ply, alpha, beta, limits);
         }
 
         tt::Entry tt_entry{};
@@ -114,6 +114,7 @@ namespace episteme::search {
             stack[ply].eval = static_eval;
         } 
 
+        bool tt_PV = tt_entry.tt_PV;
         bool improving = false;
 
         if (!in_check(position, position.STM())) {
@@ -240,6 +241,7 @@ namespace episteme::search {
 
                 reduction += !improving;
                 reduction += !is_PV;
+                reduction -= tt_PV;
                 reduction += cut_node * 2;
                 reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position.pawn_hash()) / 8192;
 
@@ -330,6 +332,7 @@ namespace episteme::search {
             ttable.add({
                 .hash = position.hash(),
                 .move = PV.moves[0],
+                .tt_PV = is_PV || tt_entry.tt_PV,
                 .score = best,
                 .depth = static_cast<uint8_t>(depth),
                 .node_type = node_type
@@ -339,6 +342,7 @@ namespace episteme::search {
         return best;
     }
 
+    template<bool PV_node>
     int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta, SearchLimits limits) {
         if (nodes % 2000 == 0 && limits.time_exceeded()) {
             should_stop = true;
@@ -352,6 +356,8 @@ namespace episteme::search {
         ) {
             return tt_entry.score;
         }
+
+        constexpr bool is_PV = PV_node;
 
         int32_t eval = eval::evaluate(accumulator, position.STM());
 
@@ -394,7 +400,7 @@ namespace episteme::search {
             };
 
             Line candidate = {};
-            int32_t score = -quiesce(position, candidate, ply + 1, -beta, -alpha, limits);
+            int32_t score = -quiesce<PV_node>(position, candidate, ply + 1, -beta, -alpha, limits);
 
             position.unmake_move();
             accum_history.pop_back();
@@ -422,6 +428,7 @@ namespace episteme::search {
         ttable.add({
             .hash = position.hash(),
             .move = PV.moves[0],
+            .tt_PV = is_PV || tt_entry.tt_PV,    
             .score = best,
             .depth = 0,
             .node_type = node_type
