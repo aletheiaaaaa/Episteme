@@ -238,8 +238,8 @@ namespace episteme::search {
             if (num_legal >= 4 && depth >= 3) {
                 reduction = lmr_table[depth][num_legal] + !improving;
 
-                if (cut_node) reduction += 2;
-                if (is_quiet) reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position.pawn_hash()) / 8192;
+                reduction += 2 * cut_node;
+                reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply) / 8192;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
