@@ -240,7 +240,7 @@ namespace episteme::search {
 
                 reduction += !improving;
                 reduction += cut_node * 2;
-                reduction -= is_quiet * history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position.pawn_hash()) / 8192;
+                reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position.pawn_hash()) / 8192;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
