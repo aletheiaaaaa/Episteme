@@ -239,6 +239,7 @@ namespace episteme::search {
                 reduction = lmr_table[depth][num_legal];
 
                 reduction += !improving;
+                reduction += !is_PV;
                 reduction += cut_node * 2;
                 reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position.pawn_hash()) / 8192;
 
