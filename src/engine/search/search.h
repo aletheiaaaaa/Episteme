@@ -13,6 +13,7 @@
 #include <iostream>
 #include <atomic>
 #include <optional>
+#include <memory>
 
 namespace episteme::search {
     using namespace std::chrono;
