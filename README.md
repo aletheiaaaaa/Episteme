@@ -21,8 +21,8 @@ Episteme is a modern chess engine designed for strength, efficiency, and competi
 
 ```bash
 # Clone the repository
-git clone https://github.com/aletheiaaaaa/episteme.git
-cd episteme
+git clone https://github.com/aletheiaaaaa/Episteme.git
+cd Episteme
 
 # Build the engine
 make
