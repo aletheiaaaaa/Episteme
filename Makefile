@@ -5,7 +5,7 @@ SRC_DIR   := src
 OBJ_DIR   := ./obj
 BIN_DIR   := .
 
-DEFAULT_NET := ./256_v0_05.bin
+DEFAULT_NET := ./256_v1_05.bin
 EVALFILE    ?= $(DEFAULT_NET)
 
 # Network repository configuration
@@ -25,7 +25,7 @@ OBJS    := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
 all: $(TARGET)
 
 # Main target - depends on network file and object files
-$(TARGET): $(DEFAULT_NET) $(OBJS)
+$(TARGET): $(OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJS)
 
