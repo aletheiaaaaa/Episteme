@@ -1,6 +1,6 @@
 # Episteme Chess Engine
 
-A high-performance chess engine with an hopeful rating of ~3500 Elo, capable of outperforming even the strongest humans.
+A high-performance chess engine with an rating of ~3400 Elo, capable of outperforming even the strongest humans.
 
 ## Overview
 
