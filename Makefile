@@ -5,7 +5,7 @@ SRC_DIR   := src
 OBJ_DIR   := ./obj
 BIN_DIR   := .
 
-DEFAULT_NET := ./256_v1_05.bin
+DEFAULT_NET := ./512_v0_05.bin
 EVALFILE    ?= $(DEFAULT_NET)
 
 # Network repository configuration
