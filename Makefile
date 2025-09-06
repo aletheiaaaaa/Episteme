@@ -25,7 +25,7 @@ OBJS    := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
 all: $(TARGET)
 
 # Main target - depends on network file and object files
-$(TARGET): $(OBJS)
+$(TARGET): $(DEFAULT_NET) $(OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJS)
 
