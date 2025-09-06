@@ -55,7 +55,7 @@ go depth 15
 
 ## Version History
 
-### v1.0.0
+### v1
 - Initial release
 - Core engine functionality
 - UCI protocol support
