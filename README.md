@@ -65,13 +65,6 @@ go depth 15
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
-
-- Chess programming community for algorithms and techniques
-- UCI protocol developers
-- Open-source chess engines for inspiration and testing
-- Beta testers and contributors
-
 ## Support
 
 If you find Episteme useful, please consider:
