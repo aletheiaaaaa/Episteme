@@ -42,6 +42,7 @@ namespace episteme::datagen {
             .params = search_params,
             .hash_size = params.hash_size,
             .num_threads = params.num_threads,
+            .position = {}
         };
 
         search::Engine engine(cfg);
