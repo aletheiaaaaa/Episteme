@@ -8,7 +8,7 @@ Episteme is a modern chess engine designed for strength, efficiency, and competi
 
 ## Features
 
-- **High Performance**: ~3500 Elo estimated strength
+- **High Performance**: ~3400 Elo estimated strength
 - **UCI Compatible**: Full support for the Universal Chess Interface protocol
 - **Advanced Search**: Deep alpha-beta pruning with modern enhancements
 - **Sophisticated Evaluation**: Multi-layered position assessment
