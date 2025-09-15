@@ -85,7 +85,29 @@ namespace episteme::search {
             return 0;
         };
 
-        if (ply > 0 && position.is_threefold()) return 0;
+        if (ply > 0) {
+            if (position.half_move_clock() >= 100) {
+                if (!in_check(position, position.STM())) return 0;
+
+                bool has_legal = false;
+                MoveList move_list;
+                generate_all_moves(move_list, position);
+                for (auto& move : move_list.list) {
+                    position.make_move(move);
+                    if (!in_check(position, position.NTM())) {
+                        position.unmake_move();
+                        has_legal = true;
+                        break;
+                    }
+                    position.unmake_move();
+                }
+
+                if (!has_legal) return -MATE + ply;
+                else return 0;
+            }
+
+            if (position.is_threefold()) return 0;
+        }
 
         if (depth <= 0) {
             return quiesce<PV_node>(position, PV, ply, alpha, beta, limits);
