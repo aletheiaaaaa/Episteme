@@ -158,7 +158,7 @@ namespace episteme::search {
                 return generate_scored_targets(position, generate_all_captures, tt_entry);
             }
 
-            int32_t correct_static_eval(int32_t eval, Position& position);
+            int32_t eval_correction(const Position& position);
 
             template<bool PV_node>
             int32_t search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node, SearchLimits limits = {});

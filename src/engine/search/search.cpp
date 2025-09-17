@@ -27,7 +27,7 @@ namespace episteme::search {
         return scored_list;
     }
 
-    int32_t Worker::correct_static_eval(int32_t eval, Position& position) {
+    int32_t Worker::eval_correction(const Position& position) {
         int32_t correction = 0;
 
         correction += 250 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
@@ -36,7 +36,7 @@ namespace episteme::search {
         correction += 240 * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
         correction += 240 * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
 
-        return eval + correction / 2048;
+        return correction / 2048;
     }
 
     ScoredMove Worker::score_move(const Position& position, const Move& move, const tt::Entry& tt_entry, std::optional<int32_t> ply) {
@@ -133,12 +133,12 @@ namespace episteme::search {
         constexpr bool is_PV = PV_node;
 
         int32_t static_eval = -INF;
+        int32_t correction = eval_correction(position);
         if (!in_check(position, position.STM())) {
-            static_eval = eval::evaluate(accumulator, position.STM());
-            static_eval = correct_static_eval(static_eval, position);
-
+            static_eval = eval::evaluate(accumulator, position.STM()) + correction;
             stack[ply].eval = static_eval;
         } 
+
 
         bool tt_PV = tt_entry.tt_PV;
         bool improving = false;
@@ -269,7 +269,8 @@ namespace episteme::search {
                 reduction += !is_PV;
                 reduction -= tt_PV;
                 reduction += cut_node * 2;
-                reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
+                reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position.pawn_hash()) / 8192;
+                reduction -= (correction > 80);
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
