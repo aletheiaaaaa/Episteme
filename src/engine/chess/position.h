@@ -18,6 +18,13 @@ namespace episteme {
         return mailbox;
     }
 
+    struct Hashes {
+        uint64_t full_hash = 0;
+        uint64_t pawn_hash = 0;
+        uint64_t major_hash = 0;
+        uint64_t minor_hash = 0;
+    };
+
     struct PositionState {
         std::array<uint64_t, 8> bitboards{};
         std::array<Piece, 64> mailbox = empty_mailbox();
@@ -34,8 +41,7 @@ namespace episteme {
         uint16_t full_move_number = 0;
         Square ep_square = Square::None;
 
-        uint64_t hash = 0;
-        uint64_t pawn_hash = 0;
+        Hashes hashes;
     };
 
     class Position {
@@ -106,12 +112,20 @@ namespace episteme {
                 return state.mailbox;
             }
 
-            [[nodiscard]] inline uint64_t hash() const {
-                return state.hash;
+            [[nodiscard]] inline uint64_t full_hash() const {
+                return state.hashes.full_hash;
             }
 
             [[nodiscard]] inline uint64_t pawn_hash() const {
-                return state.pawn_hash;
+                return state.hashes.pawn_hash;
+            }
+
+            [[nodiscard]] inline uint64_t major_hash() const {
+                return state.hashes.major_hash;
+            }
+
+            [[nodiscard]] inline uint64_t minor_hash() const {
+                return state.hashes.minor_hash;
             }
 
             void from_FEN(const std::string& FEN);
@@ -125,8 +139,8 @@ namespace episteme {
             bool is_insufficient();
 
             std::string to_FEN() const; 
-            uint64_t explicit_hash();
-            uint64_t explicit_pawn_hash();
+
+            Hashes explicit_hashes();
         public:
             static const uint16_t COLOR_OFFSET = 6;
 

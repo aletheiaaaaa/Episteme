@@ -31,6 +31,7 @@ namespace episteme::search {
         int32_t correction = 0;
 
         correction += 250 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
+        correction += 130 * history.get_major_corr_hist(position.major_hash(), position.STM());
 
         return eval + correction / 2048;
     }
@@ -115,7 +116,7 @@ namespace episteme::search {
 
         tt::Entry tt_entry{};
         if (!stack[ply].excluded.data()) {
-            tt_entry = ttable.probe(position.hash());
+            tt_entry = ttable.probe(position.full_hash());
             if (ply > 0 && (tt_entry.depth >= depth
                 && ((tt_entry.node_type == tt::NodeType::PVNode)
                     || (tt_entry.node_type == tt::NodeType::AllNode && tt_entry.score <= alpha)
@@ -203,7 +204,7 @@ namespace episteme::search {
                 if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
 
                 const int32_t history_margin = depth * -2600 + 600;
-                if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position.pawn_hash()) <= history_margin) continue;
+                if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) <= history_margin) continue;
             }
 
             if (move.data() == stack[ply].excluded.data()) continue;
@@ -265,7 +266,7 @@ namespace episteme::search {
                 reduction += !is_PV;
                 reduction -= tt_PV;
                 reduction += cut_node * 2;
-                reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position.pawn_hash()) / 8192;
+                reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
@@ -347,12 +348,12 @@ namespace episteme::search {
             && !(node_type == tt::NodeType::AllNode && best >= static_eval) 
         ) {
             int16_t diff = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 4, hist::MAX_CORR_HIST / 4);
-            history.update_corr_hist(position.pawn_hash(), position.STM(), diff);
+            history.update_corr_hist(position, position.STM(), diff);
         }
 
         if (!stack[ply].excluded.data()) {
             ttable.add({
-                .hash = position.hash(),
+                .hash = position.full_hash(),
                 .move = PV.moves[0],
                 .tt_PV = is_PV || tt_entry.tt_PV,
                 .score = best,
@@ -371,7 +372,7 @@ namespace episteme::search {
             return 0;
         };
         
-        tt::Entry tt_entry = ttable.probe(position.hash());
+        tt::Entry tt_entry = ttable.probe(position.full_hash());
         if ((tt_entry.node_type == tt::NodeType::PVNode)
             || (tt_entry.node_type == tt::NodeType::AllNode && tt_entry.score <= alpha)
             || (tt_entry.node_type == tt::NodeType::CutNode && tt_entry.score >= beta)
@@ -448,7 +449,7 @@ namespace episteme::search {
         }
 
         ttable.add({
-            .hash = position.hash(),
+            .hash = position.full_hash(),
             .move = PV.moves[0],
             .tt_PV = is_PV || tt_entry.tt_PV,    
             .score = best,
