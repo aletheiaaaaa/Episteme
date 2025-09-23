@@ -27,7 +27,7 @@ namespace episteme::search {
         return scored_list;
     }
 
-    int32_t Worker::correct_static_eval(int32_t eval, const Position& position) {
+    int32_t Worker::correct_static_eval(int32_t eval, Position& position) {
         int32_t correction = 0;
 
         correction += 250 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
@@ -227,6 +227,11 @@ namespace episteme::search {
             accumulator = eval::update(position, move, accumulator);
             accum_history.emplace_back(accumulator);
             position.make_move(move);
+
+            if (position.major_hash() != position.explicit_hashes().major_hash) {
+                std::cout << "Major hash mismatch after move " << move.to_string() << " in position " << position.to_FEN() << "\n";
+                exit(1);
+            }
 
             if (in_check(position, position.NTM())) {
                 position.unmake_move();

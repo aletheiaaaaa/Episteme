@@ -113,8 +113,7 @@ namespace episteme {
         state.full_move_number = 1;
         state.ep_square = Square::None;
 
-        state.hashes.full_hash = 0x33dc8684cf354d4a;
-        state.hashes.pawn_hash = 0xe35d4132f30b9a00;
+        state.hashes = explicit_hashes();
 
         position_history.push_back(state);
     }
@@ -148,142 +147,116 @@ namespace episteme {
             state.full_move_number++;
         }
 
-        state.hashes.full_hash ^= zobrist::piecesquares[piecesquare(src, sq_src, false)];
-
         uint64_t attacker_src_hash = zobrist::piecesquares[piecesquare(src, sq_src, false)];
         uint64_t attacker_dst_hash = zobrist::piecesquares[piecesquare(src, sq_dst, false)];
         uint64_t victim_hash = zobrist::piecesquares[piecesquare(dst, sq_dst, false)];
 
-        if (move.move_type() == MoveType::EnPassant) {
-            state.hashes.pawn_hash ^= attacker_src_hash ^ attacker_dst_hash;
-            Piece captured_pawn = piece_type_with_color(PieceType::Pawn, flip(side));
-            int capture_idx = sq_idx(sq_dst) + ((side == Color::White) ? -8 : 8);
-            state.hashes.pawn_hash ^= zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
-        } else {
-            switch (piece_type(src)) {
-                case PieceType::Pawn: state.hashes.pawn_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
-                case PieceType::Knight: state.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
-                case PieceType::Bishop: state.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
-                case PieceType::Rook: state.hashes.major_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
-                case PieceType::Queen: state.hashes.major_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
-                case PieceType::King: state.hashes.major_hash ^= attacker_src_hash ^ attacker_dst_hash; state.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
-                case PieceType::None: break;
-            }
-
-            switch (piece_type(dst)) {
-                case PieceType::Pawn: state.hashes.pawn_hash ^= victim_hash; break;
-                case PieceType::Knight: state.hashes.minor_hash ^= victim_hash; break;
-                case PieceType::Bishop: state.hashes.minor_hash ^= victim_hash; break;
-                case PieceType::Rook: state.hashes.major_hash ^= victim_hash; break;
-                case PieceType::Queen: state.hashes.major_hash ^= victim_hash; break;
-                case PieceType::King: state.hashes.major_hash ^= victim_hash; state.hashes.minor_hash ^= victim_hash; break;
-                case PieceType::None: break;
-            }
-        }
+        state.hashes.full_hash ^= attacker_src_hash;
 
         switch (move.move_type()) {
             case MoveType::Normal: {
                 if (dst != Piece::None) {
-                    state.hashes.full_hash ^= zobrist::piecesquares[piecesquare(dst, sq_dst, false)];
+                    state.hashes.full_hash ^= victim_hash;
                     state.bitboards[piece_type_idx(piece_type(dst))] ^= bb_dst;
                     state.bitboards[them + COLOR_OFFSET] ^= bb_dst;
 
                     if (piece_type(dst) == PieceType::Rook) {
                         state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
                         auto& rooks = state.allowed_castles.rooks[them];
-                        if (sq_dst == rooks.kingside) {
-                            rooks.unset(true);
-                        } else if (sq_dst == rooks.queenside) {
-                            rooks.unset(false);
-                        }
+                        if (sq_dst == rooks.kingside) rooks.unset(true);
+                        else if (sq_dst == rooks.queenside) rooks.unset(false);
                         state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
                     }
                 }
 
                 if (piece_type(src) == PieceType::King) {
                     state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
-                    auto& rooks = state.allowed_castles.rooks[us];
-                    rooks.clear();
+                    state.allowed_castles.rooks[us].clear();
                     state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
                 } else if (piece_type(src) == PieceType::Rook) {
                     state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
                     auto& rooks = state.allowed_castles.rooks[us];
-                    if (sq_src == rooks.kingside) {
-                        rooks.unset(true);
-                    } else if (sq_src == rooks.queenside) {
-                        rooks.unset(false);
-                    }
+                    if (sq_src == rooks.kingside) rooks.unset(true);
+                    else if (sq_src == rooks.queenside) rooks.unset(false);
                     state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
                 }
 
-                if (piece_type(src) == PieceType::Pawn &&
-                    std::abs(sq_idx(sq_src) - sq_idx(sq_dst)) == DOUBLE_PUSH
-                ) {
-                    int ep_offset = (side == Color::White) ? -8 : 8;
-                    state.ep_square = sq_from_idx(sq_idx(sq_dst) + ep_offset);
+                if (piece_type(src) == PieceType::Pawn && std::abs(sq_idx(sq_src) - sq_idx(sq_dst)) == DOUBLE_PUSH) {
+                    state.ep_square = sq_from_idx(sq_idx(sq_dst) + ((side == Color::White) ? -8 : 8));
                     state.hashes.full_hash ^= zobrist::ep_files[file(sq_dst)];
                 }
 
-                if (piece_type(src) == PieceType::Pawn) {
-                    state.hashes.pawn_hash ^= zobrist::piecesquares[piecesquare(src, sq_dst, false)];
-                }
-
-                state.hashes.full_hash ^= zobrist::piecesquares[piecesquare(src, sq_dst, false)];
+                state.hashes.full_hash ^= attacker_dst_hash;
                 state.bitboards[piece_type_idx(piece_type(src))] ^= bb_src ^ bb_dst;
                 state.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;
-                dst = src;
 
+                auto update_hash = [&](PieceType type, uint64_t hash) {
+                    switch (type) {
+                        case PieceType::Pawn: state.hashes.pawn_hash ^= hash; break;
+                        case PieceType::Knight: case PieceType::Bishop: state.hashes.minor_hash ^= hash; break;
+                        case PieceType::Rook: case PieceType::Queen: state.hashes.major_hash ^= hash; break;
+                        case PieceType::King: state.hashes.major_hash ^= hash; state.hashes.minor_hash ^= hash; break;
+                        default: break;
+                    }
+                };
+
+                update_hash(piece_type(src), attacker_src_hash ^ attacker_dst_hash);
+                if (dst != Piece::None) update_hash(piece_type(dst), victim_hash);
+
+                dst = src;
                 break;
             }
 
             case MoveType::Castling: {
                 bool king_side = bb_dst > bb_src;
                 Square rook_src = king_side ? state.allowed_castles.rooks[us].kingside : state.allowed_castles.rooks[us].queenside;
-                Square rook_dst = (side == Color::White)
-                    ? (king_side ? Square::F1 : Square::D1)
-                    : (king_side ? Square::F8 : Square::D8);
+                Square rook_dst = static_cast<Square>(sq_idx(sq_dst) + (king_side ? -1 : 1));
                 uint64_t bb_rook_src = (uint64_t)1 << sq_idx(rook_src);
                 uint64_t bb_rook_dst = (uint64_t)1 << sq_idx(rook_dst);
 
                 Piece rook_piece = piece_type_with_color(PieceType::Rook, side);
 
-                state.hashes.full_hash ^= zobrist::piecesquares[piecesquare(rook_piece, rook_src, false)];
-                state.hashes.full_hash ^= zobrist::piecesquares[piecesquare(rook_piece, rook_dst, false)];
-                state.hashes.full_hash ^= zobrist::piecesquares[piecesquare(src, sq_dst, false)];
+                state.hashes.full_hash ^= 
+                    zobrist::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
+                    zobrist::piecesquares[piecesquare(rook_piece, rook_dst, false)] ^
+                    zobrist::piecesquares[piecesquare(src, sq_dst, false)];
 
                 state.bitboards[piece_type_idx(PieceType::Rook)] ^= bb_rook_src ^ bb_rook_dst;
-                state.bitboards[us + COLOR_OFFSET] ^= bb_rook_src ^ bb_rook_dst;
+                state.bitboards[piece_type_idx(PieceType::King)] ^= bb_src ^ bb_dst;
+                state.bitboards[us + COLOR_OFFSET] ^= bb_rook_src ^ bb_rook_dst ^ bb_src ^ bb_dst;
 
                 state.mailbox[sq_idx(rook_src)] = Piece::None;
-                state.mailbox[sq_idx(rook_dst)] = piece_type_with_color(PieceType::Rook, side);
-
-                dst = src;
-
-                state.bitboards[piece_type_idx(PieceType::King)] ^= bb_src ^ bb_dst;
-                state.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;
+                state.mailbox[sq_idx(rook_dst)] = rook_piece;
 
                 state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
                 state.allowed_castles.rooks[us].clear();
                 state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
 
+                state.hashes.major_hash ^= 
+                    attacker_src_hash ^ attacker_dst_hash ^
+                    zobrist::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
+                    zobrist::piecesquares[piecesquare(rook_piece, rook_dst, false)]; 
+                state.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; 
+
+                dst = src;
                 break;
             }
 
             case MoveType::EnPassant: {
-                int ep_offset = (side == Color::White) ? -8 : 8;
-                int capture_idx = sq_idx(sq_dst) + ep_offset;
+                int capture_idx = sq_idx(sq_dst) + ((side == Color::White) ? -8 : 8);
                 uint64_t bb_cap = (uint64_t)1 << capture_idx;
-
                 Piece captured_pawn = piece_type_with_color(PieceType::Pawn, flip(side));
-                state.hashes.full_hash ^= zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
-                state.hashes.full_hash ^= zobrist::piecesquares[piecesquare(src, sq_dst, false)];
-                state.hashes.pawn_hash ^= zobrist::piecesquares[piecesquare(src, sq_dst, false)];
-                state.hashes.pawn_hash ^= zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)]; 
+
+                state.hashes.full_hash ^= 
+                    zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)] ^
+                    zobrist::piecesquares[piecesquare(src, sq_dst, false)];
+                state.hashes.pawn_hash ^= 
+                    attacker_src_hash ^ attacker_dst_hash ^
+                    zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
 
                 state.bitboards[piece_type_idx(PieceType::Pawn)] ^= bb_src ^ bb_dst ^ bb_cap;
                 state.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;
                 state.bitboards[them + COLOR_OFFSET] ^= bb_cap;
-
                 state.mailbox[capture_idx] = Piece::None;
                 dst = src;
 
@@ -292,37 +265,47 @@ namespace episteme {
 
             case MoveType::Promotion: {
                 if (dst != Piece::None) {
-                    state.hashes.full_hash ^= zobrist::piecesquares[piecesquare(dst, sq_dst, false)];
+                    state.hashes.full_hash ^= victim_hash;
                     state.bitboards[piece_type_idx(piece_type(dst))] ^= bb_dst;
                     state.bitboards[them + COLOR_OFFSET] ^= bb_dst;
 
                     if (piece_type(dst) == PieceType::Rook) {
                         state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
                         auto& rooks = state.allowed_castles.rooks[them];
-                        if (sq_dst == rooks.kingside) {
-                            rooks.unset(true);
-                        } else if (sq_dst == rooks.queenside) {
-                            rooks.unset(false);
-                        }
+                        if (sq_dst == rooks.kingside) rooks.unset(true);
+                        else if (sq_dst == rooks.queenside) rooks.unset(false);
                         state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
+                    }
+
+                    switch (piece_type(dst)) {
+                        case PieceType::Pawn: state.hashes.pawn_hash ^= victim_hash; break;
+                        case PieceType::Knight: case PieceType::Bishop: state.hashes.minor_hash ^= victim_hash; break;
+                        case PieceType::Rook: case PieceType::Queen: state.hashes.major_hash ^= victim_hash; break;
+                        case PieceType::King: state.hashes.major_hash ^= victim_hash; state.hashes.minor_hash ^= victim_hash; break;
+                        default: break;
                     }
                 }
 
                 PieceType promo_type = move.promo_piece_type();
                 Piece promo_piece = piece_type_with_color(promo_type, side);
+                uint64_t promo_hash = zobrist::piecesquares[piecesquare(promo_piece, sq_dst, false)];
 
-                state.hashes.full_hash ^= zobrist::piecesquares[piecesquare(promo_piece, sq_dst, false)];
+                state.hashes.full_hash ^= promo_hash;
+                state.hashes.pawn_hash ^= attacker_src_hash;
+                
+                if (promo_type <= PieceType::Bishop) state.hashes.minor_hash ^= promo_hash;
+                else state.hashes.major_hash ^= promo_hash;
+
                 state.bitboards[piece_type_idx(promo_type)] ^= bb_dst;
                 state.bitboards[piece_type_idx(PieceType::Pawn)] ^= bb_src;
-
                 state.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;
                 dst = promo_piece;
-
                 break;
             }
 
             case MoveType::None: break;
         }
+        
 
         src = Piece::None;
         state.stm = !state.stm;
@@ -430,7 +413,7 @@ namespace episteme {
     }
 
     Hashes Position::explicit_hashes() {
-        Hashes hashes{0, 0, 0, 0};
+        Hashes hashes{};
 
         for (size_t i = 0; i < 64; i++) {
             Piece piece = state.mailbox[i];
