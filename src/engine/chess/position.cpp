@@ -150,27 +150,35 @@ namespace episteme {
 
         state.hashes.full_hash ^= zobrist::piecesquares[piecesquare(src, sq_src, false)];
 
-        uint64_t src_hash = zobrist::piecesquares[piecesquare(src, sq_src, false)];
-        uint64_t dst_hash = zobrist::piecesquares[piecesquare(dst, sq_dst, false)];
+        uint64_t attacker_src_hash = zobrist::piecesquares[piecesquare(src, sq_src, false)];
+        uint64_t attacker_dst_hash = zobrist::piecesquares[piecesquare(src, sq_dst, false)];
+        uint64_t victim_hash = zobrist::piecesquares[piecesquare(dst, sq_dst, false)];
 
-        switch (piece_type(src)) {
-            case PieceType::Pawn: state.hashes.pawn_hash ^= src_hash; break;
-            case PieceType::Knight: state.hashes.minor_hash ^= src_hash; break;
-            case PieceType::Bishop: state.hashes.minor_hash ^= src_hash; break;
-            case PieceType::Rook: state.hashes.major_hash ^= src_hash; break;
-            case PieceType::Queen: state.hashes.major_hash ^= src_hash; break;
-            case PieceType::King: state.hashes.major_hash ^= src_hash; state.hashes.minor_hash ^= src_hash; break;
-            case PieceType::None: break;
-        }
+        if (move.move_type() == MoveType::EnPassant) {
+            state.hashes.pawn_hash ^= attacker_src_hash ^ attacker_dst_hash;
+            Piece captured_pawn = piece_type_with_color(PieceType::Pawn, flip(side));
+            int capture_idx = sq_idx(sq_dst) + ((side == Color::White) ? -8 : 8);
+            state.hashes.pawn_hash ^= zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
+        } else {
+            switch (piece_type(src)) {
+                case PieceType::Pawn: state.hashes.pawn_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
+                case PieceType::Knight: state.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
+                case PieceType::Bishop: state.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
+                case PieceType::Rook: state.hashes.major_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
+                case PieceType::Queen: state.hashes.major_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
+                case PieceType::King: state.hashes.major_hash ^= attacker_src_hash ^ attacker_dst_hash; state.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; break;
+                case PieceType::None: break;
+            }
 
-        switch (piece_type(dst)) {
-            case PieceType::Pawn: state.hashes.pawn_hash ^= dst_hash; break;
-            case PieceType::Knight: state.hashes.minor_hash ^= dst_hash; break;
-            case PieceType::Bishop: state.hashes.minor_hash ^= dst_hash; break;
-            case PieceType::Rook: state.hashes.major_hash ^= dst_hash; break;
-            case PieceType::Queen: state.hashes.major_hash ^= dst_hash; break;
-            case PieceType::King: state.hashes.major_hash ^= dst_hash; state.hashes.minor_hash ^= dst_hash; break;
-            case PieceType::None: break;
+            switch (piece_type(dst)) {
+                case PieceType::Pawn: state.hashes.pawn_hash ^= victim_hash; break;
+                case PieceType::Knight: state.hashes.minor_hash ^= victim_hash; break;
+                case PieceType::Bishop: state.hashes.minor_hash ^= victim_hash; break;
+                case PieceType::Rook: state.hashes.major_hash ^= victim_hash; break;
+                case PieceType::Queen: state.hashes.major_hash ^= victim_hash; break;
+                case PieceType::King: state.hashes.major_hash ^= victim_hash; state.hashes.minor_hash ^= victim_hash; break;
+                case PieceType::None: break;
+            }
         }
 
         switch (move.move_type()) {
