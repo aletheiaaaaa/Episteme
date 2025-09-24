@@ -30,8 +30,8 @@ namespace episteme::search {
     int32_t Worker::correct_static_eval(int32_t eval, Position& position) {
         int32_t correction = 0;
 
-        correction += 130 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
-        correction += 110 * history.get_krp_corr_hist(position.krp_hash(), position.STM());
+        correction += 250 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
+        correction += 220 * history.get_krp_corr_hist(position.krp_hash(), position.STM());
 
         return eval + correction / 2048;
     }
