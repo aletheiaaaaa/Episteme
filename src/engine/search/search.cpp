@@ -228,6 +228,11 @@ namespace episteme::search {
             accum_history.emplace_back(accumulator);
             position.make_move(move);
 
+            if (position.major_hash() != position.explicit_hashes().major_hash) {
+                std::cout << "Major hash mismatch after move " << move.to_string() << " in position " << position.to_FEN() << "\n";
+                exit(1);
+            }
+
             if (in_check(position, position.NTM())) {
                 position.unmake_move();
                 accum_history.pop_back();
