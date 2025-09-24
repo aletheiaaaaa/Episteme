@@ -21,7 +21,7 @@ namespace episteme {
     struct Hashes {
         uint64_t full_hash = 0;
         uint64_t pawn_hash = 0;
-        uint64_t major_hash = 0;
+        uint64_t krp_hash = 0;
         uint64_t minor_hash = 0;
     };
 
@@ -120,8 +120,8 @@ namespace episteme {
                 return state.hashes.pawn_hash;
             }
 
-            [[nodiscard]] inline uint64_t major_hash() const {
-                return state.hashes.major_hash;
+            [[nodiscard]] inline uint64_t krp_hash() const {
+                return state.hashes.krp_hash;
             }
 
             [[nodiscard]] inline uint64_t minor_hash() const {

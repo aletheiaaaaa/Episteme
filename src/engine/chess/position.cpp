@@ -192,10 +192,10 @@ namespace episteme {
 
                 auto update_hash = [&](PieceType type, uint64_t hash) {
                     switch (type) {
-                        case PieceType::Pawn: state.hashes.pawn_hash ^= hash; break;
-                        case PieceType::Knight: case PieceType::Bishop: state.hashes.minor_hash ^= hash; break;
-                        case PieceType::Rook: case PieceType::Queen: state.hashes.major_hash ^= hash; break;
-                        // case PieceType::King: state.hashes.major_hash ^= hash; state.hashes.minor_hash ^= hash; break;
+                        case PieceType::Pawn : state.hashes.pawn_hash ^= hash; break;
+                        case PieceType::Knight: case PieceType::Bishop: state.hashes.minor_hash ^= hash; state.hashes.krp_hash ^= hash; break;
+                        case PieceType::Rook: case PieceType::Queen: state.hashes.krp_hash ^= hash; break;
+                        case PieceType::King: state.hashes.krp_hash ^= hash; state.hashes.minor_hash ^= hash; break;
                         default: break;
                     }
                 };
@@ -232,11 +232,11 @@ namespace episteme {
                 state.allowed_castles.rooks[us].clear();
                 state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
 
-                state.hashes.major_hash ^= 
-                    /* attacker_src_hash ^ attacker_dst_hash ^ */ 
+                state.hashes.krp_hash ^= 
+                    attacker_src_hash ^ attacker_dst_hash ^
                     zobrist::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
                     zobrist::piecesquares[piecesquare(rook_piece, rook_dst, false)]; 
-                // state.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; 
+                state.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; 
 
                 dst = src;
                 break;
@@ -279,9 +279,9 @@ namespace episteme {
 
                     switch (piece_type(dst)) {
                         case PieceType::Pawn: state.hashes.pawn_hash ^= victim_hash; break;
-                        case PieceType::Knight: case PieceType::Bishop: state.hashes.minor_hash ^= victim_hash; break;
-                        case PieceType::Rook: case PieceType::Queen: state.hashes.major_hash ^= victim_hash; break;
-                        // case PieceType::King: state.hashes.major_hash ^= victim_hash; state.hashes.minor_hash ^= victim_hash; break;
+                        case PieceType::Knight: case PieceType::Bishop: state.hashes.minor_hash ^= victim_hash; state.hashes.krp_hash ^= victim_hash; break;
+                        case PieceType::Rook: case PieceType::Queen: state.hashes.krp_hash ^= victim_hash; break;
+                        case PieceType::King: state.hashes.krp_hash ^= victim_hash; state.hashes.minor_hash ^= victim_hash; break;
                         default: break;
                     }
                 }
@@ -294,7 +294,7 @@ namespace episteme {
                 state.hashes.pawn_hash ^= attacker_src_hash;
                 
                 if (promo_type <= PieceType::Bishop) state.hashes.minor_hash ^= promo_hash;
-                else state.hashes.major_hash ^= promo_hash;
+                state.hashes.krp_hash ^= promo_hash;
 
                 state.bitboards[piece_type_idx(promo_type)] ^= bb_dst;
                 state.bitboards[piece_type_idx(PieceType::Pawn)] ^= bb_src;
@@ -424,12 +424,11 @@ namespace episteme {
                 hashes.full_hash ^= piece_hash;
                 if (type == PieceType::Pawn) {
                     hashes.pawn_hash ^= piece_hash;
-                }
-                if (type == PieceType::Rook || type == PieceType::Queen /* || type == PieceType::King */) {
-                    hashes.major_hash ^= piece_hash;
-                }
-                if (type == PieceType::Knight || type == PieceType::Bishop /* || type == PieceType::King */) {
-                    hashes.minor_hash ^= piece_hash;
+                } else if (type != PieceType::None) {
+                    hashes.krp_hash ^= piece_hash;
+                    if (type == PieceType::Knight || type == PieceType::Bishop || type == PieceType::King) {
+                        hashes.minor_hash ^= piece_hash;
+                    }
                 }
             }
         }
