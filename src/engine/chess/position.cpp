@@ -294,7 +294,7 @@ namespace episteme {
                 state.hashes.pawn_hash ^= attacker_src_hash;
                 
                 if (promo_type <= PieceType::Bishop) state.hashes.minor_hash ^= promo_hash;
-                state.hashes.krp_hash ^= promo_hash;
+                state.hashes.major_hash ^= promo_hash;
 
                 state.bitboards[piece_type_idx(promo_type)] ^= bb_dst;
                 state.bitboards[piece_type_idx(PieceType::Pawn)] ^= bb_src;
