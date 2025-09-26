@@ -198,6 +198,10 @@ namespace episteme {
                         case PieceType::King: state.hashes.major_hash ^= hash; state.hashes.minor_hash ^= hash; break;
                         default: break;
                     }
+                    if (type != PieceType::Pawn) {
+                        if (color(src) == STM()) state.hashes.non_pawn_stm_hash ^= hash;
+                        else state.hashes.non_pawn_ntm_hash ^= hash;
+                    }
                 };
 
                 update_hash(piece_type(src), attacker_src_hash ^ attacker_dst_hash);
@@ -236,6 +240,10 @@ namespace episteme {
                     attacker_src_hash ^ attacker_dst_hash ^
                     zobrist::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
                     zobrist::piecesquares[piecesquare(rook_piece, rook_dst, false)]; 
+                state.hashes.non_pawn_stm_hash ^= 
+                    attacker_src_hash ^ attacker_dst_hash ^
+                    zobrist::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
+                    zobrist::piecesquares[piecesquare(rook_piece, rook_dst, false)];
                 state.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; 
 
                 dst = src;
@@ -284,6 +292,9 @@ namespace episteme {
                         case PieceType::King: state.hashes.major_hash ^= victim_hash; state.hashes.minor_hash ^= victim_hash; break;
                         default: break;
                     }
+
+                    if (color(dst) == STM()) state.hashes.non_pawn_stm_hash ^= victim_hash;
+                    else state.hashes.non_pawn_ntm_hash ^= victim_hash;
                 }
 
                 PieceType promo_type = move.promo_piece_type();
@@ -295,6 +306,7 @@ namespace episteme {
                 
                 if (promo_type <= PieceType::Bishop) state.hashes.minor_hash ^= promo_hash;
                 else state.hashes.major_hash ^= promo_hash;
+                state.hashes.non_pawn_stm_hash ^= promo_hash;
 
                 state.bitboards[piece_type_idx(promo_type)] ^= bb_dst;
                 state.bitboards[piece_type_idx(PieceType::Pawn)] ^= bb_src;
@@ -422,9 +434,14 @@ namespace episteme {
                 PieceType type = piece_type(piece);
 
                 hashes.full_hash ^= piece_hash;
+
                 if (type == PieceType::Pawn) {
                     hashes.pawn_hash ^= piece_hash;
+                } else {
+                    if (color(piece) == STM()) hashes.non_pawn_stm_hash ^= piece_hash;
+                    else hashes.non_pawn_ntm_hash ^= piece_hash;
                 }
+
                 if (type == PieceType::Rook || type == PieceType::Queen || type == PieceType::King) {
                     hashes.major_hash ^= piece_hash;
                 }

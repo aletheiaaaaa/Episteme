@@ -20,9 +20,12 @@ namespace episteme {
 
     struct Hashes {
         uint64_t full_hash = 0;
+
         uint64_t pawn_hash = 0;
         uint64_t major_hash = 0;
         uint64_t minor_hash = 0;
+        uint64_t non_pawn_stm_hash = 0;
+        uint64_t non_pawn_ntm_hash = 0;
     };
 
     struct PositionState {
@@ -126,6 +129,14 @@ namespace episteme {
 
             [[nodiscard]] inline uint64_t minor_hash() const {
                 return state.hashes.minor_hash;
+            }
+
+            [[nodiscard]] inline uint64_t non_pawn_stm_hash() const {
+                return state.hashes.non_pawn_stm_hash;
+            }
+
+            [[nodiscard]] inline uint64_t non_pawn_ntm_hash() const {
+                return state.hashes.non_pawn_ntm_hash;
             }
 
             void from_FEN(const std::string& FEN);
