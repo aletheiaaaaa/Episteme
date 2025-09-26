@@ -122,6 +122,7 @@ namespace episteme::hist {
             std::array<std::array<std::array<std::array<Entry, 64>, 12>, 64>, 12> cont_hist{};
             std::array<std::array<std::array<Entry, 6>, 64>, 12> capt_hist{};
             std::array<std::array<std::array<std::array<Entry, 64>, 6>, 1024>, 2> pawn_hist{};
+
             std::array<std::array<Entry, 16384>, 2> pawn_corr_hist{};
             std::array<std::array<Entry, 16384>, 2> major_corr_hist{};
     };

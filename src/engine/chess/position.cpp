@@ -195,7 +195,7 @@ namespace episteme {
                         case PieceType::Pawn: state.hashes.pawn_hash ^= hash; break;
                         case PieceType::Knight: case PieceType::Bishop: state.hashes.minor_hash ^= hash; break;
                         case PieceType::Rook: case PieceType::Queen: state.hashes.major_hash ^= hash; break;
-                        // case PieceType::King: state.hashes.major_hash ^= hash; state.hashes.minor_hash ^= hash; break;
+                        case PieceType::King: state.hashes.major_hash ^= hash; state.hashes.minor_hash ^= hash; break;
                         default: break;
                     }
                 };
@@ -233,7 +233,7 @@ namespace episteme {
                 state.hashes.full_hash ^= zobrist::castling_rights[state.allowed_castles.as_mask()];
 
                 state.hashes.major_hash ^= 
-                    // attacker_src_hash ^ attacker_dst_hash ^
+                    attacker_src_hash ^ attacker_dst_hash ^
                     zobrist::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
                     zobrist::piecesquares[piecesquare(rook_piece, rook_dst, false)]; 
                 state.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; 
@@ -281,7 +281,7 @@ namespace episteme {
                         case PieceType::Pawn: state.hashes.pawn_hash ^= victim_hash; break;
                         case PieceType::Knight: case PieceType::Bishop: state.hashes.minor_hash ^= victim_hash; break;
                         case PieceType::Rook: case PieceType::Queen: state.hashes.major_hash ^= victim_hash; break;
-                        // case PieceType::King: state.hashes.major_hash ^= victim_hash; state.hashes.minor_hash ^= victim_hash; break;
+                        case PieceType::King: state.hashes.major_hash ^= victim_hash; state.hashes.minor_hash ^= victim_hash; break;
                         default: break;
                     }
                 }
@@ -425,7 +425,7 @@ namespace episteme {
                 if (type == PieceType::Pawn) {
                     hashes.pawn_hash ^= piece_hash;
                 }
-                if (type == PieceType::Rook || type == PieceType::Queen /* || type == PieceType::King */) {
+                if (type == PieceType::Rook || type == PieceType::Queen || type == PieceType::King) {
                     hashes.major_hash ^= piece_hash;
                 }
                 if (type == PieceType::Knight || type == PieceType::Bishop || type == PieceType::King) {
