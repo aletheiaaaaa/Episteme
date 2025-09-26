@@ -76,6 +76,10 @@ namespace episteme::hist {
                 return major_corr_hist[color_idx(stm)][major_hash % 16384].value;
             }
 
+            [[nodiscard]] inline int32_t get_minor_corr_hist(uint64_t minor_hash, Color stm) {
+                return minor_corr_hist[color_idx(stm)][minor_hash % 16384].value;
+            }
+
             inline void update_quiet_hist(Color stm, Move move, int16_t bonus) {
                 quiet_hist[color_idx(stm)][sq_idx(move.from_square())][sq_idx(move.to_square())].update(bonus, MAX_HIST);
             }
@@ -105,6 +109,7 @@ namespace episteme::hist {
             inline void update_corr_hist(const Position& position, Color stm, int16_t diff) {
                 pawn_corr_hist[color_idx(stm)][position.pawn_hash() % 16384].update(diff, MAX_CORR_HIST);
                 major_corr_hist[color_idx(stm)][position.major_hash() % 16384].update(diff, MAX_CORR_HIST);
+                minor_corr_hist[color_idx(stm)][position.minor_hash() % 16384].update(diff, MAX_CORR_HIST);
             }
 
             inline void reset() {
@@ -115,6 +120,7 @@ namespace episteme::hist {
 
                 pawn_corr_hist = {};
                 major_corr_hist = {};
+                minor_corr_hist = {};
             }
 
         private:
@@ -125,5 +131,6 @@ namespace episteme::hist {
 
             std::array<std::array<Entry, 16384>, 2> pawn_corr_hist{};
             std::array<std::array<Entry, 16384>, 2> major_corr_hist{};
+            std::array<std::array<Entry, 16384>, 2> minor_corr_hist{};
     };
 }
