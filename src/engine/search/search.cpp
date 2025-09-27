@@ -350,7 +350,7 @@ namespace episteme::search {
             && !(node_type == tt::NodeType::CutNode && best <= static_eval)
             && !(node_type == tt::NodeType::AllNode && best >= static_eval) 
         ) {
-            int16_t diff = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 4, hist::MAX_CORR_HIST / 4);
+            int16_t diff = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 2, hist::MAX_CORR_HIST / 2);
             history.update_corr_hist(position, position.STM(), diff);
         }
 
@@ -558,7 +558,7 @@ namespace episteme::search {
             last_score = report.score;
 
             bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
-            int32_t display_score = is_mate ? ((1 + MATE - std::abs(report.score)) / 2) * ((report.score > 0) ? 1 : -1) : report.score;
+            int32_t display_score = is_mate ? (1 + MATE - std::abs(report.score)) / 2 : report.score;
 
             std::cout << "info depth " << report.depth
                 << " time " << report.time
