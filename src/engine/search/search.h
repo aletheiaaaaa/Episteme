@@ -25,7 +25,7 @@ namespace episteme::search {
         int32_t score = 0;
     };
 
-    struct ScoredList {
+    struct ScoredList : public MoveList {
         inline void add(const ScoredMove& move) {
             list[count] = move;
             count++;
@@ -39,8 +39,11 @@ namespace episteme::search {
             std::iter_swap(list.begin() + src_idx, list.begin() + dst_idx);
         }
 
+        inline ScoredMove operator[](size_t idx) const {
+            return list[idx];
+        }
+
         std::array<ScoredMove, 256> list;
-        size_t count = 0;
     };
 
     void pick_move(ScoredList& scored_list, int start);

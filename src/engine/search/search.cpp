@@ -8,7 +8,7 @@ namespace episteme::search {
 
     void pick_move(ScoredList& scored_list, int start) {
         for (size_t i = start + 1; i < scored_list.count; i++)    {
-            if (scored_list.list[i].score > scored_list.list[start].score) {
+            if (scored_list[i].score > scored_list[start].score) {
                 scored_list.swap(start, i);
             }
         }
@@ -21,7 +21,7 @@ namespace episteme::search {
         ScoredList scored_list;
 
         for (size_t i = 0; i < move_list.count; i++) {
-            scored_list.add(score_move(position, move_list.list[i], tt_entry, ply));
+            scored_list.add(score_move(position, move_list[i], tt_entry, ply));
         }
 
         return scored_list;
@@ -42,7 +42,7 @@ namespace episteme::search {
     ScoredMove Worker::score_move(const Position& position, const Move& move, const tt::Entry& tt_entry, std::optional<int32_t> ply) {
         ScoredMove scored_move{.move = move};
 
-        if (tt_entry.move.data() == move.data()) {
+        if (tt_entry.move == move) {
             scored_move.score = 10000000;
             return scored_move;
         }
@@ -60,7 +60,7 @@ namespace episteme::search {
             scored_move.score += history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
             if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
         } else {
-            if (stack[*ply].killer.data() == move.data()) {
+            if (stack[*ply].killer == move) {
                 scored_move.score = 800000;
                 return scored_move;
             }
@@ -118,7 +118,7 @@ namespace episteme::search {
         }
 
         tt::Entry tt_entry{};
-        if (!stack[ply].excluded.data()) {
+        if (!stack[ply].excluded) {
             tt_entry = ttable.probe(position.full_hash());
             if (ply > 0 && (tt_entry.depth >= depth
                 && ((tt_entry.node_type == tt::NodeType::PVNode)
@@ -149,7 +149,7 @@ namespace episteme::search {
             }
         }
 
-        if (!stack[ply].excluded.data() && !in_check(position, position.STM())) {
+        if (!stack[ply].excluded && !in_check(position, position.STM())) {
             if (!is_PV && depth <= 5 && static_eval >= beta + std::max(depth - improving, 0) * 100) return static_eval;
 
             if (!is_PV && depth >= 3) {
@@ -189,7 +189,7 @@ namespace episteme::search {
 
         for (size_t i = 0; i < move_list.count; i++) { 
             pick_move(move_list, i);
-            Move move = move_list.list[i].move;
+            Move move = move_list[i].move;
 
             Piece from_pc = position.mailbox(move.from_square());
             Piece to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(move.to_square());
@@ -210,10 +210,10 @@ namespace episteme::search {
                 if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) <= history_margin) continue;
             }
 
-            if (move.data() == stack[ply].excluded.data()) continue;
+            if (move == stack[ply].excluded) continue;
 
             int16_t extension = 0;
-            if (ply > 0 && depth >= 8 && move.data() == tt_entry.move.data() && !stack[ply].excluded.data() && tt_entry.depth >= depth - 3 && tt_entry.node_type != tt::NodeType::AllNode) {
+            if (ply > 0 && depth >= 8 && move == tt_entry.move && !stack[ply].excluded && tt_entry.depth >= depth - 3 && tt_entry.node_type != tt::NodeType::AllNode) {
                 const int32_t new_beta = std::max(-INF + 1, tt_entry.score - depth * 2);
                 const int16_t new_depth = (depth - 1) / 2;
 
@@ -314,8 +314,8 @@ namespace episteme::search {
                         history.update_pawn_hist(position.STM(), position.pawn_hash(), from_pc, move, bonus);
 
                         for (size_t j = 0; j < explored_quiets.count; j++) {
-                            Move prev_move = explored_quiets.list[j];
-                            if (prev_move.data() == move.data()) continue;
+                            Move prev_move = explored_quiets[j];
+                            if (prev_move == move) continue;
 
                             Piece prev_from_pc = position.mailbox(prev_move.from_square());
 
@@ -328,8 +328,8 @@ namespace episteme::search {
                     }
 
                     for (size_t j = 0; j < explored_noisies.count; j++) {
-                        Move prev_move = explored_noisies.list[j];
-                        if (prev_move.data() == move.data()) continue;
+                        Move prev_move = explored_noisies[j];
+                        if (prev_move == move) continue;
 
                         Piece prev_from_pc = position.mailbox(prev_move.from_square());
                         Piece prev_to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(prev_move.to_square());
@@ -354,7 +354,7 @@ namespace episteme::search {
             history.update_corr_hist(position, position.STM(), diff);
         }
 
-        if (!stack[ply].excluded.data()) {
+        if (!stack[ply].excluded) {
             ttable.add({
                 .hash = position.full_hash(),
                 .move = PV.moves[0],
@@ -401,7 +401,7 @@ namespace episteme::search {
 
         for (size_t i = 0; i < captures_list.count; i++) {
             pick_move(captures_list, i);
-            Move move = captures_list.list[i].move;
+            Move move = captures_list[i].move;
 
             if (!eval::SEE(position, move, 0)) continue;
 
