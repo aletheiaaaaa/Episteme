@@ -33,8 +33,8 @@ namespace episteme::search {
         correction += 130 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
         // correction += 110 * history.get_major_corr_hist(position.major_hash(), position.STM());
         // correction += 110 * history.get_minor_corr_hist(position.minor_hash(), position.STM());
-        correction += 140 * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
-        correction += 140 * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
+        correction += 100 * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
+        correction += 100 * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
 
         return eval + correction / 2048;
     }
@@ -350,7 +350,7 @@ namespace episteme::search {
             && !(node_type == tt::NodeType::CutNode && best <= static_eval)
             && !(node_type == tt::NodeType::AllNode && best >= static_eval) 
         ) {
-            int16_t diff = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 2, hist::MAX_CORR_HIST / 2);
+            int16_t diff = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 4, hist::MAX_CORR_HIST / 4);
             history.update_corr_hist(position, position.STM(), diff);
         }
 
