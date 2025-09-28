@@ -24,8 +24,8 @@ namespace episteme {
         uint64_t pawn_hash = 0;
         uint64_t major_hash = 0;
         uint64_t minor_hash = 0;
-        uint64_t non_pawn_stm_hash = 0;
-        uint64_t non_pawn_ntm_hash = 0;
+        uint64_t non_pawn_white_hash = 0;
+        uint64_t non_pawn_black_hash = 0;
     };
 
     struct PositionState {
@@ -132,11 +132,11 @@ namespace episteme {
             }
 
             [[nodiscard]] inline uint64_t non_pawn_stm_hash() const {
-                return state.hashes.non_pawn_stm_hash;
+                return (!state.stm) ? state.hashes.non_pawn_white_hash : state.hashes.non_pawn_black_hash;
             }
 
             [[nodiscard]] inline uint64_t non_pawn_ntm_hash() const {
-                return state.hashes.non_pawn_ntm_hash;
+                return (!state.stm) ? state.hashes.non_pawn_black_hash : state.hashes.non_pawn_white_hash;
             }
 
             void from_FEN(const std::string& FEN);
