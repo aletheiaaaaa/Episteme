@@ -31,7 +31,7 @@ namespace episteme::search {
         int32_t correction = 0;
 
         correction += 250 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
-        // correction += 110 * history.get_major_corr_hist(position.major_hash(), position.STM());
+        correction += 220 * history.get_major_corr_hist(position.major_hash(), position.STM());
         correction += 220 * history.get_minor_corr_hist(position.minor_hash(), position.STM());
         correction += 240 * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
         correction += 240 * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
