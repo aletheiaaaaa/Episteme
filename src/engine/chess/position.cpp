@@ -133,7 +133,7 @@ namespace episteme {
         auto them = color_idx(flip(side));
 
         if (current.ep_square != Square::None) {
-            current.hashes.full_hash ^= zobrist::ep_files[file(current.ep_square)];
+            current.hashes.full_hash ^= hash::ep_files[file(current.ep_square)];
             current.ep_square = Square::None;
         } 
 
@@ -147,9 +147,9 @@ namespace episteme {
             current.full_move_number++;
         }
 
-        uint64_t attacker_src_hash = zobrist::piecesquares[piecesquare(src, sq_src, false)];
-        uint64_t attacker_dst_hash = zobrist::piecesquares[piecesquare(src, sq_dst, false)];
-        uint64_t victim_hash = zobrist::piecesquares[piecesquare(dst, sq_dst, false)];
+        uint64_t attacker_src_hash = hash::piecesquares[piecesquare(src, sq_src, false)];
+        uint64_t attacker_dst_hash = hash::piecesquares[piecesquare(src, sq_dst, false)];
+        uint64_t victim_hash = hash::piecesquares[piecesquare(dst, sq_dst, false)];
 
         current.hashes.full_hash ^= attacker_src_hash;
 
@@ -161,29 +161,29 @@ namespace episteme {
                     current.bitboards[them + COLOR_OFFSET] ^= bb_dst;
 
                     if (piece_type(dst) == PieceType::Rook) {
-                        current.hashes.full_hash ^= zobrist::castling_rights[current.allowed_castles.as_mask()];
+                        current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
                         auto& rooks = current.allowed_castles.rooks[them];
                         if (sq_dst == rooks.kingside) rooks.unset(true);
                         else if (sq_dst == rooks.queenside) rooks.unset(false);
-                        current.hashes.full_hash ^= zobrist::castling_rights[current.allowed_castles.as_mask()];
+                        current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
                     }
                 }
 
                 if (piece_type(src) == PieceType::King) {
-                    current.hashes.full_hash ^= zobrist::castling_rights[current.allowed_castles.as_mask()];
+                    current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
                     current.allowed_castles.rooks[us].clear();
-                    current.hashes.full_hash ^= zobrist::castling_rights[current.allowed_castles.as_mask()];
+                    current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
                 } else if (piece_type(src) == PieceType::Rook) {
-                    current.hashes.full_hash ^= zobrist::castling_rights[current.allowed_castles.as_mask()];
+                    current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
                     auto& rooks = current.allowed_castles.rooks[us];
                     if (sq_src == rooks.kingside) rooks.unset(true);
                     else if (sq_src == rooks.queenside) rooks.unset(false);
-                    current.hashes.full_hash ^= zobrist::castling_rights[current.allowed_castles.as_mask()];
+                    current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
                 }
 
                 if (piece_type(src) == PieceType::Pawn && std::abs(sq_idx(sq_src) - sq_idx(sq_dst)) == DOUBLE_PUSH) {
                     current.ep_square = sq_from_idx(sq_idx(sq_dst) + ((side == Color::White) ? -8 : 8));
-                    current.hashes.full_hash ^= zobrist::ep_files[file(sq_dst)];
+                    current.hashes.full_hash ^= hash::ep_files[file(sq_dst)];
                 }
 
                 current.hashes.full_hash ^= attacker_dst_hash;
@@ -221,9 +221,9 @@ namespace episteme {
                 Piece rook_piece = piece_type_with_color(PieceType::Rook, side);
 
                 current.hashes.full_hash ^= 
-                    zobrist::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-                    zobrist::piecesquares[piecesquare(rook_piece, rook_dst, false)] ^
-                    zobrist::piecesquares[piecesquare(src, sq_dst, false)];
+                    hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
+                    hash::piecesquares[piecesquare(rook_piece, rook_dst, false)] ^
+                    hash::piecesquares[piecesquare(src, sq_dst, false)];
 
                 current.bitboards[piece_type_idx(PieceType::Rook)] ^= bb_rook_src ^ bb_rook_dst;
                 current.bitboards[piece_type_idx(PieceType::King)] ^= bb_src ^ bb_dst;
@@ -232,24 +232,24 @@ namespace episteme {
                 current.mailbox[sq_idx(rook_src)] = Piece::None;
                 current.mailbox[sq_idx(rook_dst)] = rook_piece;
 
-                current.hashes.full_hash ^= zobrist::castling_rights[current.allowed_castles.as_mask()];
+                current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
                 current.allowed_castles.rooks[us].clear();
-                current.hashes.full_hash ^= zobrist::castling_rights[current.allowed_castles.as_mask()];
+                current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
 
                 current.hashes.major_hash ^= 
                     attacker_src_hash ^ attacker_dst_hash ^
-                    zobrist::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-                    zobrist::piecesquares[piecesquare(rook_piece, rook_dst, false)]; 
+                    hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
+                    hash::piecesquares[piecesquare(rook_piece, rook_dst, false)]; 
                 current.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; 
 
                 if (current.stm) current.hashes.non_pawn_black_hash ^= 
                     attacker_src_hash ^ attacker_dst_hash ^
-                    zobrist::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-                    zobrist::piecesquares[piecesquare(rook_piece, rook_dst, false)];
+                    hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
+                    hash::piecesquares[piecesquare(rook_piece, rook_dst, false)];
                 else current.hashes.non_pawn_white_hash ^= 
                     attacker_src_hash ^ attacker_dst_hash ^
-                    zobrist::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-                    zobrist::piecesquares[piecesquare(rook_piece, rook_dst, false)];
+                    hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
+                    hash::piecesquares[piecesquare(rook_piece, rook_dst, false)];
 
                 dst = src;
                 break;
@@ -261,11 +261,11 @@ namespace episteme {
                 Piece captured_pawn = piece_type_with_color(PieceType::Pawn, flip(side));
 
                 current.hashes.full_hash ^= 
-                    zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)] ^
-                    zobrist::piecesquares[piecesquare(src, sq_dst, false)];
+                    hash::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)] ^
+                    hash::piecesquares[piecesquare(src, sq_dst, false)];
                 current.hashes.pawn_hash ^= 
                     attacker_src_hash ^ attacker_dst_hash ^
-                    zobrist::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
+                    hash::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
 
                 current.bitboards[piece_type_idx(PieceType::Pawn)] ^= bb_src ^ bb_dst ^ bb_cap;
                 current.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;
@@ -283,11 +283,11 @@ namespace episteme {
                     current.bitboards[them + COLOR_OFFSET] ^= bb_dst;
 
                     if (piece_type(dst) == PieceType::Rook) {
-                        current.hashes.full_hash ^= zobrist::castling_rights[current.allowed_castles.as_mask()];
+                        current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
                         auto& rooks = current.allowed_castles.rooks[them];
                         if (sq_dst == rooks.kingside) rooks.unset(true);
                         else if (sq_dst == rooks.queenside) rooks.unset(false);
-                        current.hashes.full_hash ^= zobrist::castling_rights[current.allowed_castles.as_mask()];
+                        current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
                     }
 
                     switch (piece_type(dst)) {
@@ -304,7 +304,7 @@ namespace episteme {
 
                 PieceType promo_type = move.promo_piece_type();
                 Piece promo_piece = piece_type_with_color(promo_type, side);
-                uint64_t promo_hash = zobrist::piecesquares[piecesquare(promo_piece, sq_dst, false)];
+                uint64_t promo_hash = hash::piecesquares[piecesquare(promo_piece, sq_dst, false)];
 
                 current.hashes.full_hash ^= promo_hash;
                 current.hashes.pawn_hash ^= attacker_src_hash;
@@ -328,14 +328,14 @@ namespace episteme {
 
         src = Piece::None;
         current.stm = !current.stm;
-        current.hashes.full_hash ^= zobrist::stm;
+        current.hashes.full_hash ^= hash::stm;
 
         history.push_back(current);
     }
 
     void Position::make_null() {
         if (current.ep_square != Square::None) {
-            current.hashes.full_hash ^= zobrist::ep_files[file(current.ep_square)];
+            current.hashes.full_hash ^= hash::ep_files[file(current.ep_square)];
             current.ep_square = Square::None;
         }
 
@@ -346,7 +346,7 @@ namespace episteme {
         }
 
         current.stm = !current.stm;
-        current.hashes.full_hash ^= zobrist::stm;
+        current.hashes.full_hash ^= hash::stm;
 
         history.push_back(current);
     }
@@ -437,7 +437,7 @@ namespace episteme {
         for (size_t i = 0; i < 64; i++) {
             Piece piece = current.mailbox[i];
             if (piece != Piece::None) {
-                uint64_t piece_hash = zobrist::piecesquares[piecesquare(piece, sq_from_idx(i), false)];
+                uint64_t piece_hash = hash::piecesquares[piecesquare(piece, sq_from_idx(i), false)];
                 PieceType type = piece_type(piece);
 
                 hashes.full_hash ^= piece_hash;
@@ -458,9 +458,9 @@ namespace episteme {
             }
         }
 
-        if (!current.stm) hashes.full_hash ^= zobrist::stm;
-        if (current.ep_square != Square::None) hashes.full_hash ^= zobrist::ep_files[file(current.ep_square)];
-        hashes.full_hash ^= zobrist::castling_rights[current.allowed_castles.as_mask()];
+        if (!current.stm) hashes.full_hash ^= hash::stm;
+        if (current.ep_square != Square::None) hashes.full_hash ^= hash::ep_files[file(current.ep_square)];
+        hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
 
         return hashes;
     }

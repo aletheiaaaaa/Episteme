@@ -9,7 +9,7 @@
 using namespace episteme;
 
 int main(int argc, char *argv[]) {
-    zobrist::init();
+    hash::init();
     search::init_lmr_table();
 
     search::Config cfg;
