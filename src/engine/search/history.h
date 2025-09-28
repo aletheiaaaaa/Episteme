@@ -117,7 +117,7 @@ namespace episteme::hist {
             inline void update_corr_hist(const Position& position, Color stm, int16_t diff) {
                 pawn_corr_hist[color_idx(stm)][position.pawn_hash() % 16384].update(diff, MAX_CORR_HIST);
                 // major_corr_hist[color_idx(stm)][position.major_hash() % 16384].update(diff, MAX_CORR_HIST);
-                // minor_corr_hist[color_idx(stm)][position.minor_hash() % 16384].update(diff, MAX_CORR_HIST);
+                minor_corr_hist[color_idx(stm)][position.minor_hash() % 16384].update(diff, MAX_CORR_HIST);
                 non_pawn_stm_corr_hist[color_idx(stm)][position.non_pawn_stm_hash() % 16384].update(diff, MAX_CORR_HIST);
                 non_pawn_ntm_corr_hist[color_idx(stm)][position.non_pawn_ntm_hash() % 16384].update(diff, MAX_CORR_HIST);
             }
