@@ -153,8 +153,38 @@ namespace episteme {
 
         current.hashes.full_hash ^= attacker_src_hash;
 
+        auto update_hash = [&](Piece piece, uint64_t hash) {
+            switch (piece_type(piece)) {
+                case PieceType::Pawn: 
+                    current.hashes.pawn_hash ^= hash;
+                    current.hashes.krp_hash ^= hash;
+                    break;
+                case PieceType::Knight: case PieceType::Bishop: 
+                    current.hashes.minor_hash ^= hash; 
+                    if (piece_type(piece) == PieceType::Knight) current.hashes.krn_hash ^= hash;
+                    else current.hashes.krb_hash ^= hash;
+                    break;
+                case PieceType::Rook: case PieceType::Queen: 
+                    current.hashes.major_hash ^= hash; 
+                    break;
+                case PieceType::King: 
+                    current.hashes.major_hash ^= hash; 
+                    current.hashes.minor_hash ^= hash; 
+                    current.hashes.krp_hash ^= hash; 
+                    current.hashes.krn_hash ^= hash; 
+                    current.hashes.krb_hash ^= hash;
+                    break;
+                default: break;
+            }
+
+            if (piece_type(piece) != PieceType::Pawn) {
+                if (color(piece) == Color::Black) current.hashes.non_pawn_black_hash ^= hash;
+                else current.hashes.non_pawn_white_hash ^= hash;
+            }
+        };
+
         switch (move.move_type()) {
-            case MoveType::Normal: {
+            case MoveType::Normal: { 
                 if (dst != Piece::None) {
                     current.hashes.full_hash ^= victim_hash;
                     current.bitboards[piece_type_idx(piece_type(dst))] ^= bb_dst;
@@ -190,20 +220,6 @@ namespace episteme {
                 current.bitboards[piece_type_idx(piece_type(src))] ^= bb_src ^ bb_dst;
                 current.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;
 
-                auto update_hash = [&](Piece piece, uint64_t hash) {
-                    switch (piece_type(piece)) {
-                        case PieceType::Pawn: current.hashes.pawn_hash ^= hash; break;
-                        case PieceType::Knight: case PieceType::Bishop: current.hashes.minor_hash ^= hash; break;
-                        case PieceType::Rook: case PieceType::Queen: current.hashes.major_hash ^= hash; break;
-                        case PieceType::King: current.hashes.major_hash ^= hash; current.hashes.minor_hash ^= hash; break;
-                        default: break;
-                    }
-                    if (piece_type(piece) != PieceType::Pawn) {
-                        if (color(piece) == Color::Black) current.hashes.non_pawn_black_hash ^= hash;
-                        else current.hashes.non_pawn_white_hash ^= hash;
-                    }
-                };
-
                 update_hash(src, attacker_src_hash ^ attacker_dst_hash);
                 if (dst != Piece::None) update_hash(dst, victim_hash);
 
@@ -236,20 +252,20 @@ namespace episteme {
                 current.allowed_castles.rooks[us].clear();
                 current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
 
-                current.hashes.major_hash ^= 
-                    attacker_src_hash ^ attacker_dst_hash ^
-                    hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-                    hash::piecesquares[piecesquare(rook_piece, rook_dst, false)]; 
-                current.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash; 
+                uint64_t rook_src_hash = hash::piecesquares[piecesquare(rook_piece, rook_src, false)];
+                uint64_t rook_dst_hash = hash::piecesquares[piecesquare(rook_piece, rook_dst, false)];
+                uint64_t king_hash_diff = attacker_src_hash ^ attacker_dst_hash;
+                uint64_t rook_hash_diff = rook_src_hash ^ rook_dst_hash;
+                uint64_t all_hash_diff = king_hash_diff ^ rook_hash_diff;
 
-                if (current.stm) current.hashes.non_pawn_black_hash ^= 
-                    attacker_src_hash ^ attacker_dst_hash ^
-                    hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-                    hash::piecesquares[piecesquare(rook_piece, rook_dst, false)];
-                else current.hashes.non_pawn_white_hash ^= 
-                    attacker_src_hash ^ attacker_dst_hash ^
-                    hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-                    hash::piecesquares[piecesquare(rook_piece, rook_dst, false)];
+                current.hashes.major_hash ^= all_hash_diff;
+                current.hashes.minor_hash ^= king_hash_diff;
+                current.hashes.krp_hash ^= king_hash_diff;
+                current.hashes.krn_hash ^= king_hash_diff;
+                current.hashes.krb_hash ^= king_hash_diff;
+
+                if (current.stm) current.hashes.non_pawn_black_hash ^= all_hash_diff;
+                else current.hashes.non_pawn_white_hash ^= all_hash_diff;
 
                 dst = src;
                 break;
@@ -260,12 +276,12 @@ namespace episteme {
                 uint64_t bb_cap = (uint64_t)1 << capture_idx;
                 Piece captured_pawn = piece_type_with_color(PieceType::Pawn, flip(side));
 
-                current.hashes.full_hash ^= 
-                    hash::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)] ^
-                    hash::piecesquares[piecesquare(src, sq_dst, false)];
-                current.hashes.pawn_hash ^= 
-                    attacker_src_hash ^ attacker_dst_hash ^
-                    hash::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
+                uint64_t captured_pawn_hash = hash::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
+                uint64_t pawn_move_hash = attacker_src_hash ^ attacker_dst_hash;
+
+                current.hashes.full_hash ^= captured_pawn_hash ^ attacker_dst_hash;
+                current.hashes.pawn_hash ^= pawn_move_hash ^ captured_pawn_hash;
+                current.hashes.krp_hash ^= pawn_move_hash ^ captured_pawn_hash;
 
                 current.bitboards[piece_type_idx(PieceType::Pawn)] ^= bb_src ^ bb_dst ^ bb_cap;
                 current.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;
@@ -290,14 +306,6 @@ namespace episteme {
                         current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
                     }
 
-                    switch (piece_type(dst)) {
-                        case PieceType::Pawn: current.hashes.pawn_hash ^= victim_hash; break;
-                        case PieceType::Knight: case PieceType::Bishop: current.hashes.minor_hash ^= victim_hash; break;
-                        case PieceType::Rook: case PieceType::Queen: current.hashes.major_hash ^= victim_hash; break;
-                        case PieceType::King: current.hashes.major_hash ^= victim_hash; current.hashes.minor_hash ^= victim_hash; break;
-                        default: break;
-                    }
-
                     if (!current.stm) current.hashes.non_pawn_black_hash ^= victim_hash;
                     else current.hashes.non_pawn_white_hash ^= victim_hash;
                 }
@@ -308,9 +316,10 @@ namespace episteme {
 
                 current.hashes.full_hash ^= promo_hash;
                 current.hashes.pawn_hash ^= attacker_src_hash;
-                
-                if (promo_type <= PieceType::Bishop) current.hashes.minor_hash ^= promo_hash;
-                else current.hashes.major_hash ^= promo_hash;
+
+                update_hash(src, attacker_src_hash);
+                update_hash(promo_piece, promo_hash);
+                if (dst != Piece::None) update_hash(dst, victim_hash);
 
                 if (current.stm) current.hashes.non_pawn_black_hash ^= promo_hash;
                 else current.hashes.non_pawn_white_hash ^= promo_hash;
@@ -322,9 +331,8 @@ namespace episteme {
                 break;
             }
 
-            case MoveType::None: break;
+            default: break;
         }
-        
 
         src = Piece::None;
         current.stm = !current.stm;
@@ -444,16 +452,29 @@ namespace episteme {
 
                 if (type == PieceType::Pawn) {
                     hashes.pawn_hash ^= piece_hash;
+                    hashes.krp_hash ^= piece_hash;
                 } else {
                     if (color(piece) == Color::Black) hashes.non_pawn_black_hash ^= piece_hash;
                     else hashes.non_pawn_white_hash ^= piece_hash;
                 }
 
-                if (type == PieceType::Rook || type == PieceType::Queen || type == PieceType::King) {
-                    hashes.major_hash ^= piece_hash;
-                }
-                if (type == PieceType::Knight || type == PieceType::Bishop || type == PieceType::King) {
-                    hashes.minor_hash ^= piece_hash;
+                switch (type) {
+                    case PieceType::Knight: case PieceType::Bishop:
+                        hashes.minor_hash ^= piece_hash;
+                        if (type == PieceType::Knight) hashes.krn_hash ^= piece_hash;
+                        else hashes.krb_hash ^= piece_hash;
+                        break;
+                    case PieceType::Rook: case PieceType::Queen:
+                        hashes.major_hash ^= piece_hash;
+                        break;
+                    case PieceType::King:
+                        hashes.major_hash ^= piece_hash;
+                        hashes.minor_hash ^= piece_hash;
+                        hashes.krp_hash ^= piece_hash;
+                        hashes.krb_hash ^= piece_hash;
+                        hashes.krn_hash ^= piece_hash;
+                        break;
+                    default: break;
                 }
             }
         }

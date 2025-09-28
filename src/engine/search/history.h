@@ -72,6 +72,18 @@ namespace episteme::hist {
                 return pawn_corr_hist[color_idx(stm)][pawn_hash % 16384].value;
             }
 
+            [[nodiscard]] inline int32_t get_krp_corr_hist(uint64_t krp_hash, Color stm) {
+                return krp_corr_hist[color_idx(stm)][krp_hash % 16384].value;
+            }
+            
+            [[nodiscard]] inline int32_t get_krn_corr_hist(uint64_t krn_hash, Color stm) {
+                return krn_corr_hist[color_idx(stm)][krn_hash % 16384].value;
+            }
+
+            [[nodiscard]] inline int32_t get_krb_corr_hist(uint64_t krb_hash, Color stm) {
+                return krb_corr_hist[color_idx(stm)][krb_hash % 16384].value;
+            }
+
             [[nodiscard]] inline int32_t get_major_corr_hist(uint64_t major_hash, Color stm) {
                 return major_corr_hist[color_idx(stm)][major_hash % 16384].value;
             }
@@ -116,8 +128,13 @@ namespace episteme::hist {
 
             inline void update_corr_hist(const Position& position, Color stm, int16_t diff) {
                 pawn_corr_hist[color_idx(stm)][position.pawn_hash() % 16384].update(diff, MAX_CORR_HIST);
+
+                krp_corr_hist[color_idx(stm)][position.krp_hash() % 16384].update(diff, MAX_CORR_HIST);
+                krn_corr_hist[color_idx(stm)][position.krn_hash() % 16384].update(diff, MAX_CORR_HIST);
+                krb_corr_hist[color_idx(stm)][position.krb_hash() % 16384].update(diff, MAX_CORR_HIST);
                 major_corr_hist[color_idx(stm)][position.major_hash() % 16384].update(diff, MAX_CORR_HIST);
                 minor_corr_hist[color_idx(stm)][position.minor_hash() % 16384].update(diff, MAX_CORR_HIST);
+
                 non_pawn_stm_corr_hist[color_idx(stm)][position.non_pawn_stm_hash() % 16384].update(diff, MAX_CORR_HIST);
                 non_pawn_ntm_corr_hist[color_idx(stm)][position.non_pawn_ntm_hash() % 16384].update(diff, MAX_CORR_HIST);
             }
@@ -129,8 +146,13 @@ namespace episteme::hist {
                 pawn_hist = {};
 
                 pawn_corr_hist = {};
+
+                krp_corr_hist = {};
+                krn_corr_hist = {};
+                krb_corr_hist = {};
                 major_corr_hist = {};
                 minor_corr_hist = {};
+
                 non_pawn_stm_corr_hist = {};
                 non_pawn_ntm_corr_hist = {};
             }
@@ -142,8 +164,13 @@ namespace episteme::hist {
             std::array<std::array<std::array<std::array<Entry, 64>, 6>, 1024>, 2> pawn_hist{};
 
             std::array<std::array<Entry, 16384>, 2> pawn_corr_hist{};
+
+            std::array<std::array<Entry, 16384>, 2> krp_corr_hist{};
+            std::array<std::array<Entry, 16384>, 2> krn_corr_hist{};
+            std::array<std::array<Entry, 16384>, 2> krb_corr_hist{};
             std::array<std::array<Entry, 16384>, 2> major_corr_hist{};
             std::array<std::array<Entry, 16384>, 2> minor_corr_hist{};
+
             std::array<std::array<Entry, 16384>, 2> non_pawn_stm_corr_hist{};
             std::array<std::array<Entry, 16384>, 2> non_pawn_ntm_corr_hist{};
     };

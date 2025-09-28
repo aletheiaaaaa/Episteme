@@ -22,8 +22,13 @@ namespace episteme {
         uint64_t full_hash = 0;
 
         uint64_t pawn_hash = 0;
+
+        uint64_t krp_hash = 0;
+        uint64_t krn_hash = 0;
+        uint64_t krb_hash = 0;
         uint64_t major_hash = 0;
         uint64_t minor_hash = 0;
+
         uint64_t non_pawn_white_hash = 0;
         uint64_t non_pawn_black_hash = 0;
     };
@@ -121,6 +126,18 @@ namespace episteme {
 
             [[nodiscard]] inline uint64_t pawn_hash() const {
                 return current.hashes.pawn_hash;
+            }
+
+            [[nodiscard]] inline uint64_t krp_hash() const {
+                return current.hashes.krp_hash;
+            }
+
+            [[nodiscard]] inline uint64_t krn_hash() const {
+                return current.hashes.krn_hash;
+            }
+
+            [[nodiscard]] inline uint64_t krb_hash() const {
+                return current.hashes.krb_hash;
             }
 
             [[nodiscard]] inline uint64_t major_hash() const {
