@@ -73,7 +73,7 @@ namespace episteme {
             }
 
             [[nodiscard]] inline bool operator!() const {
-                return move_data != 0x0000;
+                return move_data == 0x0000;
             }
 
             std::string to_string() const;
