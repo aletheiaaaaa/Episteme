@@ -27,7 +27,7 @@ namespace episteme::search {
         return scored_list;
     }
 
-    int32_t Worker::correct_static_eval(int32_t eval, Position& position) {
+    int32_t Worker::correct_static_eval(int32_t eval, int16_t ply, Position& position) {
         int32_t correction = 0;
 
         correction += 250 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
@@ -35,6 +35,7 @@ namespace episteme::search {
         correction += 220 * history.get_minor_corr_hist(position.minor_hash(), position.STM());
         correction += 240 * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
         correction += 240 * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
+        correction += 230 * history.get_cont_corr_hist(stack, ply, 1);
 
         return eval + correction / 2048;
     }
@@ -135,7 +136,7 @@ namespace episteme::search {
         int32_t static_eval = -INF;
         if (!in_check(position, position.STM())) {
             static_eval = eval::evaluate(accumulator, position.STM());
-            static_eval = correct_static_eval(static_eval, position);
+            static_eval = correct_static_eval(static_eval, ply, position);
 
             stack[ply].eval = static_eval;
         } 
@@ -350,8 +351,8 @@ namespace episteme::search {
             && !(node_type == tt::NodeType::CutNode && best <= static_eval)
             && !(node_type == tt::NodeType::AllNode && best >= static_eval) 
         ) {
-            int16_t diff = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 4, hist::MAX_CORR_HIST / 4);
-            history.update_corr_hist(position, position.STM(), diff);
+            int16_t correction = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 4, hist::MAX_CORR_HIST / 4);
+            history.update_corr_hist(position, stack, position.STM(), ply, correction);
         }
 
         if (!stack[ply].excluded) {

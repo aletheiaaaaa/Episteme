@@ -88,6 +88,24 @@ namespace episteme::hist {
                 return non_pawn_ntm_corr_hist[color_idx(stm)][non_pawn_ntm_hash % 16384].value;
             }
 
+            [[nodiscard]] inline int32_t get_cont_corr_hist(stack::Stack& stack, int16_t ply, int16_t diff) {
+                int32_t value = 0;
+
+                if (ply > diff - 2) {
+                    Move first_move = stack[ply - 1].move;
+                    Piece first_piece = stack[ply - 1].piece;
+
+                    Move second_move = stack[ply - diff - 1].move;
+                    Piece second_piece = stack[ply - diff - 1].piece;
+
+                    if (first_piece != Piece::None && second_piece != Piece::None) {
+                        value += cont_corr_hist[piece_idx(first_piece)][sq_idx(first_move.to_square())][piece_idx(second_piece)][sq_idx(second_move.to_square())].value;
+                    }
+                }
+
+                return value;
+            }
+
             inline void update_quiet_hist(Color stm, Move move, int16_t bonus) {
                 quiet_hist[color_idx(stm)][sq_idx(move.from_square())][sq_idx(move.to_square())].update(bonus, MAX_HIST);
             }
@@ -114,12 +132,28 @@ namespace episteme::hist {
                 pawn_hist[color_idx(stm)][pawn_hash % 1024][piece_type_idx(piece)][sq_idx(move.to_square())].update(bonus, MAX_HIST);
             }
 
-            inline void update_corr_hist(const Position& position, Color stm, int16_t diff) {
-                pawn_corr_hist[color_idx(stm)][position.pawn_hash() % 16384].update(diff, MAX_CORR_HIST);
+            inline void update_corr_hist(const Position& position, stack::Stack& stack, Color stm, int16_t ply, int16_t correction) {
+                auto update_cont_corr_hist = [&](int16_t diff) {
+                    if (ply > diff - 2) {
+                        Move first_move = stack[ply - 1].move;
+                        Piece first_piece = stack[ply - 1].piece;
+
+                        Move second_move = stack[ply - diff - 1].move;
+                        Piece second_piece = stack[ply - diff - 1].piece;
+
+                        if (first_piece != Piece::None && second_piece != Piece::None) {
+                            cont_corr_hist[piece_idx(first_piece)][sq_idx(first_move.to_square())][piece_idx(second_piece)][sq_idx(second_move.to_square())].update(correction, MAX_CORR_HIST);
+                        }
+                    }
+                };
+
+                pawn_corr_hist[color_idx(stm)][position.pawn_hash() % 16384].update(correction, MAX_CORR_HIST);
                 // major_corr_hist[color_idx(stm)][position.major_hash() % 16384].update(diff, MAX_CORR_HIST);
-                minor_corr_hist[color_idx(stm)][position.minor_hash() % 16384].update(diff, MAX_CORR_HIST);
-                non_pawn_stm_corr_hist[color_idx(stm)][position.non_pawn_stm_hash() % 16384].update(diff, MAX_CORR_HIST);
-                non_pawn_ntm_corr_hist[color_idx(stm)][position.non_pawn_ntm_hash() % 16384].update(diff, MAX_CORR_HIST);
+                minor_corr_hist[color_idx(stm)][position.minor_hash() % 16384].update(correction, MAX_CORR_HIST);
+                non_pawn_stm_corr_hist[color_idx(stm)][position.non_pawn_stm_hash() % 16384].update(correction, MAX_CORR_HIST);
+                non_pawn_ntm_corr_hist[color_idx(stm)][position.non_pawn_ntm_hash() % 16384].update(correction, MAX_CORR_HIST);
+
+                update_cont_corr_hist(1);
             }
 
             inline void reset() {
@@ -129,10 +163,11 @@ namespace episteme::hist {
                 pawn_hist = {};
 
                 pawn_corr_hist = {};
-                major_corr_hist = {};
+                // major_corr_hist = {};
                 minor_corr_hist = {};
                 non_pawn_stm_corr_hist = {};
                 non_pawn_ntm_corr_hist = {};
+                cont_corr_hist = {};
             }
 
         private:
@@ -146,5 +181,6 @@ namespace episteme::hist {
             std::array<std::array<Entry, 16384>, 2> minor_corr_hist{};
             std::array<std::array<Entry, 16384>, 2> non_pawn_stm_corr_hist{};
             std::array<std::array<Entry, 16384>, 2> non_pawn_ntm_corr_hist{};
+            std::array<std::array<std::array<std::array<Entry, 64>, 12>, 64>, 12> cont_corr_hist{};
     };
 }
