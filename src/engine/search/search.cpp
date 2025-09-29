@@ -30,18 +30,18 @@ namespace episteme::search {
     int32_t Worker::correct_static_eval(int32_t eval, Position& position) {
         int32_t correction = 0;
 
-        correction += 250 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
+        correction += 170 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
 
-        correction += 210 * history.get_krp_corr_hist(position.krp_hash(), position.STM());
-        correction += 210 * history.get_krn_corr_hist(position.krn_hash(), position.STM());
-        correction += 210 * history.get_krb_corr_hist(position.krb_hash(), position.STM());
-        correction += 210 * history.get_major_corr_hist(position.major_hash(), position.STM());
-        correction += 220 * history.get_minor_corr_hist(position.minor_hash(), position.STM());
+        correction += 140 * history.get_krp_corr_hist(position.krp_hash(), position.STM());
+        correction += 140 * history.get_krn_corr_hist(position.krn_hash(), position.STM());
+        correction += 140 * history.get_krb_corr_hist(position.krb_hash(), position.STM());
+        correction += 140 * history.get_major_corr_hist(position.major_hash(), position.STM());
+        correction += 150 * history.get_minor_corr_hist(position.minor_hash(), position.STM());
 
-        correction += 240 * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
-        correction += 240 * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
+        correction += 160 * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
+        correction += 160 * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
 
-        return eval + correction / 4096;
+        return eval + correction / 2048;
     }
 
     ScoredMove Worker::score_move(const Position& position, const Move& move, const tt::Entry& tt_entry, std::optional<int32_t> ply) {
