@@ -41,7 +41,7 @@ namespace episteme::search {
         correction += 240 * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
         correction += 240 * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
 
-        return eval + correction / 2048;
+        return eval + correction / 4096;
     }
 
     ScoredMove Worker::score_move(const Position& position, const Move& move, const tt::Entry& tt_entry, std::optional<int32_t> ply) {
