@@ -149,7 +149,7 @@ namespace episteme {
 
         uint64_t attacker_src_hash = hash::piecesquares[piecesquare(src, sq_src, false)];
         uint64_t attacker_dst_hash = hash::piecesquares[piecesquare(src, sq_dst, false)];
-        uint64_t victim_hash = hash::piecesquares[piecesquare(dst, sq_dst, false)];
+        uint64_t victim_hash = (dst == Piece::None) ? 0 : hash::piecesquares[piecesquare(dst, sq_dst, false)];
 
         current.hashes.full_hash ^= attacker_src_hash;
 

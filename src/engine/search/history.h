@@ -91,7 +91,7 @@ namespace episteme::hist {
             [[nodiscard]] inline int32_t get_cont_corr_hist(stack::Stack& stack, int16_t ply, int16_t diff) {
                 int32_t value = 0;
 
-                if (ply > diff - 2) {
+                if (ply > diff) {
                     Move first_move = stack[ply - 1].move;
                     Piece first_piece = stack[ply - 1].piece;
 
@@ -134,7 +134,7 @@ namespace episteme::hist {
 
             inline void update_corr_hist(const Position& position, stack::Stack& stack, Color stm, int16_t ply, int16_t correction) {
                 auto update_cont_corr_hist = [&](int16_t diff) {
-                    if (ply > diff - 2) {
+                    if (ply > diff) {
                         Move first_move = stack[ply - 1].move;
                         Piece first_piece = stack[ply - 1].piece;
 
