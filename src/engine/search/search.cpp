@@ -269,7 +269,7 @@ namespace episteme::search {
                 reduction += !is_PV;
                 reduction -= tt_PV;
                 reduction += cut_node * 2;
-                reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position.pawn_hash()) / 8192;
+                reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
                 reduction -= (correction > 80);
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
