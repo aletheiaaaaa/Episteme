@@ -98,6 +98,15 @@ namespace episteme::hist {
                     Move second_move = stack[ply - diff - 1].move;
                     Piece second_piece = stack[ply - diff - 1].piece;
 
+                    if (!first_move) {
+                        first_move = Move(Square::A2, Square::A1);
+                        first_piece = Piece::WhitePawn;
+                    }
+                    if (!second_move) {
+                        second_move = Move(Square::A2, Square::A1);
+                        second_piece = Piece::WhitePawn;
+                    }
+
                     if (first_piece != Piece::None && second_piece != Piece::None) {
                         value += cont_corr_hist[piece_idx(first_piece)][sq_idx(first_move.to_square())][piece_idx(second_piece)][sq_idx(second_move.to_square())].value;
                     }
