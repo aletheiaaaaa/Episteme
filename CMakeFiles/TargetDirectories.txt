@@ -1,0 +1,10 @@
+/home/yash/Desktop/episteme/CMakeFiles/episteme.dir
+/home/yash/Desktop/episteme/CMakeFiles/download-net.dir
+/home/yash/Desktop/episteme/CMakeFiles/clean-all.dir
+/home/yash/Desktop/episteme/CMakeFiles/rebuild.dir
+/home/yash/Desktop/episteme/CMakeFiles/rebuild-all.dir
+/home/yash/Desktop/episteme/CMakeFiles/debug.dir
+/home/yash/Desktop/episteme/CMakeFiles/release.dir
+/home/yash/Desktop/episteme/CMakeFiles/both.dir
+/home/yash/Desktop/episteme/CMakeFiles/edit_cache.dir
+/home/yash/Desktop/episteme/CMakeFiles/rebuild_cache.dir
