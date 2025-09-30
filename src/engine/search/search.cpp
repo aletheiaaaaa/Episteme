@@ -31,7 +31,7 @@ namespace episteme::search {
         int32_t correction = 0;
 
         correction += 250 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
-        // correction += 110 * history.get_major_corr_hist(position.major_hash(), position.STM());
+        // correction += 220 * history.get_major_corr_hist(position.major_hash(), position.STM());
         correction += 220 * history.get_minor_corr_hist(position.minor_hash(), position.STM());
         correction += 240 * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
         correction += 240 * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
@@ -270,7 +270,7 @@ namespace episteme::search {
                 reduction -= tt_PV;
                 reduction += cut_node * 2;
                 reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
-                reduction -= (correction > 80);
+                reduction -= (correction > 150);
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
