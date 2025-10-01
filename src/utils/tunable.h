@@ -37,10 +37,10 @@ void init_lmr_table();
         [[nodiscard]] constexpr int32_t name() { return default_value; }
 #endif
 
-    TUNABLE(lmr_table_quiet_base, 90, -128, 512, 8, init_lmr_table);
+    TUNABLE(lmr_table_quiet_base, 80, -128, 512, 8, init_lmr_table);
     TUNABLE(lmr_table_quiet_div, 220, 64, 1024, 16, init_lmr_table);
 
-    TUNABLE(lmr_table_noisy_base, -20, -128, 512, 8, init_lmr_table);
+    TUNABLE(lmr_table_noisy_base, -10, -128, 512, 8, init_lmr_table);
     TUNABLE(lmr_table_noisy_div, 250, 64, 1024, 16, init_lmr_table);
 
     TUNABLE(SEE_pawn_val, 100, 0, 512, 16, nullptr);
