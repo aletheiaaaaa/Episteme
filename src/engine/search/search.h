@@ -3,6 +3,7 @@
 #include "../chess/movegen.h"
 #include "../evaluation/evaluate.h"
 #include "../../utils/datagen.h"
+#include "../../utils/tunable.h"
 #include "ttable.h"
 #include "history.h"
 #include "stack.h"

@@ -5,6 +5,16 @@
 
 namespace episteme::search {
     using namespace std::chrono;
+    using namespace tunable;
+
+    std::array<std::array<int16_t, 64>, 64> lmr_table{};
+    void init_lmr_table() {
+        for (int i = 1; i < 64; i++) {
+            for (int j = 1; j < 64; j++) {
+                lmr_table[i][j] = 0.5 + std::log(i) * std::log(j) / 3.0;
+            }
+        }
+    }
 
     void pick_move(ScoredList& scored_list, int start) {
         for (size_t i = start + 1; i < scored_list.count; i++)    {
@@ -30,11 +40,11 @@ namespace episteme::search {
     int32_t Worker::eval_correction(const Position& position) {
         int32_t correction = 0;
 
-        correction += 250 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
-        // correction += 220 * history.get_major_corr_hist(position.major_hash(), position.STM());
-        correction += 220 * history.get_minor_corr_hist(position.minor_hash(), position.STM());
-        correction += 240 * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
-        correction += 240 * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
+        correction += pawn_corrhist_mult() * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
+        // correction += major_corrhist_mult() * history.get_major_corr_hist(position.major_hash(), position.STM());
+        correction += minor_corrhist_mult() * history.get_minor_corr_hist(position.minor_hash(), position.STM());
+        correction += nonpawn_stm_corrhist_mult() * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
+        correction += nonpawn_ntm_corrhist_mult() * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
 
         return correction / 2048;
     }
@@ -57,7 +67,7 @@ namespace episteme::search {
             int32_t dst_val = move.move_type() == MoveType::EnPassant ? piece_vals[piece_type_idx(PieceType::Pawn)] : piece_vals[piece_type_idx(dst)];
 
             scored_move.score += dst_val * 10 - src_val;
-            scored_move.score += history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
+            scored_move.score += capt_hist_mult() * history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
             if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
         } else {
             if (stack[*ply].killer == move) {
@@ -65,21 +75,12 @@ namespace episteme::search {
                 return scored_move;
             }
 
-            scored_move.score += history.get_quiet_hist(position.STM(), move);
-            scored_move.score += history.get_cont_hist(stack, src, move, *ply);
-            scored_move.score += history.get_pawn_hist(position.STM(), position.pawn_hash(), src, move);
+            scored_move.score += quiet_hist_mult() * history.get_quiet_hist(position.STM(), move);
+            scored_move.score += cont_hist_mult() * history.get_cont_hist(stack, src, move, *ply);
+            scored_move.score += pawn_hist_mult() * history.get_pawn_hist(position.STM(), position.pawn_hash(), src, move);
         }
 
         return scored_move;
-    }
-
-    std::array<std::array<int16_t, 64>, 64> lmr_table{};
-    void init_lmr_table() {
-        for (int i = 1; i < 64; i++) {
-            for (int j = 1; j < 64; j++) {
-                lmr_table[i][j] = 0.5 + std::log(i) * std::log(j) / 3.0;
-            }
-        }
     }
 
     template<bool PV_node>
@@ -152,7 +153,7 @@ namespace episteme::search {
         }
 
         if (!stack[ply].excluded && !in_check(position, position.STM())) {
-            if (!is_PV && depth <= 5 && static_eval >= beta + std::max(depth - improving, 0) * 100) return static_eval;
+            if (!is_PV && depth <= 5 && static_eval >= beta + rfp_base() + std::max(depth - improving, 0) * rfp_mult()) return static_eval;
 
             if (!is_PV && depth >= 3) {
                 const uint64_t no_pawns_or_kings = position.color_bb(position.STM()) & ~position.piece_bb(PieceType::King, position.STM()) & ~position.piece_bb(PieceType::Pawn, position.STM());
@@ -202,13 +203,13 @@ namespace episteme::search {
                 const int32_t lmp_threshold = 3 + depth * depth;
                 if (is_quiet && num_legal >= lmp_threshold) break;
 
-                const int32_t fp_margin = depth * 250;
+                const int32_t fp_margin = fp_base() + depth * fp_mult();
                 if (!is_PV && is_quiet && !in_check(position, position.STM()) && static_eval + fp_margin <= alpha) break;
 
-                const int32_t see_threshold = (is_quiet) ? -60 * depth : -30 * depth * depth;
+                const int32_t see_threshold = (is_quiet) ? quiet_see_base() + quiet_see_mult() * depth : noisy_see_base() + noisy_see_mult() * depth * depth;
                 if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
 
-                const int32_t history_margin = depth * -2600 + 600;
+                const int32_t history_margin = (is_quiet) ? hist_prune_quiet_base() + hist_prune_quiet_mult() * depth : hist_prune_noisy_base() + hist_prune_noisy_mult() * depth;
                 if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) <= history_margin) continue;
             }
 
@@ -225,7 +226,7 @@ namespace episteme::search {
 
                 if (should_stop) return 0;
 
-                if (score < new_beta) extension = (!is_PV && score < new_beta - 50) ? 2 : 1;
+                if (score < new_beta) extension = (!is_PV && score < new_beta - double_ext_margin()) ? 2 : 1;
                 else if (new_beta >= beta && std::abs(score) < MATE - MAX_SEARCH_PLY) return new_beta;
             }
 
@@ -265,14 +266,14 @@ namespace episteme::search {
             int16_t new_depth = depth - 1 + extension;
 
             if (num_legal >= 4 && depth >= 3) {
-                reduction = 128 * lmr_table[depth][num_legal];
+                reduction = lmr_base_mult() * lmr_table[depth][num_legal];
 
-                reduction += 128 * !improving;
-                reduction += 128 * !is_PV;
-                reduction -= 128 * tt_PV;
-                reduction += 256 * cut_node;
-                reduction -= 128 * history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
-                reduction -= 72 * (std::abs(correction) > 200);
+                reduction += lmr_improving_mult() * !improving;
+                reduction += lmr_is_PV_mult() * !is_PV;
+                reduction -= lmr_tt_PV_mult() * tt_PV;
+                reduction += lmr_cut_node_mult() * cut_node;
+                reduction -= lmr_hist_mult() * history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
+                reduction -= lmr_corrplexity_mult() * (std::abs(correction) > 200);
 
                 reduction /= 128;
 
