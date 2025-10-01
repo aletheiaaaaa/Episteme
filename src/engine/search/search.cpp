@@ -42,11 +42,11 @@ namespace episteme::search {
     int32_t Worker::eval_complexity(const Position& position) {
         int32_t complexity = 0;
 
-        auto pawn_corr = history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
-        // auto major_corr = history.get_major_corr_hist(position.major_hash(), position.STM());
-        auto minor_corr = history.get_minor_corr_hist(position.minor_hash(), position.STM());
-        auto non_pawn_stm_corr = history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
-        auto non_pawn_ntm_corr = history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
+        auto pawn_corr = history.get_pawn_corr_hist(position.pawn_hash(), position.STM()) / 32;
+        // auto major_corr = history.get_major_corr_hist(position.major_hash(), position.STM()) / 32;
+        auto minor_corr = history.get_minor_corr_hist(position.minor_hash(), position.STM()) / 32;
+        auto non_pawn_stm_corr = history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM()) / 32;
+        auto non_pawn_ntm_corr = history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM()) / 32;
 
         complexity += pawn_corr * pawn_corr;
         // complexity += major_corr * major_corr;
@@ -290,7 +290,7 @@ namespace episteme::search {
                 reduction -= tt_PV;
                 reduction += 2 * cut_node;
                 reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
-                reduction -= eval_complexity(position) > 400;
+                reduction -= eval_complexity(position) > 250;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
