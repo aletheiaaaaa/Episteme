@@ -159,6 +159,7 @@ namespace episteme::search {
             }
 
             int32_t eval_correction(const Position& position);
+            int32_t eval_complexity(const Position& position);
 
             template<bool PV_node>
             int32_t search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node, SearchLimits limits = {});
