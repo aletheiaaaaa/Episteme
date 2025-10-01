@@ -8,7 +8,7 @@ namespace episteme::uci {
         std::cout << "option name Hash type spin default 32 min 1 max 128\n";
         std::cout << "option name Threads type spin default 1 min 1 max 1\n";
 #if ENABLE_TUNING
-        for (const auto& tunable : tunables()) {
+        for (const auto& tunable : tunables) {
             std::cout << std::format("option name {} type spin default {} min {} max {}\n", tunable.name, tunable.value, tunable.min, tunable.max);
         }
 #endif
@@ -31,8 +31,8 @@ namespace episteme::uci {
             cfg.num_threads = std::stoi(option_value);
         } 
 #if ENABLE_TUNING
-        else if (!tunables().empty()) {
-            for (auto& tunable : tunables()) {
+        else if (!tunables.empty()) {
+            for (auto& tunable : tunables) {
                 if (tunable.name == option_name) {
                     int32_t new_value = std::stoi(option_value);
                     if (new_value < tunable.min || new_value > tunable.max) {
@@ -158,7 +158,7 @@ namespace episteme::uci {
 
 #if ENABLE_TUNING
     auto print_tunables() {
-        for (const auto& tunable : tunables()) {
+        for (const auto& tunable : tunables) {
             std::cout << std::format("{}, int, {}.0, {}.0, {}.0, {}, 0.002\n", tunable.name, tunable.value, tunable.min, tunable.max, tunable.step);
         }
     }

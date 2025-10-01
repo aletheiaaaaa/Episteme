@@ -27,23 +27,17 @@ void init_lmr_table();
         double step;
         std::function<void()> setter;
     };
-    
-    std::vector<Tunable>& tunables();
-    Tunable& add_tunable(const std::string& name, int32_t default_value, int32_t min, int32_t max, double step, std::function<void()> setter);
+
+    extern std::vector<Tunable> tunables;
+
+    Tunable& add_tunable(std::vector<Tunable>& tunables, const std::string& name, int32_t default_value, int32_t min, int32_t max, double step, std::function<void()> setter);
 
     #define TUNABLE(name, default_value, min, max, step, setter) \
-        inline Tunable& _tunable_##name = add_tunable(#name, default_value, min, max, step, setter); \
+        inline Tunable& _tunable_##name = add_tunable(tunables, #name, default_value, min, max, step, setter); \
         [[nodiscard]] inline int32_t name() { return _tunable_##name.value; }
-
-    #define TUNABLE_FLOAT(name, default_value, min, max, step, setter) \
-        inline Tunable& _tunable_##name = add_tunable(#name, static_cast<int32_t>(default_value * 1024), static_cast<int32_t>(min * 1024), static_cast<int32_t>(max * 1024), step * 1024, setter); \
-        [[nodiscard]] inline double name() { return static_cast<double>(_tunable_##name.value) / 1024.0; }
 #else
     #define TUNABLE(name, default_value, min, max, step, setter) \
         [[nodiscard]] constexpr int32_t name() { return default_value; }
-
-    #define TUNABLE_FLOAT(name, default_value, min, max, step, setter) \
-        [[nodiscard]] constexpr double name() { return default_value; }
 #endif
 
     TUNABLE(lmr_table_quiet_base, 80, -128, 512, 8, init_lmr_table);
