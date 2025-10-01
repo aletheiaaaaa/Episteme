@@ -265,7 +265,7 @@ namespace episteme::search {
             int16_t new_depth = depth - 1 + extension;
 
             if (num_legal >= 4 && depth >= 3) {
-                reduction = lmr_table[depth][num_legal];
+                reduction = 128 * lmr_table[depth][num_legal];
 
                 reduction += 128 * !improving;
                 reduction += 128 * !is_PV;
