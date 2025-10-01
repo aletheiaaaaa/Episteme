@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <cmath>
 #include <string>
 #include <functional>
 
@@ -8,6 +10,8 @@
 #endif
 
 namespace episteme::tunable {
+
+void init_lmr_table();
 
 #if ENABLE_TUNING
     struct Tunable {
@@ -24,10 +28,26 @@ namespace episteme::tunable {
     #define TUNABLE(name, default_value, min, max, step, setter) \
         inline Tunable& _tunable_##name = add_tunable(#name, default_value, min, max, step, setter); \
         [[nodiscard]] inline int32_t name() { return _tunable_##name.value; }
+
+    #define TUNABLE_FLOAT(name, default_value, min, max, step, setter) \
+        inline Tunable& _tunable_##name = add_tunable(#name, static_cast<int32_t>(default_value * 1024), static_cast<int32_t>(min * 1024), static_cast<int32_t>(max * 1024), step * 1024, setter); \
+        [[nodiscard]] inline double name() { return static_cast<double>(_tunable_##name.value) / 1024.0; }
 #else
     #define TUNABLE(name, default_value, min, max, step, setter) \
         [[nodiscard]] constexpr int32_t name() { return default_value; }
+
+    #define TUNABLE_FLOAT(name, default_value, min, max, step, setter) \
+        [[nodiscard]] constexpr double name() { return default_value; }
 #endif
+
+    TUNABLE_FLOAT(lmr_table_base, 0.5, 0.25, 4.0, 0.25, init_lmr_table);
+    TUNABLE_FLOAT(lmr_table_div, 3.0, 1.0, 8.0, 0.5, init_lmr_table);
+
+    TUNABLE(SEE_pawn_val, 100, 0, 512, 16, nullptr);
+    TUNABLE(SEE_knight_val, 300, 0, 1024, 32, nullptr);
+    TUNABLE(SEE_bishop_val, 300, 0, 1024, 32, nullptr);
+    TUNABLE(SEE_rook_val, 500, 0, 2048, 64, nullptr);
+    TUNABLE(SEE_queen_val, 900, 0, 4096, 128, nullptr);
 
     TUNABLE(hist_bonus_mult, 300, 0, 1024, 16, nullptr);
     TUNABLE(hist_bonus_max, 2500, 256, 8192, 128, nullptr);

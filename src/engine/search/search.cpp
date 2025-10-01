@@ -7,15 +7,6 @@ namespace episteme::search {
     using namespace std::chrono;
     using namespace tunable;
 
-    std::array<std::array<int16_t, 64>, 64> lmr_table{};
-    void init_lmr_table() {
-        for (int i = 1; i < 64; i++) {
-            for (int j = 1; j < 64; j++) {
-                lmr_table[i][j] = 0.5 + std::log(i) * std::log(j) / 3.0;
-            }
-        }
-    }
-
     void pick_move(ScoredList& scored_list, int start) {
         for (size_t i = start + 1; i < scored_list.count; i++)    {
             if (scored_list[i].score > scored_list[start].score) {
