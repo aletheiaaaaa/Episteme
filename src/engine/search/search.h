@@ -57,9 +57,6 @@ namespace episteme::search {
     constexpr int32_t DELTA = 20;
     constexpr int32_t MAX_SEARCH_PLY = 256;
 
-    extern std::array<std::array<int16_t, 64>, 64> lmr_table;
-    void init_lmr_table();
-
     struct Parameters {
         std::array<int32_t, 2> time = {};
         std::array<int32_t, 2> inc = {};

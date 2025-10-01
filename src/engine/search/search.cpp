@@ -71,6 +71,8 @@ namespace episteme::search {
             scored_move.score += pawn_hist_mult() * history.get_pawn_hist(position.STM(), position.pawn_hash(), src, move);
         }
 
+        scored_move.score /= 128;
+
         return scored_move;
     }
 
@@ -257,7 +259,7 @@ namespace episteme::search {
             int16_t new_depth = depth - 1 + extension;
 
             if (num_legal >= 4 && depth >= 3) {
-                reduction = lmr_base_mult() * lmr_table[depth][num_legal];
+                reduction = (is_quiet) ? lmr_table_quiet[depth][num_legal] : lmr_table_noisy[depth][num_legal];
 
                 reduction += lmr_improving_mult() * !improving;
                 reduction += lmr_is_PV_mult() * !is_PV;

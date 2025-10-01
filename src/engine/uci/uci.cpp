@@ -1,11 +1,17 @@
 #include "uci.h"
 
 namespace episteme::uci {
+    using namespace tunable;
 
     auto uci() {
         std::cout << "id name Episteme \nid author aletheia\n";
         std::cout << "option name Hash type spin default 32 min 1 max 128\n";
         std::cout << "option name Threads type spin default 1 min 1 max 1\n";
+#if ENABLE_TUNING
+        for (const auto& tunable : tunables) {
+            std::cout << "option name " << tunable.name << " type spin default " << tunable.value << " min " << tunable.min << " max " << tunable.max << "\n";
+        }
+#endif
         std::cout << "uciok\n";
     }
 
@@ -23,7 +29,24 @@ namespace episteme::uci {
             cfg.hash_size = std::stoi(option_value);
         } else if (option_name == "Threads") {
             cfg.num_threads = std::stoi(option_value);
-        } else {
+        } 
+#if ENABLE_TUNING
+        else if (!tunables.empty()) {
+            for (auto& tunable : tunables) {
+                if (tunable.name == option_name) {
+                    int32_t new_value = std::stoi(option_value);
+                    if (new_value < tunable.min || new_value > tunable.max) {
+                        std::cout << "value out of range" << std::endl;
+                        return;
+                    }
+                    tunable.value = new_value;
+                    if (tunable.setter) tunable.setter();
+                    break;
+                }
+            }
+        }
+#endif
+        else {
             std::cout << "invalid option" << std::endl;
         }
 
