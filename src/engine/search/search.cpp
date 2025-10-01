@@ -133,12 +133,14 @@ namespace episteme::search {
         constexpr bool is_PV = PV_node;
 
         int32_t static_eval = -INF;
-        int32_t correction = eval_correction(position);
+        int32_t correction = 0;
         if (!in_check(position, position.STM())) {
-            static_eval = eval::evaluate(accumulator, position.STM()) + correction;
+            static_eval = eval::evaluate(accumulator, position.STM());
+            correction = eval_correction(position);
+            static_eval += correction;
+
             stack[ply].eval = static_eval;
         } 
-
 
         bool tt_PV = tt_entry.tt_PV;
         bool improving = false;
@@ -270,7 +272,7 @@ namespace episteme::search {
                 reduction -= tt_PV;
                 reduction += cut_node * 2;
                 reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
-                reduction -= (std::abs(correction) > 80);
+                reduction -= std::abs(correction) > 80;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
