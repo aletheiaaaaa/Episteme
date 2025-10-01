@@ -29,6 +29,7 @@ void init_lmr_table();
     };
 
     extern std::vector<Tunable> tunables;
+    void init_tunables(std::vector<Tunable>& tunables);
 
     Tunable& add_tunable(std::vector<Tunable>& tunables, const std::string& name, int32_t default_value, int32_t min, int32_t max, double step, std::function<void()> setter);
 
