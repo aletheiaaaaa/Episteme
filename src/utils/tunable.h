@@ -26,6 +26,7 @@ void init_lmr_table();
     };
 
     extern std::vector<Tunable> tunables;
+    void init_tunables(std::vector<Tunable>& tunables);
 
     Tunable& add_tunable(std::vector<Tunable>& tunables, const std::string& name, int32_t default_value, int32_t min, int32_t max, double step, std::function<void()> setter);
 
@@ -52,6 +53,7 @@ void init_lmr_table();
     TUNABLE(hist_bonus_mult, 300, 0, 1024, 16, nullptr);
     TUNABLE(hist_bonus_max, 2500, 256, 8192, 128, nullptr);
 
+    TUNABLE(mvv_lva_mult, 128, 0, 512, 8, nullptr);
     TUNABLE(quiet_hist_mult, 128, 0, 512, 8, nullptr);
     TUNABLE(cont_hist_mult, 128, 0, 512, 8, nullptr);
     TUNABLE(pawn_hist_mult, 128, 0, 512, 8, nullptr);
@@ -86,5 +88,4 @@ void init_lmr_table();
     TUNABLE(lmr_tt_PV_mult, 128, 64, 512, 8, nullptr);
     TUNABLE(lmr_cut_node_mult, 256, 64, 1024, 16, nullptr);
     TUNABLE(lmr_hist_mult, 128, 64, 512, 8, nullptr);
-    TUNABLE(lmr_corrplexity_mult, 64, 32, 128, 4, nullptr);
 }

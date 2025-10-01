@@ -57,7 +57,7 @@ namespace episteme::search {
             int32_t src_val = piece_vals[piece_type_idx(src)];
             int32_t dst_val = move.move_type() == MoveType::EnPassant ? piece_vals[piece_type_idx(PieceType::Pawn)] : piece_vals[piece_type_idx(dst)];
 
-            scored_move.score += dst_val * 10 - src_val;
+            scored_move.score += mvv_lva_mult() * (dst_val * 10 - src_val);
             scored_move.score += capt_hist_mult() * history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
             if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
         } else {
@@ -266,7 +266,6 @@ namespace episteme::search {
                 reduction -= lmr_tt_PV_mult() * tt_PV;
                 reduction += lmr_cut_node_mult() * cut_node;
                 reduction -= lmr_hist_mult() * history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
-                reduction -= lmr_corrplexity_mult() * (std::abs(correction) > 200);
 
                 reduction /= 128;
 
