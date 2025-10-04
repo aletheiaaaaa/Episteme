@@ -289,7 +289,7 @@ namespace episteme::search {
                 reduction -= 128 * tt_PV;
                 reduction += 256 * cut_node;
                 reduction -= 128 * history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
-                reduction -= 72 * (complexity > 400);
+                reduction -= 72 * (complexity > 600);
 
                 reduction /= 128;
 
