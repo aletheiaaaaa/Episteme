@@ -52,10 +52,14 @@ namespace episteme::hist {
             [[nodiscard]] inline int32_t get_hist(stack::Stack& stack, Piece attacker, Piece victim, Move move, Color stm, int16_t ply, const Position& position) {
                 int32_t value = 0;
 
-                value += get_quiet_hist(stm, move);
-                value += get_cont_hist(stack, attacker, move, ply);
-                value += get_pawn_hist(stm, position.pawn_hash(), attacker, move);
-                if (victim != Piece::None) value += get_capt_hist(attacker, move, victim);
+                if (victim != Piece::None || move.move_type() == MoveType::EnPassant) {
+                    Piece to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : victim;
+                    value += get_capt_hist(attacker, move, to_pc);
+                } else {
+                    value += get_quiet_hist(stm, move);
+                    value += get_cont_hist(stack, attacker, move, ply);
+                    value += get_pawn_hist(stm, position.pawn_hash(), attacker, move);
+                }
 
                 return value;
             }
