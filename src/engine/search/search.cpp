@@ -57,8 +57,11 @@ namespace episteme::search {
             int32_t dst_val = move.move_type() == MoveType::EnPassant ? piece_vals[piece_type_idx(PieceType::Pawn)] : piece_vals[piece_type_idx(dst)];
 
             scored_move.score += dst_val * 10 - src_val;
-            scored_move.score += history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
+            scored_move.score += ply ? 
+                history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst) :
+                history.get_qs_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
             if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
+
         } else {
             if (stack[*ply].killer == move) {
                 scored_move.score = 800000;
@@ -454,7 +457,7 @@ namespace episteme::search {
 
                 if (score >= beta) {
                     int16_t bonus = hist::bonus(1);
-                    history.update_capt_hist(from_pc, move, to_pc, bonus);
+                    history.update_qs_capt_hist(from_pc, move, to_pc, bonus);
 
                     for (size_t j = 0; j < explored_noisies.count; j++) {
                         Move prev_move = explored_noisies.list[j];
@@ -463,7 +466,7 @@ namespace episteme::search {
                         Piece prev_from_pc = position.mailbox(prev_move.from_square());
                         Piece prev_to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(prev_move.to_square());
 
-                        history.update_capt_hist(prev_from_pc, prev_move, prev_to_pc, -bonus);
+                        history.update_qs_capt_hist(prev_from_pc, prev_move, prev_to_pc, -bonus);
                     }
 
                     node_type = tt::NodeType::CutNode;
