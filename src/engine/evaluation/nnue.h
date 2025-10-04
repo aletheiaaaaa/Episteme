@@ -17,7 +17,7 @@ namespace episteme::nn {
     constexpr int16_t QB = 64;
     constexpr int16_t EVAL_SCALE = 400;
 
-    constexpr int L1_WIDTH = 256;
+    constexpr int L1_WIDTH = 512;
 
     struct Accumulator {
         alignas(32) std::array<int16_t, L1_WIDTH> white = {};

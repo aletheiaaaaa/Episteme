@@ -14,7 +14,7 @@ namespace episteme::datagen {
             bool found_legal = false;
 
             for (size_t j = 0; j < move_list.count; j++) {
-                position.make_move(move_list.list[j]);
+                position.make_move(move_list[j]);
                 if (!in_check(position, position.NTM())) {
                     found_legal = true;
                     break;
@@ -42,6 +42,7 @@ namespace episteme::datagen {
             .params = search_params,
             .hash_size = params.hash_size,
             .num_threads = params.num_threads,
+            .position = {}
         };
 
         search::Engine engine(cfg);
@@ -68,7 +69,7 @@ namespace episteme::datagen {
             while (!stop) {
                 const search::ScoredMove scored_move = engine.datagen_search(position);
 
-                if (!scored_move.move.data()) {
+                if (!scored_move.move) {
                     wdl = in_check(position, position.STM()) ? (position.STM() == Color::Black ? 2 : 0) : 1;
                     break;
                 } else {

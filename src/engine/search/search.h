@@ -13,6 +13,7 @@
 #include <iostream>
 #include <atomic>
 #include <optional>
+#include <memory>
 
 namespace episteme::search {
     using namespace std::chrono;
@@ -24,7 +25,7 @@ namespace episteme::search {
         int32_t score = 0;
     };
 
-    struct ScoredList {
+    struct ScoredList : public MoveList {
         inline void add(const ScoredMove& move) {
             list[count] = move;
             count++;
@@ -38,8 +39,11 @@ namespace episteme::search {
             std::iter_swap(list.begin() + src_idx, list.begin() + dst_idx);
         }
 
+        inline ScoredMove operator[](size_t idx) const {
+            return list[idx];
+        }
+
         std::array<ScoredMove, 256> list;
-        size_t count = 0;
     };
 
     void pick_move(ScoredList& scored_list, int start);
@@ -154,11 +158,12 @@ namespace episteme::search {
                 return generate_scored_targets(position, generate_all_captures, tt_entry);
             }
 
-            int32_t correct_static_eval(int32_t eval, const Position& position);
+            int32_t eval_correction(const Position& position);
 
             template<bool PV_node>
             int32_t search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node, SearchLimits limits = {});
 
+            template<bool PV_node>
             int32_t quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta, SearchLimits limits);
 
             Report run(int32_t last_score, const Parameters& params, Position& position, const SearchLimits& limits, bool is_absolute);

@@ -28,6 +28,10 @@ namespace episteme {
             std::mt19937 gen(rd());
             std::shuffle(list.begin(), list.begin() + count, gen);
         }
+
+        inline Move operator[](size_t idx) const {
+            return list[idx];
+        }
     };
 
     struct PawnAttacks {
