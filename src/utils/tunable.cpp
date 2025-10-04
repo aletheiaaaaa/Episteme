@@ -20,19 +20,19 @@ namespace episteme::tunable {
     }
 
 #if ENABLE_TUNING
-    std::vector<Tunable> tunables{};
-    void init_tunables(std::vector<Tunable>& tunables) {
-        tunables.reserve(128);
+    std::vector<Tunable>& tunables() {
+        static std::vector<Tunable> tunables = []() {
+            std::vector<Tunable> v;
+            v.reserve(128);
+            return v;
+        }();
+        return tunables;
     }
 
-    Tunable& add_tunable(std::vector<Tunable>& tunables, const std::string& name, int32_t default_value, int32_t min, int32_t max, double step, std::function<void()> setter) {
-        if (tunables.size() == tunables.capacity()) {
-            std::cerr << "Warning: exceeded tunable capacity, increase initial capacity in tunable.h\n";
-            std::terminate();
-        }
-
-        tunables.emplace_back(Tunable{name, default_value, min, max, step, setter});
-        return tunables.back();
+    Tunable& add_tunable(const std::string& name, int32_t default_value, int32_t min, int32_t max, double step, std::function<void()> setter) {
+        auto& vec = tunables();
+        vec.emplace_back(Tunable{name, default_value, min, max, step, setter});
+        return vec.back();
     }
 #endif
 }
