@@ -83,9 +83,11 @@ void init_lmr_table();
 
     TUNABLE(double_ext_margin, 50, 0, 512, 8, nullptr);
 
-    TUNABLE(lmr_improving_mult, 128, 64, 512, 8, nullptr);
-    TUNABLE(lmr_is_PV_mult, 128, 64, 512, 8, nullptr);
-    TUNABLE(lmr_tt_PV_mult, 128, 64, 512, 8, nullptr);
-    TUNABLE(lmr_cut_node_mult, 256, 64, 1024, 16, nullptr);
-    TUNABLE(lmr_hist_mult, 128, 64, 512, 8, nullptr);
+    TUNABLE(lmr_improving_mult, 128, 0, 1024, 8, nullptr);
+    TUNABLE(lmr_is_PV_mult, 128, 0, 1024, 8, nullptr);
+    TUNABLE(lmr_tt_PV_mult, 128, 0, 1024, 8, nullptr);
+    TUNABLE(lmr_cut_node_mult, 256, 0, 1024, 16, nullptr);
+    TUNABLE(lmr_hist_mult, 128, 0, 1024, 8, nullptr);
+    TUNABLE(lmr_corrplexity_mult, 64, 0, 1024, 8, nullptr);
+    TUNABLE(lmr_corrplexity_thresh, 300, 0, 1024, 16, nullptr);
 }

@@ -266,6 +266,7 @@ namespace episteme::search {
                 reduction -= lmr_tt_PV_mult() * tt_PV;
                 reduction += lmr_cut_node_mult() * cut_node;
                 reduction -= lmr_hist_mult() * history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
+                reduction -= lmr_corrplexity_mult() * (std::abs(correction) > lmr_corrplexity_thresh());
 
                 reduction /= 128;
 
