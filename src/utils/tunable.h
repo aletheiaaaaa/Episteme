@@ -92,5 +92,5 @@ void init_lmr_table();
     TUNABLE(lmr_cut_node_mult, 256, 0, 1024, 16, nullptr);
     TUNABLE(lmr_hist_mult, 128, 0, 1024, 8, nullptr);
     TUNABLE(lmr_corrplexity_mult, 64, 0, 1024, 8, nullptr);
-    TUNABLE(lmr_corrplexity_thresh, 250, 0, 1024, 16, nullptr);
+    TUNABLE(lmr_corrplexity_thresh, 300, 0, 1024, 16, nullptr);
 }
