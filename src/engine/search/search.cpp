@@ -39,24 +39,6 @@ namespace episteme::search {
         return correction / 2048;
     }
 
-    int32_t Worker::eval_complexity(const Position& position) {
-        int32_t complexity = 0;
-
-        auto pawn_corr = history.get_pawn_corr_hist(position.pawn_hash(), position.STM()) / 32;
-        // auto major_corr = history.get_major_corr_hist(position.major_hash(), position.STM()) / 32;
-        auto minor_corr = history.get_minor_corr_hist(position.minor_hash(), position.STM()) / 32;
-        auto non_pawn_stm_corr = history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM()) / 32;
-        auto non_pawn_ntm_corr = history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM()) / 32;
-
-        complexity += pawn_corr * pawn_corr;
-        // complexity += major_corr * major_corr;
-        complexity += minor_corr * minor_corr;
-        complexity += non_pawn_stm_corr * non_pawn_stm_corr;
-        complexity += non_pawn_ntm_corr * non_pawn_ntm_corr;
-
-        return complexity;
-    }
-
     ScoredMove Worker::score_move(const Position& position, const Move& move, const tt::Entry& tt_entry, std::optional<int32_t> ply) {
         ScoredMove scored_move{.move = move};
 
@@ -151,10 +133,11 @@ namespace episteme::search {
         constexpr bool is_PV = PV_node;
 
         int32_t static_eval = -INF;
-        int32_t complexity = 0;
+        int32_t correction = 0;
         if (!in_check(position, position.STM())) {
-            static_eval = eval::evaluate(accumulator, position.STM()) + eval_correction(position);
-            complexity = eval_complexity(position);
+            static_eval = eval::evaluate(accumulator, position.STM());
+            correction = eval_correction(position);
+            static_eval += correction;
 
             stack[ply].eval = static_eval;
         } 
@@ -282,25 +265,14 @@ namespace episteme::search {
             int16_t new_depth = depth - 1 + extension;
 
             if (num_legal >= 4 && depth >= 3) {
-                reduction = 128 * lmr_table[depth][num_legal];
+                reduction = lmr_table[depth][num_legal];
 
-<<<<<<< HEAD
-                reduction += 128 * !improving;
-                reduction += 128 * !is_PV;
-                reduction -= 128 * tt_PV;
-                reduction += 256 * cut_node;
-                reduction -= 128 * history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
-                reduction -= 64 * complexity / 512;
-
-                reduction /= 128;
-=======
                 reduction += !improving;
                 reduction += !is_PV;
                 reduction -= tt_PV;
                 reduction += cut_node * 2;
                 reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
-                reduction -= std::abs(correction) > 80;
->>>>>>> parent of 7f4073b (readjust threshold AGAIN)
+                reduction -= std::abs(correction) > 300;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
