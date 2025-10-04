@@ -11,9 +11,6 @@ using namespace episteme;
 int main(int argc, char *argv[]) {
     hash::init();
     tunable::init_lmr_table();
-#if ENABLE_TUNING
-    tunable::init_tunables(tunable::tunables);
-#endif
 
     search::Config cfg;
     search::Engine engine(cfg);

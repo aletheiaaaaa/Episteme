@@ -528,7 +528,7 @@ namespace episteme::search {
         }
 
         int64_t nps = elapsed.count() > 0 ? 1000 * total / elapsed.count() : 0;
-        std::cout << total << " nodes " << nps << " nps" << std::endl;
+        std::cout << std::format("{} nodes {} nps\n", total, nps);
     }
 
     void Engine::run(Position& position) {
@@ -559,21 +559,18 @@ namespace episteme::search {
             bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
             int32_t display_score = is_mate ? (1 + MATE - std::abs(report.score)) / 2 : report.score;
 
-            std::cout << "info depth " << report.depth
-                << " time " << report.time
-                << " nodes " << report.nodes
-                << " nps " << report.nps
-                << " score " << (is_mate ? "mate " : "cp ") << display_score
-                << " pv ";
+            std::cout << std::format("info depth {} time {} nodes {} nps {} score {} {} pv ",
+                report.depth, report.time, report.nodes, report.nps,
+                is_mate ? "mate" : "cp", display_score);
 
             for (size_t i = 0; i < report.line.length; ++i) {
-                std::cout << report.line.moves[i].to_string() << " ";
+                std::cout << std::format("{} ", report.line.moves[i].to_string());
             }
-            std::cout << std::endl;
+            std::cout << "\n";
         }
     
         Move best = last_report.line.moves[0];
-        std::cout << "bestmove " << best.to_string() << std::endl;
+        std::cout << std::format("bestmove {}\n", best.to_string());
     }
 
     ScoredMove Engine::datagen_search(Position& position) {
@@ -610,7 +607,7 @@ namespace episteme::search {
     }
 
     void Engine::eval(Position& position) {
-        std::cout << "info score cp " << workers[0]->eval(position) << std::endl;
+        std::cout << std::format("info score cp {}\n", workers[0]->eval(position));
     }
 
     void Engine::bench(int depth) {

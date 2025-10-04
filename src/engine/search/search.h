@@ -8,6 +8,7 @@
 #include "history.h"
 #include "stack.h"
 
+#include <format>
 #include <cstdint>
 #include <chrono>
 #include <algorithm>
