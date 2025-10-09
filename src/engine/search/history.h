@@ -52,9 +52,8 @@ namespace episteme::hist {
             [[nodiscard]] inline int32_t get_hist(stack::Stack& stack, Piece attacker, Piece victim, Move move, Color stm, int16_t ply, const Position& position) {
                 int32_t value = 0;
 
-                if (victim != Piece::None || move.move_type() == MoveType::EnPassant) {
-                    Piece to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : victim;
-                    value += get_capt_hist(attacker, move, to_pc);
+                if (victim != Piece::None) {
+                    value += get_capt_hist(attacker, move, victim);
                 } else {
                     value += get_quiet_hist(stm, move);
                     value += get_cont_hist(stack, attacker, move, ply);
