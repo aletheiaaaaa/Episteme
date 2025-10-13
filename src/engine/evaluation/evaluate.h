@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nnue.h"
+#include "nn/nn.h"
 #include "../chess/position.h"
 #include "../chess/movegen.h"
 #include "../../external/incbin.h"
