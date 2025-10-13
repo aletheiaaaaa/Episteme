@@ -188,7 +188,9 @@ namespace episteme::uci {
 
         else if (keyword == "eval") eval(cfg, engine);
         else if (keyword == "datagen") datagen(cmd.substr(cmd.find(" ")+1));
+#if ENABLE_TUNING
         else if (keyword == "printob") print_tunables();
+#endif 
 
         else std::cout << "invalid command\n";
 

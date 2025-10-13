@@ -18,6 +18,7 @@ namespace episteme::tunable {
             }
         }
     }
+
 #if ENABLE_TUNING
     std::vector<Tunable>& tunables() {
         static std::vector<Tunable> tunables = []() {
