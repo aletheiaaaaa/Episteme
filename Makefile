@@ -5,21 +5,26 @@ SRC_DIR   := src
 OBJ_DIR   := ./obj
 BIN_DIR   := .
 
-DEFAULT_NET := ./512_v0_05.bin
+DEFAULT_NET := anthracite_1024_16.bin
 EVALFILE    ?= $(DEFAULT_NET)
 
 # Network repository configuration
 NETS_REPO := https://github.com/aletheiaaaaa/episteme-nets
 NET_FILENAME := $(notdir $(DEFAULT_NET))
-NET_URL := $(NETS_REPO)/releases/latest/download/$(NET_FILENAME)
+NET_URL := $(NETS_REPO)/releases/download/experimental/$(NET_FILENAME)
 
-# Detect CPU capabilities at build time
-DETECTED_ARCH := $(shell \
+# Allow architecture override via ARCH variable
+ifdef ARCH
+    DETECTED_ARCH := $(ARCH)
+else
+    # Detect CPU capabilities at build time
+    DETECTED_ARCH := $(shell \
 	if grep -q avx512_vnni /proc/cpuinfo 2>/dev/null || sysctl -a 2>/dev/null | grep -q avx512_vnni; then \
 		echo "avx512_vnni"; \
 	else \
 		echo "avx2"; \
 	fi)
+endif
 
 # Architecture-specific flags
 ifeq ($(DETECTED_ARCH),avx512_vnni)
@@ -88,10 +93,10 @@ rebuild-all: clean-all all
 
 # Force specific architecture build
 avx2:
-	$(MAKE) DETECTED_ARCH=avx2
+	$(MAKE) ARCH=avx2
 
 avx512_vnni:
-	$(MAKE) DETECTED_ARCH=avx512_vnni
+	$(MAKE) ARCH=avx512_vnni
 
 # Display detected architecture
 show-arch:

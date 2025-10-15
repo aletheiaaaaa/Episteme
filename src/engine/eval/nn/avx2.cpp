@@ -41,7 +41,7 @@ namespace episteme::eval::nn {
     L1Output NNUE::l1_forward(const L0Output& in) const {
         L1Output out = {};
 
-        for (int i = 0; i < L2_WIDTH; i += BLOCK_HEIGHT) {
+        for (int i = 0; i < L2_WIDTH; i += L1_BLOCK_HEIGHT) {
             __m256i acc0 = _mm256_setzero_si256();
             __m256i acc1 = _mm256_setzero_si256();
             __m256i acc2 = _mm256_setzero_si256();
@@ -53,10 +53,10 @@ namespace episteme::eval::nn {
                 __m256i x2 = _mm256_set1_epi32(*reinterpret_cast<const uint32_t*>(&in[j + 8]));
                 __m256i x3 = _mm256_set1_epi32(*reinterpret_cast<const uint32_t*>(&in[j + 12]));
 
-                __m256i w0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / BLOCK_HEIGHT][j / 4 + 0]));
-                __m256i w1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / BLOCK_HEIGHT][j / 4 + 1]));
-                __m256i w2 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / BLOCK_HEIGHT][j / 4 + 2]));
-                __m256i w3 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / BLOCK_HEIGHT][j / 4 + 3]));
+                __m256i w0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / L1_BLOCK_HEIGHT][j / 4 + 0]));
+                __m256i w1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / L1_BLOCK_HEIGHT][j / 4 + 1]));
+                __m256i w2 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / L1_BLOCK_HEIGHT][j / 4 + 2]));
+                __m256i w3 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / L1_BLOCK_HEIGHT][j / 4 + 3]));
 
                 acc0 = _mm256_add_epi32(acc0, _mm256_madd_epi16(_mm256_maddubs_epi16(x0, w0), _mm256_set1_epi16(1)));
                 acc1 = _mm256_add_epi32(acc1, _mm256_madd_epi16(_mm256_maddubs_epi16(x1, w1), _mm256_set1_epi16(1)));

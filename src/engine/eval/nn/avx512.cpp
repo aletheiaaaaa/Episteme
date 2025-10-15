@@ -1,4 +1,5 @@
 #include "common.h"
+#include <iostream>
 
 namespace episteme::eval::nn {
 #if defined(USE_AVX512) && defined(USE_VNNI)
@@ -24,8 +25,8 @@ namespace episteme::eval::nn {
                     acc01 = _mm512_min_epi16(acc01, _mm512_set1_epi16(QA));
                     acc11 = _mm512_min_epi16(acc11, _mm512_set1_epi16(QA));
 
-                    __m512i pair0 = _mm512_mulhi_epi16(_mm512_slli_epi16(acc00, 16 - SHIFT), acc01);
-                    __m512i pair1 = _mm512_mulhi_epi16(_mm512_slli_epi16(acc10, 16 - SHIFT), acc11);
+                    __m512i pair0 = _mm512_mulhi_epi16(_mm512_slli_epi16(acc00, SHIFT), acc01);
+                    __m512i pair1 = _mm512_mulhi_epi16(_mm512_slli_epi16(acc10, SHIFT), acc11);
 
                     _mm512_storeu_si512(reinterpret_cast<__m512i*>(&out[j + offset + is_ntm * (L1_WIDTH / 2)]), _mm512_packus_epi16(pair0, pair1));
                 };
@@ -91,10 +92,10 @@ namespace episteme::eval::nn {
             for (int j = 0; j < L2_WIDTH; j += 16) {
                 __m512 x = _mm512_loadu_ps(&in[j]);
 
-                __m512 w0 = _mm512_loadu_ps(&l2_weights[i + 0][j + 0]);
-                __m512 w1 = _mm512_loadu_ps(&l2_weights[i + 1][j + 0]);
-                __m512 w2 = _mm512_loadu_ps(&l2_weights[i + 2][j + 0]);
-                __m512 w3 = _mm512_loadu_ps(&l2_weights[i + 3][j + 0]);
+                __m512 w0 = _mm512_loadu_ps(&l2_weights[i + 0][j]);
+                __m512 w1 = _mm512_loadu_ps(&l2_weights[i + 1][j]);
+                __m512 w2 = _mm512_loadu_ps(&l2_weights[i + 2][j]);
+                __m512 w3 = _mm512_loadu_ps(&l2_weights[i + 3][j]);
 
                 acc0 = _mm512_fmadd_ps(x, w0, acc0);
                 acc1 = _mm512_fmadd_ps(x, w1, acc1);
@@ -107,15 +108,9 @@ namespace episteme::eval::nn {
             float out2 = _mm512_reduce_add_ps(acc2) + l2_biases[i + 2];
             float out3 = _mm512_reduce_add_ps(acc3) + l2_biases[i + 3];
 
-            out0 = std::min(std::max(out0, 0.0f), 1.0f);
-            out1 = std::min(std::max(out1, 0.0f), 1.0f);
-            out2 = std::min(std::max(out2, 0.0f), 1.0f);
-            out3 = std::min(std::max(out3, 0.0f), 1.0f);
-
-            out[i + 0] = out0 * out0;
-            out[i + 1] = out1 * out1;
-            out[i + 2] = out2 * out2;
-            out[i + 3] = out3 * out3;
+            __m128 vec = _mm_setr_ps(out0, out1, out2, out3);
+            vec = _mm_min_ps(_mm_max_ps(vec, _mm_setzero_ps()), _mm_set1_ps(1.0f));
+            _mm_storeu_ps(&out[i], _mm_mul_ps(vec, vec));
         }
 
         return out;

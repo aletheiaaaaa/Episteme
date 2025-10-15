@@ -1,11 +1,12 @@
 #include "eval.h"
 
+INCBIN(WEIGHTS, EVALFILE);
+
 namespace episteme::eval {
     using namespace nn;
 
     const NNUE nnue = []{
-        NNUEData data;
-        data.init_random();
+        const NNUEData data = *reinterpret_cast<const NNUEData*>(gWEIGHTSData);
         return NNUE(data);
     }();
 
