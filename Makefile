@@ -15,14 +15,14 @@ NET_URL := $(NETS_REPO)/releases/latest/download/$(NET_FILENAME)
 
 # Detect CPU capabilities at build time
 DETECTED_ARCH := $(shell \
-	if grep -q avx512vnni /proc/cpuinfo 2>/dev/null || sysctl -a 2>/dev/null | grep -q avx512vnni; then \
-		echo "avx512vnni"; \
+	if grep -q avx512_vnni /proc/cpuinfo 2>/dev/null || sysctl -a 2>/dev/null | grep -q avx512_vnni; then \
+		echo "avx512_vnni"; \
 	else \
 		echo "avx2"; \
 	fi)
 
 # Architecture-specific flags
-ifeq ($(DETECTED_ARCH),avx512vnni)
+ifeq ($(DETECTED_ARCH),avx512_vnni)
     ARCH_FLAGS := -mavx512f -mavx512bw -mavx512dq -mavx512vl -mavx512vnni
     ARCH_DEF := -DUSE_AVX512 -DUSE_VNNI
     $(info Building with AVX-512 + VNNI support)
@@ -90,12 +90,12 @@ rebuild-all: clean-all all
 avx2:
 	$(MAKE) DETECTED_ARCH=avx2
 
-avx512vnni:
-	$(MAKE) DETECTED_ARCH=avx512vnni
+avx512_vnni:
+	$(MAKE) DETECTED_ARCH=avx512_vnni
 
 # Display detected architecture
 show-arch:
 	@echo "Detected architecture: $(DETECTED_ARCH)"
 	@echo "Compiler flags: $(ARCH_FLAGS) $(ARCH_DEF)"
 
-.PHONY: all clean clean-all rebuild rebuild-all download-net avx2 avx512vnni show-arch
+.PHONY: all clean clean-all rebuild rebuild-all download-net avx2 avx512_vnni show-arch

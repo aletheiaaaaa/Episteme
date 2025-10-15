@@ -102,10 +102,20 @@ namespace episteme::eval::nn {
                 acc3 = _mm512_fmadd_ps(x, w3, acc3);
             }
 
-            out[i + 0] = _mm512_reduce_add_ps(acc0) + l2_biases[i + 0];
-            out[i + 1] = _mm512_reduce_add_ps(acc1) + l2_biases[i + 1];
-            out[i + 2] = _mm512_reduce_add_ps(acc2) + l2_biases[i + 2];
-            out[i + 3] = _mm512_reduce_add_ps(acc3) + l2_biases[i + 3];
+            float out0 = _mm512_reduce_add_ps(acc0) + l2_biases[i + 0];
+            float out1 = _mm512_reduce_add_ps(acc1) + l2_biases[i + 1];
+            float out2 = _mm512_reduce_add_ps(acc2) + l2_biases[i + 2];
+            float out3 = _mm512_reduce_add_ps(acc3) + l2_biases[i + 3];
+
+            out0 = std::min(std::max(out0, 0.0f), 1.0f);
+            out1 = std::min(std::max(out1, 0.0f), 1.0f);
+            out2 = std::min(std::max(out2, 0.0f), 1.0f);
+            out3 = std::min(std::max(out3, 0.0f), 1.0f);
+
+            out[i + 0] = out0 * out0;
+            out[i + 1] = out1 * out1;
+            out[i + 2] = out2 * out2;
+            out[i + 3] = out3 * out3;
         }
 
         return out;
