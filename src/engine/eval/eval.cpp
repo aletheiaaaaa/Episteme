@@ -1,4 +1,4 @@
-#include "evaluate.h"
+#include "eval.h"
 
 namespace episteme::eval {
     using namespace nn;
@@ -20,8 +20,11 @@ namespace episteme::eval {
     }
 
     int32_t evaluate(Accumulator& accum, Color stm) {
-        int32_t out = nnue.l1_activate(accum, stm);
-        return out;
+        L0Output l0 = nnue.l0_pairwise(accum, stm);
+        L1Output l1 = nnue.l1_forward(l0);
+        L2Output l2 = nnue.l2_forward(l1);
+        L3Output l3 = nnue.l3_forward(l2);
+        return l3;
     }
 
     bool SEE(const Position& position, const Move& move, int32_t threshold) {

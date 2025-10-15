@@ -1,4 +1,4 @@
-#include "nn.h"
+#include "common.h"
 
 namespace episteme::eval::nn {
     void NNUEData::init_random() {
@@ -36,10 +36,8 @@ namespace episteme::eval::nn {
             val = dis(gen);
         }
 
-        for (auto& row : l3_weights) {
-            for (auto& val : row) {
-                val = dis(gen);
-            }
+        for (auto& val : l3_weights) {
+            val = dis(gen);
         }
 
         l3_bias = dis(gen);

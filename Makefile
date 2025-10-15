@@ -1,5 +1,5 @@
 CXX       := g++
-CXXFLAGS  := -std=c++23 -O3 -flto=auto -mavx2
+CXXFLAGS  := -std=c++23 -O3 -flto=auto
 
 SRC_DIR   := src
 OBJ_DIR   := ./obj
@@ -13,7 +13,26 @@ NETS_REPO := https://github.com/aletheiaaaaa/episteme-nets
 NET_FILENAME := $(notdir $(DEFAULT_NET))
 NET_URL := $(NETS_REPO)/releases/latest/download/$(NET_FILENAME)
 
-CXXFLAGS  += -DEVALFILE=\"$(EVALFILE)\"
+# Detect CPU capabilities at build time
+DETECTED_ARCH := $(shell \
+	if grep -q avx512vnni /proc/cpuinfo 2>/dev/null || sysctl -a 2>/dev/null | grep -q avx512vnni; then \
+		echo "avx512vnni"; \
+	else \
+		echo "avx2"; \
+	fi)
+
+# Architecture-specific flags
+ifeq ($(DETECTED_ARCH),avx512vnni)
+    ARCH_FLAGS := -mavx512f -mavx512bw -mavx512dq -mavx512vl -mavx512vnni
+    ARCH_DEF := -DUSE_AVX512 -DUSE_VNNI
+    $(info Building with AVX-512 + VNNI support)
+else
+    ARCH_FLAGS := -mavx2 -mfma
+    ARCH_DEF := -DUSE_AVX2
+    $(info Building with AVX2 support)
+endif
+
+CXXFLAGS  += $(ARCH_FLAGS) $(ARCH_DEF) -DEVALFILE=\"$(EVALFILE)\"
 
 EXE     ?= episteme
 TARGET  := $(BIN_DIR)/$(EXE)
@@ -67,4 +86,16 @@ rebuild: clean all
 # Rebuild including fresh network download
 rebuild-all: clean-all all
 
-.PHONY: all clean clean-all rebuild rebuild-all download-net
+# Force specific architecture build
+avx2:
+	$(MAKE) DETECTED_ARCH=avx2
+
+avx512vnni:
+	$(MAKE) DETECTED_ARCH=avx512vnni
+
+# Display detected architecture
+show-arch:
+	@echo "Detected architecture: $(DETECTED_ARCH)"
+	@echo "Compiler flags: $(ARCH_FLAGS) $(ARCH_DEF)"
+
+.PHONY: all clean clean-all rebuild rebuild-all download-net avx2 avx512vnni show-arch

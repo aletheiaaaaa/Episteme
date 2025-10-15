@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../chess/movegen.h"
-#include "../evaluation/evaluate.h"
+#include "../eval/eval.h"
 #include "../../utils/datagen.h"
 #include "ttable.h"
 #include "history.h"
@@ -171,8 +171,8 @@ namespace episteme::search {
             void bench(int depth);
 
         private:
-            nn::Accumulator accumulator;
-            std::vector<nn::Accumulator> accum_history;
+            eval::nn::Accumulator accumulator;
+            std::vector<eval::nn::Accumulator> accum_history;
 
             Position position;
 

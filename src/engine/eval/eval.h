@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nn/nn.h"
+#include "nn/common.h"
 #include "../chess/position.h"
 #include "../chess/movegen.h"
 #include "../../external/incbin.h"
