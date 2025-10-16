@@ -27,7 +27,9 @@ namespace episteme::eval::nn {
                     __m256i pair0 = _mm256_mulhi_epi16(_mm256_slli_epi16(acc00, 16 - SHIFT), acc01);
                     __m256i pair1 = _mm256_mulhi_epi16(_mm256_slli_epi16(acc10, 16 - SHIFT), acc11);
 
-                    _mm256_storeu_si256(reinterpret_cast<__m256i*>(&out[j + offset + is_ntm * (L1_WIDTH / 2)]), _mm256_packus_epi16(pair0, pair1));
+                    __m256i pair = _mm256_permute4x64_epi64(_mm256_packus_epi16(pair0, pair1), 0xD8);
+
+                    _mm256_storeu_si256(reinterpret_cast<__m256i*>(&out[j + offset + is_ntm * (L1_WIDTH / 2)]), pair);
                 };
 
                 process_chunk(0);
@@ -41,7 +43,7 @@ namespace episteme::eval::nn {
     L1Output NNUE::l1_forward(const L0Output& in) const {
         L1Output out = {};
 
-        for (int i = 0; i < L2_WIDTH; i += L1_BLOCK_HEIGHT) {
+        for (int i = 0; i < L2_WIDTH; i += BLOCK_HEIGHT) {
             __m256i acc0 = _mm256_setzero_si256();
             __m256i acc1 = _mm256_setzero_si256();
             __m256i acc2 = _mm256_setzero_si256();
@@ -53,10 +55,10 @@ namespace episteme::eval::nn {
                 __m256i x2 = _mm256_set1_epi32(*reinterpret_cast<const uint32_t*>(&in[j + 8]));
                 __m256i x3 = _mm256_set1_epi32(*reinterpret_cast<const uint32_t*>(&in[j + 12]));
 
-                __m256i w0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / L1_BLOCK_HEIGHT][j / 4 + 0]));
-                __m256i w1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / L1_BLOCK_HEIGHT][j / 4 + 1]));
-                __m256i w2 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / L1_BLOCK_HEIGHT][j / 4 + 2]));
-                __m256i w3 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / L1_BLOCK_HEIGHT][j / 4 + 3]));
+                __m256i w0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / BLOCK_HEIGHT][j / 4 + 0]));
+                __m256i w1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / BLOCK_HEIGHT][j / 4 + 1]));
+                __m256i w2 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / BLOCK_HEIGHT][j / 4 + 2]));
+                __m256i w3 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(&l1_weights[i / BLOCK_HEIGHT][j / 4 + 3]));
 
                 acc0 = _mm256_add_epi32(acc0, _mm256_madd_epi16(_mm256_maddubs_epi16(x0, w0), _mm256_set1_epi16(1)));
                 acc1 = _mm256_add_epi32(acc1, _mm256_madd_epi16(_mm256_maddubs_epi16(x1, w1), _mm256_set1_epi16(1)));
@@ -67,9 +69,9 @@ namespace episteme::eval::nn {
             __m256i acc = _mm256_add_epi32(_mm256_add_epi32(_mm256_add_epi32(acc0, acc1), acc2), acc3);
             __m256 b = _mm256_loadu_ps(&l1_biases[i]);
 
-            __m256 pre = _mm256_fmadd_ps(_mm256_cvtepi32_ps(acc), _mm256_set1_ps(1.0f / float(QA * QA * QB >> SHIFT)), b);
-            pre = _mm256_mul_ps(pre, pre);
+            __m256 pre = _mm256_fmadd_ps(_mm256_cvtepi32_ps(acc), _mm256_set1_ps(float(1 << SHIFT) / float(QA * QA * QB)), b);
             pre = _mm256_min_ps(_mm256_max_ps(pre, _mm256_setzero_ps()), _mm256_set1_ps(1.0f));
+            pre = _mm256_mul_ps(pre, pre);
 
             _mm256_storeu_ps(&out[i], pre);
         }
@@ -111,36 +113,42 @@ namespace episteme::eval::nn {
                 return _mm_cvtss_f32(out);
             };
 
-            out[i + 0] = _mm256_reduce_add_ps(acc0) + l2_biases[i + 0];
-            out[i + 1] = _mm256_reduce_add_ps(acc1) + l2_biases[i + 1];
-            out[i + 2] = _mm256_reduce_add_ps(acc2) + l2_biases[i + 2];
-            out[i + 3] = _mm256_reduce_add_ps(acc3) + l2_biases[i + 3];
+            float out0 = _mm256_reduce_add_ps(acc0) + l2_biases[i + 0];
+            float out1 = _mm256_reduce_add_ps(acc1) + l2_biases[i + 1];
+            float out2 = _mm256_reduce_add_ps(acc2) + l2_biases[i + 2];
+            float out3 = _mm256_reduce_add_ps(acc3) + l2_biases[i + 3];
+
+            __m128 vec = _mm_setr_ps(out0, out1, out2, out3);
+            vec = _mm_min_ps(_mm_max_ps(vec, _mm_setzero_ps()), _mm_set1_ps(1.0f));
+            _mm_storeu_ps(&out[i], _mm_mul_ps(vec, vec));
         }
 
         return out;
     }
 
     L3Output NNUE::l3_forward(const L2Output& in) const {
-        __m256 acc_ = _mm256_setzero_ps();
+        float out = 0.0f;
+
+        auto _mm256_reduce_add_ps = [] (const __m256& vec) {
+            __m128 vec0 = _mm256_extractf128_ps(vec, 0);
+            __m128 vec1 = _mm256_extractf128_ps(vec, 1);
+
+            __m128 out = _mm_add_ps(vec0, vec1);
+            out = _mm_hadd_ps(out, out);
+            out = _mm_hadd_ps(out, out);
+
+            return _mm_cvtss_f32(out);
+        };
 
         for (int i = 0; i < L3_WIDTH; i += 8) {
             __m256 x = _mm256_loadu_ps(&in[i]);
             __m256 w = _mm256_loadu_ps(&l3_weights[i]);
-
-            acc_ = _mm256_fmadd_ps(x, w, acc_);
+            out += _mm256_reduce_add_ps(_mm256_mul_ps(x, w));
         }
-
-        __m128 acc0 = _mm256_extractf128_ps(acc_, 0);
-        __m128 acc1 = _mm256_extractf128_ps(acc_, 1);
-
-        __m128 acc = _mm_add_ps(acc0, acc1);
-        acc = _mm_hadd_ps(acc, acc);
-        acc = _mm_hadd_ps(acc, acc);
-
-        float out = _mm_cvtss_f32(acc); 
 
         out += l3_bias;
         return static_cast<int32_t>(out * EVAL_SCALE);
+
     }
 #endif
 }

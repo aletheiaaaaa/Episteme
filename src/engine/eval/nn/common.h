@@ -13,7 +13,7 @@
 #include <random>
 
 namespace episteme::eval::nn {
-    constexpr int SHIFT = 8;
+    constexpr int SHIFT = 9;
     constexpr int16_t QA = 255;
     constexpr int16_t QB = 64;
     constexpr int16_t EVAL_SCALE = 400;
@@ -28,6 +28,9 @@ namespace episteme::eval::nn {
 #elif defined(USE_AVX2)
     constexpr int BLOCK_HEIGHT = 8;
     constexpr int ALIGNMENT = 32;
+#elif defined(USE_SSSE3)
+    constexpr int BLOCK_HEIGHT = 4;
+    constexpr int ALIGNMENT = 16;
 #else
     constexpr int BLOCK_HEIGHT = 1;
     constexpr int ALIGNMENT = 16;
