@@ -13,12 +13,13 @@ SRC_DIR   := src
 OBJ_DIR   := ./obj
 BIN_DIR   := .
 
-DEFAULT_NET := 512_v0_05.bin
+DEFAULT_NET := apricot_512.bin
 EVALFILE    ?= $(DEFAULT_NET)
 
 NETS_REPO := https://github.com/aletheiaaaaa/episteme-nets
 NET_FILENAME := $(notdir $(DEFAULT_NET))
-NET_URL := $(NETS_REPO)/releases/latest/download/$(NET_FILENAME)
+NET_BASENAME := $(basename $(NET_FILENAME))
+NET_URL := $(NETS_REPO)/releases/download/$(NET_BASENAME)/$(NET_FILENAME)
 
 ifdef ARCH
     DETECTED_ARCH := $(ARCH)
