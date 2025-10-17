@@ -2,8 +2,7 @@
 
 namespace episteme::eval::nn {
 #if defined(USE_AVX512) && defined(USE_VNNI)
-        int32_t NNUE::l1_forward(const Accumulator& accum, Color stm) const {
-
+    int32_t NNUE::l1_forward(const Accumulator& accum, Color stm) const {
         const auto& accum_stm = (!color_idx(stm)) ? (accum.white) : (accum.black);
         const auto& accum_ntm = (!color_idx(stm)) ? (accum.black) : (accum.white);
 
@@ -14,19 +13,19 @@ namespace episteme::eval::nn {
 
         for (int i = 0; i < L1_WIDTH; i += 128) {
             auto partial = [&](__m512i temp, int offset) {
-                __m512i stm_pre = _mm512_load_si512(reinterpret_cast<const __m512i*>(&accum_stm[i + offset]));
-                __m512i ntm_pre = _mm512_load_si512(reinterpret_cast<const __m512i*>(&accum_ntm[i + offset]));
-                __m512i l1w0 = _mm512_load_si512(reinterpret_cast<const __m512i*>(&l1_weights[0][i + offset]));
-                __m512i l1w1 = _mm512_load_si512(reinterpret_cast<const __m512i*>(&l1_weights[1][i + offset]));
+                __m512i stm_ = _mm512_load_si512(reinterpret_cast<const __m512i*>(&accum_stm[i + offset]));
+                __m512i ntm_ = _mm512_load_si512(reinterpret_cast<const __m512i*>(&accum_ntm[i + offset]));
+                __m512i l1w0 = _mm512_load_si512(reinterpret_cast<const __m512i*>(&l1_weights[i + offset + 0 * L1_WIDTH]));
+                __m512i l1w1 = _mm512_load_si512(reinterpret_cast<const __m512i*>(&l1_weights[i + offset + 1 * L1_WIDTH]));
 
-                __m512i stm = _mm512_min_epi16(_mm512_max_epi16(stm_pre, _mm512_setzero_si512()), _mm512_set1_epi16(QA));
-                __m512i ntm = _mm512_min_epi16(_mm512_max_epi16(ntm_pre, _mm512_setzero_si512()), _mm512_set1_epi16(QA));
+                stm_ = _mm512_min_epi16(_mm512_max_epi16(stm_, _mm512_setzero_si512()), _mm512_set1_epi16(QA));
+                ntm_ = _mm512_min_epi16(_mm512_max_epi16(ntm_, _mm512_setzero_si512()), _mm512_set1_epi16(QA));
 
-                __m512i temp_stm = _mm512_mullo_epi16(stm, l1w0);
-                __m512i temp_ntm = _mm512_mullo_epi16(ntm, l1w1);
+                __m512i _stm = _mm512_mullo_epi16(stm_, l1w0);
+                __m512i _ntm = _mm512_mullo_epi16(ntm_, l1w1);
 
-                temp = _mm512_add_epi32(temp, _mm512_madd_epi16(stm, temp_stm));
-                temp = _mm512_add_epi32(temp, _mm512_madd_epi16(ntm, temp_ntm));
+                temp = _mm512_add_epi32(temp, _mm512_madd_epi16(stm_, _stm));
+                temp = _mm512_add_epi32(temp, _mm512_madd_epi16(ntm_, _ntm));
 
                 return temp;
             };

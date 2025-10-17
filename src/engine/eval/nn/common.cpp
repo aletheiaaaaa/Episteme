@@ -122,9 +122,8 @@ namespace episteme::eval::nn {
         for (auto& val : l0_biases)
             val = dist(gen);
 
-        for (auto& arr : l1_weights)
-            for (auto& val : arr)
-                val = dist(gen);
+        for (auto& val : l1_weights)
+            val = dist(gen);
 
         l1_bias = dist(gen);
     }

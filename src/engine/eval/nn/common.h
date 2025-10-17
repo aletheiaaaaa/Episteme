@@ -43,7 +43,7 @@ namespace episteme::eval::nn {
         private:
             using L0Weights = std::array<std::array<int16_t, L1_WIDTH>, 768>;
             using L0Biases = std::array<int16_t, L1_WIDTH>;
-            using L1Weights = std::array<std::array<int16_t, L1_WIDTH>, 2>;
+            using L1Weights = std::array<int16_t, L1_WIDTH * 2>;
             using L1Bias = int16_t;
 
             alignas(ALIGNMENT) L0Weights l0_weights;
