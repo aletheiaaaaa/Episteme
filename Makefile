@@ -13,7 +13,7 @@ SRC_DIR   := src
 OBJ_DIR   := ./obj
 BIN_DIR   := .
 
-DEFAULT_NET := apricot_512.bin
+DEFAULT_NET := 512_v0_05.bin
 EVALFILE    ?= $(DEFAULT_NET)
 
 NETS_REPO := https://github.com/aletheiaaaaa/episteme-nets
