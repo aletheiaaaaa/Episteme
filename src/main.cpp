@@ -1,7 +1,3 @@
-#include "engine/chess/movegen.h"
-#include "engine/chess/perft.h"
-#include "engine/search/search.h"
-#include "engine/search/bench.h"
 #include "engine/uci/uci.h"
 
 #include <string>
