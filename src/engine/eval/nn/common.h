@@ -37,8 +37,7 @@ namespace episteme::eval::nn {
 #endif
 
     using L0Weights = std::array<std::array<int16_t, L1_WIDTH>, 768>;
-    using L1WeightsPre = std::array<std::array<int8_t, L1_WIDTH>, L2_WIDTH>;
-    using L1Weights = std::array<std::array<std::array<int8_t, BLOCK_HEIGHT * 4>, L1_WIDTH / 4>, L2_WIDTH / BLOCK_HEIGHT>;
+    using L1Weights = std::array<std::array<int8_t, L1_WIDTH>, L2_WIDTH>;
     using L2Weights = std::array<std::array<float, L2_WIDTH>, L3_WIDTH>;
     using L3Weights = std::array<float, L3_WIDTH>;
 
@@ -46,6 +45,12 @@ namespace episteme::eval::nn {
     using L1Biases = std::array<float, L2_WIDTH>;
     using L2Biases = std::array<float, L3_WIDTH>;
     using L3Bias = float;
+
+#if (defined(USE_AVX512) && defined(USE_VNNI)) || (defined(USE_AVX2)) || (defined(USE_SSSE3))
+    using L1WeightsPerm = std::array<std::array<std::array<int8_t, BLOCK_HEIGHT * 4>, L1_WIDTH / 4>, L2_WIDTH / BLOCK_HEIGHT>;
+#else
+    using L1WeightsPerm = L1Weights;
+#endif
 
     using L0Output = std::array<uint8_t, L1_WIDTH>;
     using L1Output = std::array<float, L2_WIDTH>;
@@ -60,7 +65,7 @@ namespace episteme::eval::nn {
     struct NNUEData {
         alignas(ALIGNMENT) L0Weights l0_weights;
         alignas(ALIGNMENT) L0Biases l0_biases;
-        alignas(ALIGNMENT) L1WeightsPre l1_weights_pre;
+        alignas(ALIGNMENT) L1Weights l1_weights;
         alignas(ALIGNMENT) L1Biases l1_biases;
         alignas(ALIGNMENT) L2Weights l2_weights;
         alignas(ALIGNMENT) L2Biases l2_biases;
@@ -82,13 +87,13 @@ namespace episteme::eval::nn {
             L3Output l3_forward(const L2Output& in) const;
 
         private:
-            alignas(64) L0Weights l0_weights;
-            alignas(64) L0Biases l0_biases;
-            alignas(64) L1Weights l1_weights;
-            alignas(64) L1Biases l1_biases;
-            alignas(64) L2Weights l2_weights;
-            alignas(64) L2Biases l2_biases;
-            alignas(64) L3Weights l3_weights;
-            alignas(64) L3Bias l3_bias;
+            alignas(ALIGNMENT) L0Weights l0_weights;
+            alignas(ALIGNMENT) L0Biases l0_biases;
+            alignas(ALIGNMENT) L1WeightsPerm l1_weights;
+            alignas(ALIGNMENT) L1Biases l1_biases;
+            alignas(ALIGNMENT) L2Weights l2_weights;
+            alignas(ALIGNMENT) L2Biases l2_biases;
+            alignas(ALIGNMENT) L3Weights l3_weights;
+            alignas(ALIGNMENT) L3Bias l3_bias;
     };
 }

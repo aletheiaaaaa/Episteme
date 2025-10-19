@@ -11,7 +11,8 @@ EVALFILE    ?= $(DEFAULT_NET)
 # Network repository configuration
 NETS_REPO := https://github.com/aletheiaaaaa/episteme-nets
 NET_FILENAME := $(notdir $(DEFAULT_NET))
-NET_URL := $(NETS_REPO)/releases/download/experimental/$(NET_FILENAME)
+NET_BASENAME := $(basename $(NET_FILENAME))
+NET_URL := $(NETS_REPO)/releases/download/$(NET_BASENAME)/$(NET_FILENAME)
 
 # Allow architecture override via ARCH variable
 ifdef ARCH
@@ -34,19 +35,19 @@ endif
 ifeq ($(DETECTED_ARCH),avx512_vnni)
     ARCH_FLAGS := -mavx512f -mavx512bw -mavx512dq -mavx512vl -mavx512vnni
     ARCH_DEF := -DUSE_AVX512 -DUSE_VNNI
-    $(info Building with AVX-512 + VNNI support)
+    $(info Building with AVX-512 + VNNI)
 else ifeq ($(DETECTED_ARCH),avx2)
     ARCH_FLAGS := -mavx2 -mfma
     ARCH_DEF := -DUSE_AVX2
-    $(info Building with AVX2 support)
+    $(info Building with AVX2)
 else ifeq ($(DETECTED_ARCH),ssse3)
     ARCH_FLAGS := -mssse3
     ARCH_DEF := -DUSE_SSSE3
-    $(info Building with SSSE3 support)
+    $(info Building with SSSE3)
 else
     ARCH_FLAGS :=
-    ARCH_DEF := -DUSE_GENERIC
-    $(info Building with generic SSE/SSE2 support)
+    ARCH_DEF :=
+    $(info Building with generic architecture)
 endif
 
 CXXFLAGS  += $(ARCH_FLAGS) $(ARCH_DEF) -DEVALFILE=\"$(EVALFILE)\"
@@ -112,6 +113,9 @@ avx512_vnni:
 
 ssse3:
 	$(MAKE) ARCH=ssse3
+
+generic:
+	$(MAKE) ARCH=generic
 
 # Display detected architecture
 show-arch:

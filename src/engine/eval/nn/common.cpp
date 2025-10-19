@@ -1,6 +1,31 @@
 #include "common.h"
 
 namespace episteme::eval::nn {
+    NNUE::NNUE(const NNUEData& data) {
+        l0_weights = data.l0_weights;
+        l0_biases = data.l0_biases;
+
+#if (defined(USE_AVX512) && defined(USE_VNNI)) || (defined(USE_AVX2)) || (defined(USE_SSSE3))
+        for (int i = 0; i < L2_WIDTH; ++i) {
+            for (int j = 0; j < L1_WIDTH; ++j) {
+                int block_row = i / BLOCK_HEIGHT;
+                int block_col = j / 4;
+                int in_block_row = i % BLOCK_HEIGHT;
+                int in_block_col = j % 4;
+                l1_weights[block_row][block_col][in_block_row * 4 + in_block_col] = data.l1_weights[i][j];
+            }
+        }
+#else
+        l1_weights = data.l1_weights;
+#endif
+
+        l1_biases = data.l1_biases;
+        l2_weights = data.l2_weights;
+        l2_biases = data.l2_biases;
+        l3_weights = data.l3_weights;
+        l3_bias = data.l3_bias;
+    }
+
     void NNUEData::init_random() {
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -16,7 +41,7 @@ namespace episteme::eval::nn {
             val = dis(gen);
         }
 
-        for (auto& row : l1_weights_pre) {
+        for (auto& row : l1_weights) {
             for (auto& val : row) {
                 val = dis(gen);
             }
@@ -41,27 +66,6 @@ namespace episteme::eval::nn {
         }
 
         l3_bias = dis(gen);
-    }
-
-    NNUE::NNUE(const NNUEData& data) {
-        l0_weights = data.l0_weights;
-        l0_biases = data.l0_biases;
-
-        for (int i = 0; i < L2_WIDTH; ++i) {
-            for (int j = 0; j < L1_WIDTH; ++j) {
-                int block_row = i / BLOCK_HEIGHT;
-                int block_col = j / 4;
-                int in_block_row = i % BLOCK_HEIGHT;
-                int in_block_col = j % 4;
-                l1_weights[block_row][block_col][in_block_row * 4 + in_block_col] = data.l1_weights_pre[i][j];
-            }
-        }
-
-        l1_biases = data.l1_biases;
-        l2_weights = data.l2_weights;
-        l2_biases = data.l2_biases;
-        l3_weights = data.l3_weights;
-        l3_bias = data.l3_bias;
     }
 
     Accumulator NNUE::update_accumulator(const Position& position, const Move& move, Accumulator accum) const {

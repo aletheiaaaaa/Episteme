@@ -14,6 +14,9 @@
 #include <fstream>
 #include <atomic>
 #include <sstream>
+#include <vector>
+#include <bit>
+#include <optional>
 
 namespace episteme::datagen {
     constexpr int32_t WIN_SCORE_MIN = 2500;

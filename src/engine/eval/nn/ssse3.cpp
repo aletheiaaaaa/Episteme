@@ -1,5 +1,4 @@
 #include "common.h"
-#include <iostream>
 
 namespace episteme::eval::nn {
 #if !(defined(USE_AVX512) && defined(USE_VNNI)) && !(defined(USE_AVX2)) && defined(USE_SSSE3)
