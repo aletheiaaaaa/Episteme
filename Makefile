@@ -50,7 +50,7 @@ else ifeq ($(DETECTED_ARCH),ssse3)
     $(info Building with SSSE3 support)
 else
     ARCH_FLAGS :=
-    ARCH_DEF := -DUSE_GENERIC
+    ARCH_DEF :=
     $(info Building with generic SSE/SSE2 support)
 endif
 
@@ -108,6 +108,9 @@ avx512_vnni:
 ssse3:
 	$(MAKE) ARCH=ssse3
 
+generic:
+	$(MAKE) ARCH=generic
+
 debug:
 	$(MAKE) DEBUG=1
 
@@ -115,4 +118,4 @@ show-arch:
 	@echo "Detected architecture: $(DETECTED_ARCH)"
 	@echo "Compiler flags: $(ARCH_FLAGS) $(ARCH_DEF)"
 
-.PHONY: all clean clean-all rebuild rebuild-all download-net avx2 avx512_vnni ssse3 show-arch debug
+.PHONY: all clean clean-all rebuild rebuild-all download-net avx2 avx512_vnni ssse3 generic show-arch debug
