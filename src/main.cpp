@@ -1,7 +1,5 @@
 #include "engine/uci/uci.h"
 
-#include <string>
-
 using namespace episteme;
 
 int main(int argc, char *argv[]) {
