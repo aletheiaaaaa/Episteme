@@ -5,26 +5,34 @@ INCBIN(WEIGHTS, EVALFILE);
 namespace episteme::eval {
     using namespace nn;
 
-    const NNUE nnue = []{
+    const NNUE* nnue = []{
         const NNUEData data = *reinterpret_cast<const NNUEData*>(gWEIGHTSData);
-        return NNUE(data);
+        return new NNUE(data);
     }();
 
+
     Accumulator update(const Position& position, const Move& move, Accumulator accum) {
-        accum = nnue.update_accumulator(position, move, accum);
+        accum = nnue->update_accumulator(position, move, accum);
         return accum;
     }
 
     Accumulator reset(const Position& position) {
-        Accumulator accum = nnue.reset_accumulator(position);
+        Accumulator accum = nnue->reset_accumulator(position);
         return accum;
     }
 
     int32_t evaluate(Accumulator& accum, Color stm) {
-        L0Output l0 = nnue.l0_pairwise(accum, stm);
-        L1Output l1 = nnue.l1_forward(l0);
-        L2Output l2 = nnue.l2_forward(l1);
-        L3Output l3 = nnue.l3_forward(l2);
+        L1Indices indices{};
+
+#if (defined(USE_AVX512) && defined(USE_VNNI)) || (defined(USE_AVX2)) || (defined(USE_SSSE3))
+        L0Output l0 = nnue->l0_pairwise(accum, stm, indices);
+        L1Output l1 = nnue->l1_forward(l0, indices);
+#else
+        L0Output l0 = nnue->l0_pairwise(accum, stm);
+        L1Output l1 = nnue->l1_forward(l0);
+#endif
+        L2Output l2 = nnue->l2_forward(l1);
+        L3Output l3 = nnue->l3_forward(l2);
         return l3;
     }
 

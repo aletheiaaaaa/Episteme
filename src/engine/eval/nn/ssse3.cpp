@@ -2,11 +2,14 @@
 
 namespace episteme::eval::nn {
 #if !(defined(USE_AVX512) && defined(USE_VNNI)) && !(defined(USE_AVX2)) && defined(USE_SSSE3)
-    L0Output NNUE::l0_pairwise(const Accumulator& accum, Color stm) const {
-        L0Output out = {};
+    L0Output NNUE::l0_pairwise(const Accumulator& accum, Color stm, L1Indices& indices) const {
+        std::array<uint8_t, L1_WIDTH> out = {};
 
         const auto& accum_stm = (!color_idx(stm)) ? (accum.white) : (accum.black);
         const auto& accum_ntm = (!color_idx(stm)) ? (accum.black) : (accum.white);
+
+        int count = 0;
+        __m128i base = _mm_setzero_si128();
 
         for (int i = 0; i < 2; i++) {
             auto accum = (i == 0) ? accum_stm : accum_ntm;
@@ -25,32 +28,48 @@ namespace episteme::eval::nn {
 
                 __m128i pair0 = _mm_mulhi_epi16(_mm_slli_epi16(acc00, 16 - SHIFT), acc01);
                 __m128i pair1 = _mm_mulhi_epi16(_mm_slli_epi16(acc10, 16 - SHIFT), acc11);
-
                 __m128i pair = _mm_packus_epi16(pair0, pair1);
 
                 _mm_storeu_si128(reinterpret_cast<__m128i*>(&out[j + is_ntm * (L1_WIDTH / 2)]), pair);
+
+                uint8_t nnz = _mm_movemask_ps(_mm_castsi128_ps(_mm_cmpgt_epi32(pair, _mm_setzero_si128())));
+                const auto& nnz_indices = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&table[nnz]));
+
+                _mm_storeu_si128(reinterpret_cast<__m128i*>(&indices[count]), _mm_add_epi16(base, nnz_indices));
+
+                count += std::popcount(nnz);
+                base = _mm_add_epi16(base, _mm_set1_epi16(4));
             }
         }
 
-        return out;
+        return std::make_pair(out, count);
     }
 
-    L1Output NNUE::l1_forward(const L0Output& in) const {
+    L1Output NNUE::l1_forward(const L0Output& in, const L1Indices& indices) const {
         L1Output out = {};
 
+        auto [vec, count] = in;
         for (int i = 0; i < L2_WIDTH; i += BLOCK_HEIGHT) {
             __m128i acc0 = _mm_setzero_si128();
             __m128i acc1 = _mm_setzero_si128();
 
-            for (int j = 0; j < L1_WIDTH; j += 8) {
-                __m128i x0 = _mm_set1_epi32(*reinterpret_cast<const uint32_t*>(&in[j + 0]));
-                __m128i x1 = _mm_set1_epi32(*reinterpret_cast<const uint32_t*>(&in[j + 4]));
+            int j = 0;
+            for (; j < count - count % 2; j += 2) {
+                __m128i x0 = _mm_set1_epi32(*reinterpret_cast<const uint32_t*>(&vec[4 * indices[j + 0]]));
+                __m128i x1 = _mm_set1_epi32(*reinterpret_cast<const uint32_t*>(&vec[4 * indices[j + 1]]));
 
-                __m128i w0 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&l1_weights[i / BLOCK_HEIGHT][j / 4 + 0]));
-                __m128i w1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&l1_weights[i / BLOCK_HEIGHT][j / 4 + 1]));
+                __m128i w0 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&l1_weights[i / BLOCK_HEIGHT][indices[j + 0]]));
+                __m128i w1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&l1_weights[i / BLOCK_HEIGHT][indices[j + 1]]));
 
                 acc0 = _mm_add_epi32(acc0, _mm_madd_epi16(_mm_maddubs_epi16(x0, w0), _mm_set1_epi16(1)));
                 acc1 = _mm_add_epi32(acc1, _mm_madd_epi16(_mm_maddubs_epi16(x1, w1), _mm_set1_epi16(1)));
+            }
+
+            for (; j < count; ++j) {
+                __m128i x = _mm_set1_epi32(*reinterpret_cast<const uint32_t*>(&vec[4 * indices[j]]));
+                __m128i w = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&l1_weights[i / BLOCK_HEIGHT][indices[j]]));
+
+                acc0 = _mm_add_epi32(acc0, _mm_madd_epi16(_mm_maddubs_epi16(x, w), _mm_set1_epi16(1)));
             }
 
             __m128i acc = _mm_add_epi32(acc0, acc1);
