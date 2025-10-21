@@ -56,17 +56,27 @@ namespace episteme::eval::nn {
                 __m512i x2 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&in[j + 128]));
                 __m512i x3 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&in[j + 192]));
 
-                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i / 16][j / 64 + 0], x0);
-                val_count += std::popcount(l1_bitmasks[i / 16][j / 64 + 0]);
+                uint64_t mask0 = l1_bitmasks[i / 16][j / 64 + 0];
+                uint64_t mask1 = l1_bitmasks[i / 16][j / 64 + 1];
+                uint64_t mask2 = l1_bitmasks[i / 16][j / 64 + 2];
+                uint64_t mask3 = l1_bitmasks[i / 16][j / 64 + 3];
 
-                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i / 16][j / 64 + 1], x1);
-                val_count += std::popcount(l1_bitmasks[i / 16][j / 64 + 1]);
+                x0 = _mm512_maskz_compress_epi8(mask0, x0);
+                x1 = _mm512_maskz_compress_epi8(mask1, x1);
+                x2 = _mm512_maskz_compress_epi8(mask2, x2);
+                x3 = _mm512_maskz_compress_epi8(mask3, x3);
 
-                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i / 16][j / 64 + 2], x2);
-                val_count += std::popcount(l1_bitmasks[i / 16][j / 64 + 2]);
+                _mm512_storeu_si512(reinterpret_cast<__m512i*>(&values[val_count]), x0);
+                val_count += std::popcount(mask0);
 
-                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i / 16][j / 64 + 3], x3);
-                val_count += std::popcount(l1_bitmasks[i / 16][j / 64 + 3]);
+                _mm512_storeu_si512(reinterpret_cast<__m512i*>(&values[val_count]), x1);
+                val_count += std::popcount(mask1);
+
+                _mm512_storeu_si512(reinterpret_cast<__m512i*>(&values[val_count]), x2);
+                val_count += std::popcount(mask2);
+
+                _mm512_storeu_si512(reinterpret_cast<__m512i*>(&values[val_count]), x3);
+                val_count += std::popcount(mask3);
             }
 
             __m512i acc0 = _mm512_setzero_si512();
