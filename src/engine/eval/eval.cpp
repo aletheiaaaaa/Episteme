@@ -22,17 +22,11 @@ namespace episteme::eval {
     }
 
     int32_t evaluate(Accumulator& accum, Color stm) {
-        L1Indices indices{};
-
-#if (defined(USE_AVX512) && defined(USE_VNNI)) || (defined(USE_AVX2)) || (defined(USE_SSSE3))
-        L0Output l0 = nnue->l0_pairwise(accum, stm, indices);
-        L1Output l1 = nnue->l1_forward(l0, indices);
-#else
         L0Output l0 = nnue->l0_pairwise(accum, stm);
         L1Output l1 = nnue->l1_forward(l0);
-#endif
         L2Output l2 = nnue->l2_forward(l1);
         L3Output l3 = nnue->l3_forward(l2);
+
         return l3;
     }
 

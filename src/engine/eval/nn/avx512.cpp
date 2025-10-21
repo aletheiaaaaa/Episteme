@@ -2,8 +2,8 @@
 
 namespace episteme::eval::nn {
 #if defined(USE_AVX512) && defined(USE_VNNI)
-    L0Output NNUE::l0_pairwise(const Accumulator& accum, Color stm, L1Indices& indices) const {
-        std::array<uint8_t, L1_WIDTH> out = {};
+    L0Output NNUE::l0_pairwise(const Accumulator& accum, Color stm) const {
+        L0Output out = {};
 
         const auto& accum_stm = (!color_idx(stm)) ? (accum.white) : (accum.black);
         const auto& accum_ntm = (!color_idx(stm)) ? (accum.black) : (accum.white);
@@ -32,17 +32,6 @@ namespace episteme::eval::nn {
                     __m512i pair = _mm512_packus_epi16(pair0, pair1);
 
                     _mm512_storeu_si512(&out[j + offset + is_ntm * (L1_WIDTH / 2)], pair);
-
-                    uint16_t nnz = _mm512_cmpgt_epi32_mask(pair, _mm512_setzero_si512());
-                    for (int k = 0; k < 16; k += 8) {
-                        const uint8_t byte = (nnz >> k) & 0xFF;
-                        const auto& nnz_indices = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&table[byte]));
-
-                        _mm_storeu_si128(reinterpret_cast<__m128i*>(&indices[count]), _mm_add_epi16(base, nnz_indices));
-
-                        count += std::popcount(byte);
-                        base = _mm_add_epi16(base, _mm_set1_epi16(8));
-                    }
                 };
 
                 process_chunk(0);
@@ -52,42 +41,55 @@ namespace episteme::eval::nn {
             }
         }
 
-        return std::make_pair(out, count);
+        return out;
     }
 
-    L1Output NNUE::l1_forward(const L0Output& in, const L1Indices& indices) const {
+    L1Output NNUE::l1_forward(const L0Output& in) const {
         L1Output out = {};
 
-        auto [vec, count] = in;
         for (int i = 0; i < L2_WIDTH; i += BLOCK_HEIGHT) {
+            std::array<uint8_t, L1_NNZ> values{};
+            int val_count = 0;
+
+            for (int j = 0; j < L1_WIDTH; j += 256) {
+                __m512i x0 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&in[j + 0]));
+                __m512i x1 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&in[j + 64]));
+                __m512i x2 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&in[j + 128]));
+                __m512i x3 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&in[j + 192]));
+
+                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i][j / 64 + 0], x0);
+                val_count += std::popcount(l1_bitmasks[i][j / 64 + 0]);
+
+                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i][j / 64 + 1], x1);
+                val_count += std::popcount(l1_bitmasks[i][j / 64 + 1]);
+
+                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i][j / 64 + 2], x2);
+                val_count += std::popcount(l1_bitmasks[i][j / 64 + 2]);
+
+                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i][j / 64 + 3], x3);
+                val_count += std::popcount(l1_bitmasks[i][j / 64 + 3]);
+            }
+
             __m512i acc0 = _mm512_setzero_si512();
             __m512i acc1 = _mm512_setzero_si512();
             __m512i acc2 = _mm512_setzero_si512();
             __m512i acc3 = _mm512_setzero_si512();
 
-            int j = 0;
-            for (; j < count - count % 4; j += 4) {
-                __m512i x0 = _mm512_set1_epi32(*reinterpret_cast<const uint32_t*>(&vec[4 * indices[j + 0]]));
-                __m512i x1 = _mm512_set1_epi32(*reinterpret_cast<const uint32_t*>(&vec[4 * indices[j + 1]]));
-                __m512i x2 = _mm512_set1_epi32(*reinterpret_cast<const uint32_t*>(&vec[4 * indices[j + 2]]));
-                __m512i x3 = _mm512_set1_epi32(*reinterpret_cast<const uint32_t*>(&vec[4 * indices[j + 3]]));
+            for (int j = 0; j < (val_count + 3) / 4; j += 4) {
+                __m512i x0 = _mm512_set1_epi32(*reinterpret_cast<const uint32_t*>(&values[4 * (j + 0)]));
+                __m512i x1 = _mm512_set1_epi32(*reinterpret_cast<const uint32_t*>(&values[4 * (j + 1)]));
+                __m512i x2 = _mm512_set1_epi32(*reinterpret_cast<const uint32_t*>(&values[4 * (j + 2)]));
+                __m512i x3 = _mm512_set1_epi32(*reinterpret_cast<const uint32_t*>(&values[4 * (j + 3)]));
 
-                __m512i w0 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&l1_weights[i / BLOCK_HEIGHT][indices[j + 0]]));
-                __m512i w1 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&l1_weights[i / BLOCK_HEIGHT][indices[j + 1]]));
-                __m512i w2 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&l1_weights[i / BLOCK_HEIGHT][indices[j + 2]]));
-                __m512i w3 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&l1_weights[i / BLOCK_HEIGHT][indices[j + 3]]));
+                __m512i w0 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&l1_weights[i / BLOCK_HEIGHT][j + 0]));
+                __m512i w1 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&l1_weights[i / BLOCK_HEIGHT][j + 1]));
+                __m512i w2 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&l1_weights[i / BLOCK_HEIGHT][j + 2]));
+                __m512i w3 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&l1_weights[i / BLOCK_HEIGHT][j + 3]));
 
                 acc0 = _mm512_dpbusd_epi32(acc0, x0, w0);
                 acc1 = _mm512_dpbusd_epi32(acc1, x1, w1);
                 acc2 = _mm512_dpbusd_epi32(acc2, x2, w2);
                 acc3 = _mm512_dpbusd_epi32(acc3, x3, w3);
-            }
-
-            for (; j < count; ++j) {
-                __m512i x = _mm512_set1_epi32(*reinterpret_cast<const uint32_t*>(&vec[4 * indices[j]]));
-                __m512i w = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&l1_weights[i / BLOCK_HEIGHT][indices[j]]));
-
-                acc0 = _mm512_dpbusd_epi32(acc0, x, w);
             }
 
             __m512i acc = _mm512_add_epi32(_mm512_add_epi32(_mm512_add_epi32(acc0, acc1), acc2), acc3);

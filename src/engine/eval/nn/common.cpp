@@ -18,27 +18,17 @@ namespace episteme::eval::nn {
         l0_weights = data.l0_weights;
         l0_biases = data.l0_biases;
 
-#if (defined(USE_AVX512) && defined(USE_VNNI)) || (defined(USE_AVX2)) || (defined(USE_SSSE3))
-        L1Weights l1_weights_pre{};
-#if defined(USE_AVX512) && defined(USE_VNNI)
+        L1Weights l1_weights_pre = {};
+
         std::array<size_t, 8> perm = {0, 4, 1, 5, 2, 6, 3, 7};
         for (int i = 0; i < L2_WIDTH; ++i) {
-            for (int j = 0; j < L1_WIDTH; ++j) {
+            for (int j = 0; j < L1_NNZ; ++j) {
                 l1_weights_pre[i][j] = data.l1_weights[i][(j / 64) * 64 + perm[(j % 64) / 8] * 8 + (j % 8)];
             }
         }
-#elif defined(USE_AVX2)
-        std::array<size_t, 4> perm = {0, 2, 1, 3};
+
         for (int i = 0; i < L2_WIDTH; ++i) {
-            for (int j = 0; j < L1_WIDTH; ++j) {
-                l1_weights_pre[i][j] = data.l1_weights[i][(j / 32) * 32 + perm[(j % 32) / 8] * 8 + (j % 8)];
-            }
-        }
-#else
-        l1_weights_pre = data.l1_weights;
-#endif
-        for (int i = 0; i < L2_WIDTH; ++i) {
-            for (int j = 0; j < L1_WIDTH; ++j) {
+            for (int j = 0; j < L1_NNZ; ++j) {
                 int block_row = i / BLOCK_HEIGHT;
                 int block_col = j / 4;
                 int in_block_row = i % BLOCK_HEIGHT;
@@ -46,10 +36,8 @@ namespace episteme::eval::nn {
                 l1_weights[block_row][block_col][in_block_row * 4 + in_block_col] = l1_weights_pre[i][j];
             }
         }
-#else
-        l1_weights = data.l1_weights;
-#endif
 
+        l1_bitmasks = data.l1_bitmasks;
         l1_biases = data.l1_biases;
         l2_weights = data.l2_weights;
         l2_biases = data.l2_biases;
