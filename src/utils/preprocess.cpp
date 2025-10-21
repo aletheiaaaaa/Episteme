@@ -58,19 +58,6 @@ NNUECompressed process_net(const NNUERaw& raw) {
             }
         }
 
-        // Print the first bitmask (first 64 bits) for each row in this chunk
-        std::cout << "Chunk " << chunk << " bitmask[0]: 0x" << std::hex << chunk_bitmask[0] << std::dec << std::endl;
-        for (int row = 0; row < 16; ++row) {
-            int i = chunk * 16 + row;
-            uint64_t row_bitmask_0 = 0;
-            for (int j = 0; j < 64; ++j) {
-                if (raw.l1_weights[i][j] != 0) {
-                    row_bitmask_0 |= (1ULL << j);
-                }
-            }
-            std::cout << "  Row " << i << " bitmask[0]: 0x" << std::hex << row_bitmask_0 << std::dec << std::endl;
-        }
-
         // Compress each row using the chunk bitmask
         for (int row = 0; row < 16; ++row) {
             int i = chunk * 16 + row;
