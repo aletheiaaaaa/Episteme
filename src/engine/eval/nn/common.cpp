@@ -1,48 +1,6 @@
 #include "common.h"
 
 namespace episteme::eval::nn {
-    void NNUEData::init_random() {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<int16_t> dis(-QA, QA);
-
-        for (auto& row : l0_weights) {
-            for (auto& val : row) {
-                val = dis(gen);
-            }
-        }
-
-        for (auto& val : l0_biases) {
-            val = dis(gen);
-        }
-
-        for (auto& row : l1_weights) {
-            for (auto& val : row) {
-                val = dis(gen);
-            }
-        }
-
-        for (auto& val : l1_biases) {
-            val = dis(gen);
-        }
-
-        for (auto& row : l2_weights) {
-            for (auto& val : row) {
-                val = dis(gen);
-            }
-        }
-
-        for (auto& val : l2_biases) {
-            val = dis(gen);
-        }
-
-        for (auto& val : l3_weights) {
-            val = dis(gen);
-        }
-
-        l3_bias = dis(gen);
-    }
-
     Accumulator NNUE::update_accumulator(const Position& position, const Move& move, Accumulator accum) const {
         Square sq_src = move.from_square();
         Square sq_dst = move.to_square();

@@ -54,20 +54,6 @@ void copy_common_fields(T& dst, const U& src) {
     dst.l3_bias = src.l3_bias;
 }
 
-NNUERaw reorder_net(const NNUERaw& raw) {
-    NNUERaw reordered;
-    copy_common_fields(reordered, raw);
-
-    std::array<size_t, 8> perm = {0, 4, 1, 5, 2, 6, 3, 7};
-    for (int i = 0; i < L2_WIDTH; ++i) {
-        for (int j = 0; j < L1_NNZ; ++j) {
-            reordered.l1_weights[i][j] = raw.l1_weights[i][(j / 64) * 64 + perm[(j % 64) / 8] * 8 + (j % 8)];
-        }
-    }
-
-    return reordered;
-}
-
 NNUECompressed compress_net(const NNUERaw& reordered) {
     NNUECompressed compressed;
 
@@ -102,11 +88,11 @@ NNUECompressed compress_net(const NNUERaw& reordered) {
     return compressed;
 }
 
-NNUETransposed transpose_net(const NNUECompressed& compressed) {
-    NNUETransposed permuted;
+NNUETransposed transpose_net(const NNUECompressed& permuted) {
+    NNUETransposed transposed;
 
-    copy_common_fields(permuted, compressed);
-    permuted.l1_bitmasks = compressed.l1_bitmasks;
+    copy_common_fields(transposed, permuted);
+    transposed.l1_bitmasks = permuted.l1_bitmasks;
 
     for (int i = 0; i < L2_WIDTH; ++i) {
         for (int j = 0; j < L1_NNZ; ++j) {
@@ -114,11 +100,11 @@ NNUETransposed transpose_net(const NNUECompressed& compressed) {
             int block_col = j / 4;
             int in_block_row = i % 16;
             int in_block_col = j % 4;
-            permuted.l1_weights[block_row][block_col][in_block_row * 4 + in_block_col] = compressed.l1_weights[i][j];
+            transposed.l1_weights[block_row][block_col][in_block_row * 4 + in_block_col] = permuted.l1_weights[i][j];
         }
     }
 
-    return permuted;
+    return transposed;
 }
 
 int main(int argc, char* argv[]) {
@@ -128,9 +114,7 @@ int main(int argc, char* argv[]) {
     infile.read(reinterpret_cast<char*>(&raw), sizeof(NNUERaw));
     infile.close();
 
-    NNUERaw reordered = reorder_net(raw);
-    NNUECompressed compressed = compress_net(reordered);
-    NNUETransposed transposed = transpose_net(compressed);
+    NNUETransposed transposed = transpose_net(compress_net(raw));
 
     std::ofstream outfile(argv[2], std::ios::binary | std::ios::ate);
     outfile.write(reinterpret_cast<const char*>(&transposed), sizeof(NNUETransposed));
