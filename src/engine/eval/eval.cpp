@@ -5,11 +5,7 @@ INCBIN(WEIGHTS, EVALFILE);
 namespace episteme::eval {
     using namespace nn;
 
-    const NNUE* nnue = []{
-        const NNUEData data = *reinterpret_cast<const NNUEData*>(gWEIGHTSData);
-        return new NNUE(data);
-    }();
-
+    const NNUE* nnue = reinterpret_cast<const NNUE*>(gWEIGHTSData);
 
     Accumulator update(const Position& position, const Move& move, Accumulator accum) {
         accum = nnue->update_accumulator(position, move, accum);

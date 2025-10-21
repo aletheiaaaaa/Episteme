@@ -1,52 +1,6 @@
 #include "common.h"
 
 namespace episteme::eval::nn {
-    ShufTable::ShufTable() {
-        for (int i = 0; i < 256; ++i) {
-            table[i].fill(0);
-
-            uint8_t idx = 0;
-            for (uint8_t bit = 0; bit < 8; ++bit) {
-                if (i & (1 << bit)) {
-                    table[i][idx++] = bit;
-                }
-            }
-        }
-    }
-
-    NNUE::NNUE(const NNUEData& data) {
-        l0_weights = data.l0_weights;
-        l0_biases = data.l0_biases;
-
-        L1Weights l1_weights_pre = {};
-
-        std::array<size_t, 8> perm = {0, 4, 1, 5, 2, 6, 3, 7};
-        for (int i = 0; i < L2_WIDTH; ++i) {
-            for (int j = 0; j < L1_NNZ; ++j) {
-                l1_weights_pre[i][j] = data.l1_weights[i][(j / 64) * 64 + perm[(j % 64) / 8] * 8 + (j % 8)];
-            }
-        }
-
-        for (int i = 0; i < L2_WIDTH; ++i) {
-            for (int j = 0; j < L1_NNZ; ++j) {
-                int block_row = i / BLOCK_HEIGHT;
-                int block_col = j / 4;
-                int in_block_row = i % BLOCK_HEIGHT;
-                int in_block_col = j % 4;
-                l1_weights[block_row][block_col][in_block_row * 4 + in_block_col] = l1_weights_pre[i][j];
-            }
-        }
-
-        l1_bitmasks = data.l1_bitmasks;
-        l1_biases = data.l1_biases;
-        l2_weights = data.l2_weights;
-        l2_biases = data.l2_biases;
-        l3_weights = data.l3_weights;
-        l3_bias = data.l3_bias;
-
-        table = ShufTable();
-    }
-
     void NNUEData::init_random() {
         std::random_device rd;
         std::mt19937 gen(rd());

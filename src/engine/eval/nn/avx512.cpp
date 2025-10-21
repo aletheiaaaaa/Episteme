@@ -57,17 +57,17 @@ namespace episteme::eval::nn {
                 __m512i x2 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&in[j + 128]));
                 __m512i x3 = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&in[j + 192]));
 
-                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i][j / 64 + 0], x0);
-                val_count += std::popcount(l1_bitmasks[i][j / 64 + 0]);
+                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i / 16][j / 64 + 0], x0);
+                val_count += std::popcount(l1_bitmasks[i / 16][j / 64 + 0]);
 
-                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i][j / 64 + 1], x1);
-                val_count += std::popcount(l1_bitmasks[i][j / 64 + 1]);
+                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i / 16][j / 64 + 1], x1);
+                val_count += std::popcount(l1_bitmasks[i / 16][j / 64 + 1]);
 
-                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i][j / 64 + 2], x2);
-                val_count += std::popcount(l1_bitmasks[i][j / 64 + 2]);
+                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i / 16][j / 64 + 2], x2);
+                val_count += std::popcount(l1_bitmasks[i / 16][j / 64 + 2]);
 
-                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i][j / 64 + 3], x3);
-                val_count += std::popcount(l1_bitmasks[i][j / 64 + 3]);
+                _mm512_mask_compressstoreu_epi8(reinterpret_cast<__m512i*>(&values[val_count]), l1_bitmasks[i / 16][j / 64 + 3], x3);
+                val_count += std::popcount(l1_bitmasks[i / 16][j / 64 + 3]);
             }
 
             __m512i acc0 = _mm512_setzero_si512();

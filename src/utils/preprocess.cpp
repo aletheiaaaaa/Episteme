@@ -4,61 +4,86 @@
 #include <cstdint>
 #include <iostream>
 #include <bit>
+#include <variant>
 
 constexpr int L1_WIDTH = 1024;
 constexpr int L2_WIDTH = 128;
 constexpr int L3_WIDTH = 32;
 
-struct NNUERaw {
-    alignas(64) std::array<std::array<int16_t, L1_WIDTH>, 768> l0_weights;
-    alignas(64) std::array<int16_t, L1_WIDTH> l0_biases;
-    alignas(64) std::array<std::array<int8_t, L1_WIDTH>, L2_WIDTH> l1_weights;
-    alignas(64) std::array<float, L2_WIDTH> l1_biases;
-    alignas(64) std::array<std::array<float, L2_WIDTH>, L3_WIDTH> l2_weights;
-    alignas(64) std::array<float, L3_WIDTH> l2_biases;
-    alignas(64) std::array<float, L3_WIDTH> l3_weights;
-    alignas(64) float l3_bias;
+constexpr int L1_NNZ = 208;
+
+using L0Weights = std::array<std::array<int16_t, L1_WIDTH>, 768>;
+using L1Weights = std::array<std::array<int8_t, L1_WIDTH>, L2_WIDTH>;
+using L2Weights = std::array<std::array<float, L2_WIDTH>, L3_WIDTH>;
+using L3Weights = std::array<float, L3_WIDTH>;
+
+using L0Biases = std::array<int16_t, L1_WIDTH>;
+using L1Biases = std::array<float, L2_WIDTH>;
+using L2Biases = std::array<float, L3_WIDTH>;
+using L3Bias = float;
+
+using L1Bitmask = std::array<std::array<uint64_t, L1_WIDTH / 64>, L2_WIDTH / 16>;
+using L1Nonzero = std::array<std::array<int8_t, L1_NNZ>, L2_WIDTH>;
+using L1Transpose = std::array<std::array<std::array<int8_t, 16 * 4>, L1_NNZ / 4>, L2_WIDTH / 16>;
+
+template <typename L1W, typename L1WMask>
+struct NNUEBase {
+    alignas(64) L0Weights l0_weights;
+    alignas(64) L0Biases l0_biases;
+    alignas(64) L1W l1_weights;
+    alignas(64) L1WMask l1_bitmasks;
+    alignas(64) L1Biases l1_biases;
+    alignas(64) L2Weights l2_weights;
+    alignas(64) L2Biases l2_biases;
+    alignas(64) L3Weights l3_weights;
+    alignas(64) L3Bias l3_bias;
 };
 
-constexpr int MAX_NNZ = 208;
+struct NNUERaw : NNUEBase<L1Weights, std::monostate> {};
+struct NNUECompressed : NNUEBase<L1Nonzero, L1Bitmask> {};
+struct NNUETransposed : NNUEBase<L1Transpose, L1Bitmask> {};
 
-struct NNUECompressed {
-    alignas(64) std::array<std::array<int16_t, L1_WIDTH>, 768> l0_weights;
-    alignas(64) std::array<int16_t, L1_WIDTH> l0_biases;
-    alignas(64) std::array<std::array<int8_t, MAX_NNZ>, L2_WIDTH> l1_weights;
-    alignas(64) std::array<std::array<uint64_t, L1_WIDTH / 64>, L2_WIDTH> l1_bitmasks;
-    alignas(64) std::array<float, L2_WIDTH> l1_biases;
-    alignas(64) std::array<std::array<float, L2_WIDTH>, L3_WIDTH> l2_weights;
-    alignas(64) std::array<float, L3_WIDTH> l2_biases;
-    alignas(64) std::array<float, L3_WIDTH> l3_weights;
-    alignas(64) float l3_bias;
-};
+template <typename T, typename U>
+void copy_common_fields(T& dst, const U& src) {
+    dst.l0_weights = src.l0_weights;
+    dst.l0_biases = src.l0_biases;
+    dst.l1_biases = src.l1_biases;
+    dst.l2_weights = src.l2_weights;
+    dst.l2_biases = src.l2_biases;
+    dst.l3_weights = src.l3_weights;
+    dst.l3_bias = src.l3_bias;
+}
 
-NNUECompressed process_net(const NNUERaw& raw) {
+NNUERaw reorder_net(const NNUERaw& raw) {
+    NNUERaw reordered;
+    copy_common_fields(reordered, raw);
+
+    std::array<size_t, 8> perm = {0, 4, 1, 5, 2, 6, 3, 7};
+    for (int i = 0; i < L2_WIDTH; ++i) {
+        for (int j = 0; j < L1_NNZ; ++j) {
+            reordered.l1_weights[i][j] = raw.l1_weights[i][(j / 64) * 64 + perm[(j % 64) / 8] * 8 + (j % 8)];
+        }
+    }
+
+    return reordered;
+}
+
+NNUECompressed compress_net(const NNUERaw& reordered) {
     NNUECompressed compressed;
 
-    compressed.l0_weights = raw.l0_weights;
-    compressed.l0_biases = raw.l0_biases;
-    compressed.l1_biases = raw.l1_biases;
-    compressed.l2_weights = raw.l2_weights;
-    compressed.l2_biases = raw.l2_biases;
-    compressed.l3_weights = raw.l3_weights;
-    compressed.l3_bias = raw.l3_bias;
+    copy_common_fields(compressed, reordered);
 
-    // Process in chunks of 16 rows
     for (int chunk = 0; chunk < L2_WIDTH / 16; ++chunk) {
-        // Compute OR'd bitmask across 16 rows in this chunk
         std::array<uint64_t, L1_WIDTH / 64> chunk_bitmask{};
         for (int row = 0; row < 16; ++row) {
             int i = chunk * 16 + row;
             for (int j = 0; j < L1_WIDTH; ++j) {
-                if (raw.l1_weights[i][j] != 0) {
+                if (reordered.l1_weights[i][j] != 0) {
                     chunk_bitmask[j / 64] |= (1ULL << (j % 64));
                 }
             }
         }
 
-        // Compress each row using the chunk bitmask
         for (int row = 0; row < 16; ++row) {
             int i = chunk * 16 + row;
             compressed.l1_weights[i].fill(0);
@@ -66,27 +91,49 @@ NNUECompressed process_net(const NNUERaw& raw) {
 
             for (int j = 0; j < L1_WIDTH; ++j) {
                 if (chunk_bitmask[j / 64] & (1ULL << (j % 64))) {
-                    compressed.l1_weights[i][nnz_count++] = raw.l1_weights[i][j];
+                    compressed.l1_weights[i][nnz_count++] = reordered.l1_weights[i][j];
                 }
             }
-
-            compressed.l1_bitmasks[i] = chunk_bitmask;
         }
+
+        compressed.l1_bitmasks[chunk] = chunk_bitmask;
     }
 
     return compressed;
 }
 
-int main() {
-    std::ifstream infile("aquamarine_raw.bin", std::ios::binary);
+NNUETransposed transpose_net(const NNUECompressed& compressed) {
+    NNUETransposed permuted;
+
+    copy_common_fields(permuted, compressed);
+    permuted.l1_bitmasks = compressed.l1_bitmasks;
+
+    for (int i = 0; i < L2_WIDTH; ++i) {
+        for (int j = 0; j < L1_NNZ; ++j) {
+            int block_row = i / 16;
+            int block_col = j / 4;
+            int in_block_row = i % 16;
+            int in_block_col = j % 4;
+            permuted.l1_weights[block_row][block_col][in_block_row * 4 + in_block_col] = compressed.l1_weights[i][j];
+        }
+    }
+
+    return permuted;
+}
+
+int main(int argc, char* argv[]) {
+    std::ifstream infile(argv[1], std::ios::binary);
+
     NNUERaw raw;
     infile.read(reinterpret_cast<char*>(&raw), sizeof(NNUERaw));
     infile.close();
 
-    NNUECompressed compressed = process_net(raw);
+    NNUERaw reordered = reorder_net(raw);
+    NNUECompressed compressed = compress_net(reordered);
+    NNUETransposed transposed = transpose_net(compressed);
 
-    std::ofstream outfile("aquamarine_1024_128.bin", std::ios::binary);
-    outfile.write(reinterpret_cast<const char*>(&compressed), sizeof(NNUECompressed));
+    std::ofstream outfile(argv[2], std::ios::binary | std::ios::ate);
+    outfile.write(reinterpret_cast<const char*>(&transposed), sizeof(NNUETransposed));
     outfile.close();
 
     return 0;
