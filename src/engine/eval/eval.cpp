@@ -1,11 +1,11 @@
 #include "eval.h"
 
-INCBIN(WEIGHTS, EVALFILE);
+INCBIN(NNUE, EVALFILE);
 
 namespace episteme::eval {
     using namespace nn;
 
-    const NNUE* nnue = reinterpret_cast<const NNUE*>(gWEIGHTSData);
+    const NNUE* nnue = reinterpret_cast<const NNUE*>(gNNUEData);
 
     Accumulator update(const Position& position, const Move& move, Accumulator accum) {
         accum = nnue->update_accumulator(position, move, accum);

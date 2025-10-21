@@ -29,9 +29,8 @@ namespace episteme::eval::nn {
 
                     __m512i pair0 = _mm512_mulhi_epi16(_mm512_slli_epi16(acc00, 16 - SHIFT), acc01);
                     __m512i pair1 = _mm512_mulhi_epi16(_mm512_slli_epi16(acc10, 16 - SHIFT), acc11);
-                    __m512i pair = _mm512_permutexvar_epi64(_mm512_setr_epi64(0, 2, 4, 6, 1, 3, 5, 7), _mm512_packus_epi16(pair0, pair1));
 
-                    _mm512_storeu_si512(&out[j + offset + is_ntm * (L1_WIDTH / 2)], pair);
+                    _mm512_storeu_si512(&out[j + offset + is_ntm * (L1_WIDTH / 2)], _mm512_packus_epi16(pair0, pair1));
                 };
 
                 process_chunk(0);
