@@ -88,7 +88,7 @@ $(EVALFILE):
 $(PROCESSED_NET): $(EVALFILE) $(PREPROCESS_EXE)
 	@echo "Processing $(EVALFILE) -> $(PROCESSED_NET)"
 	$(PREPROCESS_EXE) $(EVALFILE) $(PROCESSED_NET)
-# 	@rm -f $(EVALFILE)
+	@rm -f $(EVALFILE)
 
 # Compile sources
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
@@ -103,11 +103,11 @@ download-net:
 
 # Clean build artifacts but keep processed network file
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET)
+	rm -rf $(OBJ_DIR) $(TARGET) $(PREPROCESS_EXE)
 
 # Clean everything including processed network file
 clean-all:
-	rm -rf $(OBJ_DIR) $(TARGET) $(PROCESSED_NET)
+	rm -rf $(OBJ_DIR) $(TARGET) $(EVALFILE) $(PROCESSED_NET) $(PREPROCESS_EXE)
 
 # Rebuild without re-downloading network
 rebuild: clean all
