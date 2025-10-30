@@ -21,7 +21,7 @@ namespace episteme::eval::nn {
     constexpr int16_t EVAL_SCALE = 400;
 
     constexpr int L1_WIDTH = 1024;
-    constexpr int L1_NNZ = 208;
+    constexpr int L1_NNZ = 192;
     constexpr int L2_WIDTH = 128;
     constexpr int L3_WIDTH = 32;
 

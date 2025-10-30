@@ -10,7 +10,7 @@ constexpr int L1_WIDTH = 1024;
 constexpr int L2_WIDTH = 128;
 constexpr int L3_WIDTH = 32;
 
-constexpr int L1_NNZ = 208;
+constexpr int L1_NNZ = 192;
 
 using L0Weights = std::array<std::array<int16_t, L1_WIDTH>, 768>;
 using L1Weights = std::array<std::array<int8_t, L1_WIDTH>, L2_WIDTH>;

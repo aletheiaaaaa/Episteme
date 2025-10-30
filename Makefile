@@ -32,7 +32,7 @@ else
 	$(error Unsupported CPU architecture. Minimum requirement: AVX-512 with VNNI support.)
 endif
 
-DEFAULT_NET := aquamarine.bin
+DEFAULT_NET := axolotl.bin
 EVALFILE    ?= $(DEFAULT_NET)
 PROCESSED_NET := $(basename $(EVALFILE))_$(DETECTED_ARCH).bin
 
@@ -88,7 +88,7 @@ $(EVALFILE):
 $(PROCESSED_NET): $(EVALFILE) $(PREPROCESS_EXE)
 	@echo "Processing $(EVALFILE) -> $(PROCESSED_NET)"
 	$(PREPROCESS_EXE) $(EVALFILE) $(PROCESSED_NET)
-	@rm -f $(EVALFILE)
+# 	@rm -f $(EVALFILE)
 
 # Compile sources
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
