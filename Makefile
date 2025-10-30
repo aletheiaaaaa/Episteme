@@ -88,7 +88,7 @@ $(EVALFILE):
 $(PROCESSED_NET): $(EVALFILE) $(PREPROCESS_EXE)
 	@echo "Processing $(EVALFILE) -> $(PROCESSED_NET)"
 	$(PREPROCESS_EXE) $(EVALFILE) $(PROCESSED_NET)
-# 	@rm -f $(EVALFILE)
+	@rm -f $(EVALFILE)
 
 # Compile sources
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
