@@ -549,6 +549,7 @@ namespace episteme::search {
 
         Report last_report;
         int32_t last_score = 0;
+        int32_t total_time = 0;
 
         for (int depth = 1; depth <= max_depth; depth++) {
             Parameters iter_params = params;
@@ -559,12 +560,13 @@ namespace episteme::search {
 
             last_report = report;
             last_score = report.score;
+            total_time += report.time;
 
             bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
             int32_t display_score = is_mate ? (1 + MATE - std::abs(report.score)) / 2 : report.score;
 
             std::cout << "info depth " << report.depth
-                << " time " << report.time
+                << " time " << total_time
                 << " nodes " << report.nodes
                 << " nps " << report.nps
                 << " score " << (is_mate ? "mate " : "cp ") << display_score
