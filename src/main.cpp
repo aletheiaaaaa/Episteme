@@ -4,7 +4,7 @@ using namespace episteme;
 
 int main(int argc, char *argv[]) {
     hash::init();
-    search::init_lmr_table();
+    tunable::init_lmr_table();
 
     search::Config cfg;
     search::Engine engine(cfg);
