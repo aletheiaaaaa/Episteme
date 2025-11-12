@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../../utils/tunable.h"
 #include "../chess/move.h"
 #include "stack.h"
 
@@ -9,13 +8,11 @@
 #include <algorithm>
 
 namespace episteme::hist {
-    using namespace tunable;
-
     constexpr int MAX_HIST = 16384;
     constexpr int MAX_CORR_HIST = 1024;
 
     [[nodiscard]] inline int16_t bonus(int16_t depth) {
-        return static_cast<int16_t>(std::clamp(depth * hist_bonus_mult(), 0, hist_bonus_max()));
+        return static_cast<int16_t>(std::clamp(depth * 300, 0, 2500));
     }
 
     struct Entry {

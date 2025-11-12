@@ -4,15 +4,11 @@
 #include "../chess/perft.h"
 #include "../search/search.h"
 #include "../../utils/datagen.h"
-#include "../../utils/tunable.h"
 
-#include <format>
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <array>
-#include <vector>
-#include <typeinfo>
 
 namespace episteme::uci {
     int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine);
@@ -27,7 +23,4 @@ namespace episteme::uci {
     auto bench(const std::string& args, search::Config& cfg);
     auto perft(const std::string& args, search::Config& cfg);
     auto datagen(const std::string& args);
-#if ENABLE_TUNING
-    auto print_tunables();
-#endif
 }

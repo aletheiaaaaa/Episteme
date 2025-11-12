@@ -4,7 +4,6 @@
 #include "../chess/position.h"
 #include "../chess/movegen.h"
 #include "../../external/incbin.h"
-#include "../../utils/tunable.h"
 
 namespace episteme::eval {
     nn::Accumulator update(const Position& position, const Move& move, nn::Accumulator accum);    

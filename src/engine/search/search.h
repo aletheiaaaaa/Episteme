@@ -3,12 +3,10 @@
 #include "../chess/movegen.h"
 #include "../eval/eval.h"
 #include "../../utils/datagen.h"
-#include "../../utils/tunable.h"
 #include "ttable.h"
 #include "history.h"
 #include "stack.h"
 
-#include <format>
 #include <cstdint>
 #include <chrono>
 #include <algorithm>
@@ -57,6 +55,9 @@ namespace episteme::search {
 
     constexpr int32_t DELTA = 20;
     constexpr int32_t MAX_SEARCH_PLY = 256;
+
+    extern std::array<std::array<int16_t, 64>, 64> lmr_table;
+    void init_lmr_table();
 
     struct Parameters {
         std::array<int32_t, 2> time = {};
@@ -109,6 +110,7 @@ namespace episteme::search {
         int16_t depth;
         int64_t time;
         uint64_t nodes;
+        int64_t nps;
         int32_t score;
         Line line;
     };

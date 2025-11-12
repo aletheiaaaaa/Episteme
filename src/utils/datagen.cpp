@@ -107,8 +107,7 @@ namespace episteme::datagen {
             if ((i + 1) % 16 == 0 || (i + 1) == workload) {
                 time_point end = steady_clock::now();
                 int32_t elapsed = duration_cast<milliseconds>(end - start).count() / 1000;
-                std::cout << std::format("Thread {}: {}/{} games completed at {} pos/sec\n", 
-                    id, games, workload, positions / (elapsed > 0 ? elapsed : 1));
+                std::cout << "Thread " << id << ": " << games << "/" << workload << " games completed at " << positions / (elapsed > 0 ? elapsed : 1) << " pos/sec" << std::endl;
 
                 start = steady_clock::now();
                 positions = 0;
@@ -117,11 +116,11 @@ namespace episteme::datagen {
     }
 
     void run(Parameters& params) {
-        std::cout << "Beginning datagen.\n";
+        std::cout << "Beginning datagen." << std::endl;
 
         std::signal(SIGINT, []([[maybe_unused]] int signum){
             stop = true;
-            std::cout << "Datagen interrupted.\n";
+            std::cout << "Datagen interrupted." << std::endl;
             return;
         });
 
@@ -143,14 +142,14 @@ namespace episteme::datagen {
                 [&params, file = std::move(file), i]() {
                     std::ofstream stream(file, std::ios::binary | std::ios::app);
                     if (!stream) {
-                        std::cout << std::format("Failed to open {} on thread {}\n", file.string(), i);
+                        std::cout << "Failed to open " << file.string() << " on thread " << i << std::endl;
                         return;
                     }
 
                     game_loop(params, stream, i);
 
                     if (!stream.good()) {
-                        std::cout << std::format("Error encountered on thread {} when closing\n", i);
+                        std::cout << "Error encountered on thread " << i << " when closing" << std::endl;
                     }
                 }
             );
@@ -158,7 +157,7 @@ namespace episteme::datagen {
 
         for (auto& thread : threads) thread.join();
 
-        std::cout << std::format("Generated {} data files. Concatenating.\n", params.num_threads);
+        std::cout << "Generated " << params.num_threads << " data files. Concatenating." << std::endl;
 
         std::ostringstream oss;
         oss << params.out_dir << "/data." << Format::EXTENSION;
@@ -166,7 +165,7 @@ namespace episteme::datagen {
 
         std::ofstream final(output, std::ios::binary);
         if (!final) {
-            std::cout << std::format("Failed to open output file {}\n", output.string());
+            std::cout << "Failed to open output file " << output.string() << std::endl;
         }
 
         int32_t concats = 0;
@@ -177,13 +176,13 @@ namespace episteme::datagen {
                 input.close();
 
                 if (std::remove(file.c_str()) == 0) concats++;
-                else std::cout << std::format("Error removing file {} after concatenation\n", file);
+                else std::cout << "Error removing file " << file << " after concatenation" << std::endl;
             } else {
-                std::cout << std::format("Error opening file {} during concatenation\n", file);
+                std::cout << "Error opening file " << file << " during concatenation" << std::endl;
             }
         }
 
-        std::cout << std::format("Concatenated {} files\n", concats);
-        std::cout << "Datagen complete.\n";
+        std::cout << "Concatenated " << concats << " files" << std::endl;
+        std::cout << "Datagen complete." << std::endl;
     }
 }
