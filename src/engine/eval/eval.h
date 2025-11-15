@@ -6,6 +6,8 @@
 #include "../../external/incbin.h"
 #include "../../utils/tunable.h"
 
+#include <memory>
+
 namespace episteme::eval {
     nn::Accumulator update(const Position& position, const Move& move, nn::Accumulator accum);    
     nn::Accumulator reset(const Position& position);
