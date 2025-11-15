@@ -5,6 +5,8 @@
 #include "../chess/movegen.h"
 #include "../../external/incbin.h"
 
+#include <memory>
+
 namespace episteme::eval {
     nn::Accumulator update(const Position& position, const Move& move, nn::Accumulator accum);    
     nn::Accumulator reset(const Position& position);

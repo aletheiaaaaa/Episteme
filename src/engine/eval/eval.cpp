@@ -5,7 +5,11 @@ INCBIN(NNUE, EVALFILE);
 namespace episteme::eval {
     using namespace nn;
 
-    const NNUE* nnue = reinterpret_cast<const NNUE*>(gNNUEData);
+    auto nnue_deleter = [](const NNUE*) {};
+    std::unique_ptr<const NNUE, decltype(nnue_deleter)> nnue(
+        reinterpret_cast<const NNUE*>(gNNUEData),
+        nnue_deleter
+    );
 
     Accumulator update(const Position& position, const Move& move, Accumulator accum) {
         accum = nnue->update_accumulator(position, move, accum);
