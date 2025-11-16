@@ -6,6 +6,7 @@
 #include "ttable.h"
 #include "history.h"
 #include "stack.h"
+#include "time.h"
 
 #include <cstdint>
 #include <chrono>
@@ -59,29 +60,6 @@ namespace episteme::search {
     extern std::array<std::array<int16_t, 64>, 64> lmr_table;
     void init_lmr_table();
 
-    struct Parameters {
-        std::array<int32_t, 2> time = {};
-        std::array<int32_t, 2> inc = {};
-
-        int16_t depth = MAX_SEARCH_PLY;
-        uint64_t nodes = 0;
-        uint64_t soft_nodes = 0;
-        int32_t num_games = 0;
-    };
-
-    struct SearchLimits {
-        std::optional<steady_clock::time_point> end;
-        std::optional<uint64_t> max_nodes;
-    
-        bool time_exceeded() const {
-            return end && steady_clock::now() >= *end;
-        }
-    
-        bool node_exceeded(uint64_t current_nodes) const {
-            return max_nodes && current_nodes >= *max_nodes;
-        }
-    };    
-
     struct Line {
         size_t length = 0;
         std::array<Move, MAX_SEARCH_PLY + 1> moves = {};
@@ -106,6 +84,16 @@ namespace episteme::search {
         }
     };
 
+    struct Parameters {
+        std::array<int32_t, 2> time = {};
+        std::array<int32_t, 2> inc = {};
+
+        int16_t depth = MAX_SEARCH_PLY;
+        uint64_t nodes = 0;
+        uint64_t soft_nodes = 0;
+        int32_t num_games = 0;
+    };
+
     struct Report {
         int16_t depth;
         int64_t time;
@@ -115,9 +103,16 @@ namespace episteme::search {
         Line line;
     };
 
+    struct Config {
+        Parameters params = {};
+        uint32_t hash_size = 32;
+        uint16_t num_threads = 1;
+        Position position;
+    };
+
     class Worker {
         public:
-            Worker(tt::Table& ttable) : ttable(ttable), nodes(0), should_stop(false) {};
+            Worker(tt::Table& ttable, time::Limiter& limiter) : ttable(ttable), limiter(limiter), nodes(0), should_stop(false) {};
 
             inline void reset_accum() {
                 accumulator = {};
@@ -161,12 +156,12 @@ namespace episteme::search {
             int32_t eval_correction(const Position& position);
 
             template<bool PV_node>
-            int32_t search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node, SearchLimits limits = {});
+            int32_t search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node);
 
             template<bool PV_node>
-            int32_t quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta, SearchLimits limits);
+            int32_t quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta);
 
-            Report run(int32_t last_score, const Parameters& params, Position& position, const SearchLimits& limits, bool is_absolute);
+            Report run(int32_t last_score, const Parameters& params, Position& position, bool is_absolute);
             int32_t eval(Position& position);
             void bench(int depth);
 
@@ -177,6 +172,7 @@ namespace episteme::search {
             Position position;
 
             tt::Table& ttable;
+            time::Limiter& limiter;
             hist::Table history;
             stack::Stack stack;
 
@@ -184,19 +180,12 @@ namespace episteme::search {
             std::atomic<bool> should_stop;
     };
 
-    struct Config {
-        Parameters params = {};
-        uint32_t hash_size = 32;
-        uint16_t num_threads = 1;
-        Position position;
-    };
-
     class Engine {
         public:
-            Engine(const search::Config& cfg) : ttable(cfg.hash_size), params(cfg.params) {
-                workers.reserve(cfg.num_threads);
-                for (uint16_t i = 0; i < cfg.num_threads; ++i) {
-                    workers.emplace_back(std::make_unique<Worker>(ttable));
+            Engine(const search::Config& search_cfg) : ttable(search_cfg.hash_size), params(search_cfg.params), limiter() {
+                workers.reserve(search_cfg.num_threads);
+                for (uint16_t i = 0; i < search_cfg.num_threads; ++i) {
+                    workers.emplace_back(std::make_unique<Worker>(ttable, limiter));
                 }
             }
 
@@ -237,6 +226,7 @@ namespace episteme::search {
         private:
             tt::Table ttable;
             Parameters params;
+            time::Limiter limiter;
 
             std::vector<std::unique_ptr<Worker>> workers;
     };
