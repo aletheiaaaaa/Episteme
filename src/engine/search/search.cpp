@@ -61,7 +61,7 @@ namespace episteme::search {
             scored_move.score += capt_hist_mult() * history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
             if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
         } else {
-            if (stack[*ply].killer == move) {
+            if (stack[ply.value()].killer == move) {
                 scored_move.score = 800000;
                 return scored_move;
             }
@@ -77,8 +77,8 @@ namespace episteme::search {
     }
 
     template<bool PV_node>
-    int32_t Worker::search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node, SearchLimits limits) {
-        if (nodes % 2000 == 0 && limits.time_exceeded()) {
+    int32_t Worker::search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node) {
+        if (nodes % 2000 == 0 && limiter.time_exceeded()) {
             should_stop = true;
             return 0;
         };
@@ -108,7 +108,7 @@ namespace episteme::search {
         }
 
         if (depth <= 0) {
-            return quiesce<PV_node>(position, PV, ply, alpha, beta, limits);
+            return quiesce<PV_node>(position, PV, ply, alpha, beta);
         }
 
         tt::Entry tt_entry{};
@@ -159,7 +159,7 @@ namespace episteme::search {
                     stack[ply].piece = Piece::None;
 
                     position.make_null();
-                    int32_t score = -search<false>(position, null, depth - reduction, ply + 1, -beta, -beta + 1, !cut_node, limits);
+                    int32_t score = -search<false>(position, null, depth - reduction, ply + 1, -beta, -beta + 1, !cut_node);
                     position.unmake_move();
 
                     if (should_stop) return 0;
@@ -214,7 +214,7 @@ namespace episteme::search {
                 const int16_t new_depth = (depth - 1) / 2;
 
                 stack[ply].excluded = move;
-                int32_t score = search<false>(position, PV, new_depth, ply, new_beta - 1, new_beta, cut_node, limits);
+                int32_t score = search<false>(position, PV, new_depth, ply, new_beta - 1, new_beta, cut_node);
                 stack[ply].excluded = Move();
 
                 if (should_stop) return 0;
@@ -243,7 +243,7 @@ namespace episteme::search {
             if (is_quiet) explored_quiets.add(move);
             else explored_noisies.add(move);
 
-            if (limits.node_exceeded(nodes)) {
+            if (limiter.nodes_exceeded(nodes)) {
                 should_stop = true;
                 position.unmake_move();
 
@@ -272,16 +272,16 @@ namespace episteme::search {
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
-                score = -search<false>(position, candidate, reduced, ply + 1, -alpha - 1, -alpha, true, limits);
+                score = -search<false>(position, candidate, reduced, ply + 1, -alpha - 1, -alpha, true);
                 if (score > alpha && reduced < depth - 1) {
-                    score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node, limits);
+                    score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node);
                 }
             } else if (!is_PV || num_legal > 1) {
-                score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node, limits);
+                score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node);
             }
 
             if (is_PV && (num_legal == 1 || score > alpha)) {
-                score = -search<true>(position, candidate, new_depth, ply + 1, -beta, -alpha, false, limits);
+                score = -search<true>(position, candidate, new_depth, ply + 1, -beta, -alpha, false);
             }
 
             position.unmake_move();
@@ -368,8 +368,8 @@ namespace episteme::search {
     }
 
     template<bool PV_node>
-    int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta, SearchLimits limits) {
-        if (nodes % 2000 == 0 && limits.time_exceeded()) {
+    int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta) {
+        if (nodes % 2000 == 0 && limiter.time_exceeded()) {
             should_stop = true;
             return 0;
         };
@@ -418,14 +418,14 @@ namespace episteme::search {
 
             nodes++;
 
-            if (limits.node_exceeded(nodes)) {
+            if (limiter.nodes_exceeded(nodes)) {
                 should_stop = true;
                 position.unmake_move();
                 return 0;
             };
 
             Line candidate = {};
-            int32_t score = -quiesce<PV_node>(position, candidate, ply + 1, -beta, -alpha, limits);
+            int32_t score = -quiesce<PV_node>(position, candidate, ply + 1, -beta, -alpha);
 
             position.unmake_move();
             accum_history.pop_back();
@@ -462,7 +462,7 @@ namespace episteme::search {
         return best;
     }
 
-    Report Worker::run(int32_t last_score, const Parameters& params, Position& position, const SearchLimits& limits, bool is_absolute) {
+    Report Worker::run(int32_t last_score, const Parameters& params, Position& position, bool is_absolute) {
         accumulator = eval::reset(position);
         accum_history.emplace_back(accumulator);
 
@@ -474,13 +474,13 @@ namespace episteme::search {
         int32_t beta = (depth == 1) ? MATE : last_score + delta;
 
         auto start = steady_clock::now();
-        int32_t score = search<true>(position, PV, depth, 0, alpha, beta, false, limits);
+        int32_t score = search<true>(position, PV, depth, 0, alpha, beta, false);
 
         while (score <= alpha || score >= beta) {
             delta *= 2;
             alpha = last_score - delta;
             beta = last_score + delta;
-            score = search<true>(position, PV, depth, 0, alpha, beta, false, limits);
+            score = search<true>(position, PV, depth, 0, alpha, beta, false);
         }
 
         int64_t elapsed = duration_cast<milliseconds>(steady_clock::now() - start).count();
@@ -530,30 +530,27 @@ namespace episteme::search {
     }
 
     void Engine::run(Position& position) {
-        int16_t max_depth = params.depth;
-        uint64_t target_nodes = params.nodes;
-        int32_t time = params.time[color_idx(position.STM())];
-        int32_t inc  = params.inc[color_idx(position.STM())];
-
-        int32_t bound = time / 20 + inc / 2;
-
-        SearchLimits limits;
-        if (target_nodes) limits.max_nodes = target_nodes;
-        if (time) limits.end = steady_clock::now() + milliseconds(bound);
-
-        time_point<steady_clock> soft_end = steady_clock::now() + milliseconds(bound * 3 / 5);
-
-        reset_nodes();
+        time::Config cfg {
+            .nodes = params.nodes,
+            .time_left = params.time[color_idx(position.STM())],
+            .increment = params.inc[color_idx(position.STM())],
+        };
 
         Report last_report;
         int32_t last_score = 0;
         int32_t total_time = 0;
 
-        for (int depth = 1; depth <= max_depth; depth++) {
+        reset_nodes();
+
+        limiter.set_config(cfg);
+        limiter.calculate_limits();
+        limiter.start();
+
+        for (int depth = 1; depth <= params.depth; depth++) {
             Parameters iter_params = params;
             iter_params.depth = depth;
 
-            Report report = workers[0]->run(last_score, iter_params, position, limits, false);
+            Report report = workers[0]->run(last_score, iter_params, position, false);
             if (workers[0]->stopped()) break;
 
             last_report = report;
@@ -574,7 +571,7 @@ namespace episteme::search {
             }
             std::cout << std::endl;
 
-            if (limits.time_exceeded() || steady_clock::now() >= soft_end) break;
+            if (limiter.time_approaching() || limiter.time_exceeded()) break;
         }
     
         Move best = last_report.line.moves[0];
@@ -582,28 +579,31 @@ namespace episteme::search {
     }
 
     ScoredMove Engine::datagen_search(Position& position) {
-        uint64_t hard_nodes = params.nodes;
-        uint64_t soft_nodes = params.soft_nodes;
-
-        SearchLimits limits{};
-        limits.max_nodes = hard_nodes;
-
-        reset_nodes();
+        time::Config cfg {
+            .nodes = params.nodes,
+            .soft_nodes = params.soft_nodes,
+        };
 
         Report last_report;
         int32_t last_score = 0;
+
+        reset_nodes();
+
+        limiter.set_config(cfg);
+        limiter.calculate_limits();
+        limiter.start();
 
         for (int depth = 1; depth <= 10; depth++) {
             Parameters iter_params = params;
             iter_params.depth = depth;
 
-            Report report = workers[0]->run(last_score, iter_params, position, limits, true);
+            Report report = workers[0]->run(last_score, iter_params, position, true);
             if (workers[0]->stopped()) break;
 
             last_report = report;
             last_score = report.score;
 
-            if (workers[0]->node_count() > soft_nodes) break;
+            if (limiter.nodes_approaching(workers[0]->node_count())) break;
         }
 
         ScoredMove best{
