@@ -25,10 +25,6 @@ namespace episteme::time {
                 start_time = steady_clock::now();
             }
 
-            inline void stop() {
-                end_time = steady_clock::now();
-            }
-
             inline bool time_approaching() const {
                 return soft_limit && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
             }
@@ -66,7 +62,6 @@ namespace episteme::time {
             Config config{};
 
             steady_clock::time_point start_time;
-            steady_clock::time_point end_time;
 
             uint64_t hard_limit = 0;
             uint64_t soft_limit = 0;
