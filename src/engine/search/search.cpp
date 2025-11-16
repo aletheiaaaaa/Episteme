@@ -541,9 +541,13 @@ namespace episteme::search {
         int32_t time = params.time[color_idx(position.STM())];
         int32_t inc  = params.inc[color_idx(position.STM())];
 
+        int32_t bound = time / 20 + inc / 2;
+
         SearchLimits limits;
         if (target_nodes) limits.max_nodes = target_nodes;
-        if (time)limits.end = steady_clock::now() + milliseconds(time / 20 + inc / 2);
+        if (time) limits.end = steady_clock::now() + milliseconds(bound);
+
+        time_point<steady_clock> soft_end = steady_clock::now() + milliseconds(bound * 3 / 5);
 
         reset_nodes();
 
@@ -576,6 +580,8 @@ namespace episteme::search {
                 std::cout << report.line.moves[i].to_string() << " ";
             }
             std::cout << std::endl;
+
+            if (limits.time_exceeded() || steady_clock::now() >= soft_end) break;
         }
     
         Move best = last_report.line.moves[0];
