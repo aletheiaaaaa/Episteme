@@ -1,5 +1,5 @@
 #include "search.h"
-#include "bench.h"
+#include "../../utils/bench.h"
 
 #include <cassert>
 
