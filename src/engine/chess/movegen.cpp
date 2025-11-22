@@ -1,5 +1,7 @@
 #include "movegen.h"
 
+#include <format>
+
 namespace episteme {
     std::array<uint64_t, 64> fill_king_attacks() {
         std::array<uint64_t, 64> king_attacks;
