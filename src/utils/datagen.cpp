@@ -1,6 +1,7 @@
 #include "datagen.h"
 
 #include <cassert>
+#include <format>
 
 namespace episteme::datagen {
     using namespace std::chrono;

@@ -2,6 +2,7 @@
 #include "../../utils/bench.h"
 
 #include <cassert>
+#include <format>
 
 namespace episteme::search {
     using namespace std::chrono;
@@ -560,16 +561,15 @@ namespace episteme::search {
             int32_t nps = report.time > 0 ? (report.nodes * 1000) / total_time : report.nodes;
 
             bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
-            int32_t display_score = is_mate ? (1 + MATE - std::abs(report.score)) / 2 : report.score;
+            int32_t display_score = is_mate ? (report.score > 0 ? (MATE - report.score + 1) / 2 : -(MATE + report.score) / 2) : report.score;
 
-            std::cout << std::format("info depth {} time {} nodes {} nps {} score {} {} pv ",
-                report.depth, total_time, report.nodes, nps,
-                is_mate ? "mate" : "cp", display_score);
-
+            std::string pv;
             for (size_t i = 0; i < report.line.length; ++i) {
-                std::cout << std::format("{} ", report.line.moves[i].to_string());
+                pv += report.line.moves[i].to_string() + " ";
             }
-            std::cout << std::endl;
+            std::cout << std::format("info depth {} time {} nodes {} nps {} score {} {} pv {}\n",
+                report.depth, total_time, report.nodes, nps,
+                is_mate ? "mate" : "cp", display_score, pv);
 
             if (limiter.time_approaching() || limiter.time_exceeded()) break;
         }

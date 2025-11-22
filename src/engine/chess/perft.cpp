@@ -1,5 +1,7 @@
 #include "perft.h"
 
+#include <format>
+
 namespace episteme {
     Position fen_to_position(const std::string& FEN) {
         Position position;
@@ -49,13 +51,13 @@ namespace episteme {
             if (!illegal) {
                 nodes = perft(position, depth - 1);
                 total += nodes;
-                std::cout << move.to_string() << ": " << nodes << "\n";
+                std::cout << std::format("{}: {}\n", move.to_string(), nodes);
             }
-    
+
             position.unmake_move();
         }
-    
-        std::cout << "Total nodes: " << total << "\n";
+
+        std::cout << std::format("Total nodes: {}\n", total);
     }
     
 
@@ -71,7 +73,7 @@ namespace episteme {
             double seconds = duration.count() / 1000.0;
             double nps = nodes / (seconds > 0 ? seconds : 1.0);
 
-            std::cout << "info depth " << i << " nodes " << nodes << " nps " << static_cast<uint64_t>(nps) << std::endl;
+            std::cout << std::format("info depth {} nodes {} nps {}\n", i, nodes, static_cast<uint64_t>(nps));
         }
     }
 
