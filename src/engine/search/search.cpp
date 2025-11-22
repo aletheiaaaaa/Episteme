@@ -2,6 +2,7 @@
 #include "../../utils/bench.h"
 
 #include <cassert>
+#include <format>
 
 namespace episteme::search {
     using namespace std::chrono;
@@ -532,7 +533,7 @@ namespace episteme::search {
         }
 
         int64_t nps = elapsed.count() > 0 ? 1000 * total / elapsed.count() : 0;
-        std::cout << total << " nodes " << nps << " nps" << std::endl;
+        std::cout << std::format("{} nodes {} nps\n", total, nps);
     }
 
     void Engine::run(Position& position) {
@@ -564,25 +565,21 @@ namespace episteme::search {
             total_time += report.time;
 
             bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
-            int32_t display_score = is_mate ? (1 + MATE - std::abs(report.score)) / 2 : report.score;
+            int32_t display_score = is_mate ? (report.score > 0 ? (MATE - report.score + 1) / 2 : -(MATE + report.score) / 2) : report.score;
 
-            std::cout << "info depth " << report.depth
-                << " time " << total_time
-                << " nodes " << report.nodes
-                << " nps " << report.nps
-                << " score " << (is_mate ? "mate " : "cp ") << display_score
-                << " pv ";
-
+            std::string pv;
             for (size_t i = 0; i < report.line.length; ++i) {
-                std::cout << report.line.moves[i].to_string() << " ";
+                pv += report.line.moves[i].to_string() + " ";
             }
-            std::cout << std::endl;
+            std::cout << std::format("info depth {} time {} nodes {} nps {} score {} {} pv {}\n",
+                report.depth, total_time, report.nodes, report.nps,
+                is_mate ? "mate" : "cp", display_score, pv);
 
             if (limiter.time_approaching() || limiter.time_exceeded()) break;
         }
     
         Move best = last_report.line.moves[0];
-        std::cout << "bestmove " << best.to_string() << std::endl;
+        std::cout << std::format("bestmove {}\n", best.to_string());
     }
 
     ScoredMove Engine::datagen_search(Position& position) {
@@ -622,7 +619,7 @@ namespace episteme::search {
     }
 
     void Engine::eval(Position& position) {
-        std::cout << "info score cp " << workers[0]->eval(position) << std::endl;
+        std::cout << std::format("info score cp {}\n", workers[0]->eval(position));
     }
 
     void Engine::bench(int depth) {
