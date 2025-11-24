@@ -64,6 +64,18 @@ namespace episteme {
                 return (move_data == 0x0000);
             }
 
+            [[nodiscard]] inline bool operator==(const Move& other) const {
+                return move_data == other.move_data;
+            }
+
+            [[nodiscard]] inline bool operator!=(const Move& other) const {
+                return move_data != other.move_data;
+            }
+
+            [[nodiscard]] inline bool operator!() const {
+                return move_data == 0x0000;
+            }
+
             std::string to_string() const;
         private:
             uint16_t move_data;

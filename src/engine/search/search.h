@@ -1,17 +1,20 @@
 #pragma once
 
 #include "../chess/movegen.h"
-#include "../evaluation/evaluate.h"
+#include "../eval/eval.h"
 #include "../../utils/datagen.h"
 #include "ttable.h"
 #include "history.h"
 #include "stack.h"
+#include "time.h"
 
 #include <cstdint>
 #include <chrono>
 #include <algorithm>
 #include <iostream>
+#include <atomic>
 #include <optional>
+#include <memory>
 
 namespace episteme::search {
     using namespace std::chrono;
@@ -23,7 +26,7 @@ namespace episteme::search {
         int32_t score = 0;
     };
 
-    struct ScoredList {
+    struct ScoredList : public MoveList {
         inline void add(const ScoredMove& move) {
             list[count] = move;
             count++;
@@ -37,8 +40,11 @@ namespace episteme::search {
             std::iter_swap(list.begin() + src_idx, list.begin() + dst_idx);
         }
 
+        inline ScoredMove operator[](size_t idx) const {
+            return list[idx];
+        }
+
         std::array<ScoredMove, 256> list;
-        size_t count = 0;
     };
 
     void pick_move(ScoredList& scored_list, int start);
@@ -53,29 +59,6 @@ namespace episteme::search {
 
     extern std::array<std::array<int16_t, 64>, 64> lmr_table;
     void init_lmr_table();
-
-    struct Parameters {
-        std::array<int32_t, 2> time = {};
-        std::array<int32_t, 2> inc = {};
-
-        int16_t depth = MAX_SEARCH_PLY;
-        uint64_t nodes = 0;
-        uint64_t soft_nodes = 0;
-        int32_t num_games = 0;
-    };
-
-    struct SearchLimits {
-        std::optional<steady_clock::time_point> end;
-        std::optional<uint64_t> max_nodes;
-    
-        bool time_exceeded() const {
-            return end && steady_clock::now() >= *end;
-        }
-    
-        bool node_exceeded(uint64_t current_nodes) const {
-            return max_nodes && current_nodes >= *max_nodes;
-        }
-    };    
 
     struct Line {
         size_t length = 0;
@@ -101,6 +84,16 @@ namespace episteme::search {
         }
     };
 
+    struct Parameters {
+        std::array<int32_t, 2> time = {};
+        std::array<int32_t, 2> inc = {};
+
+        int16_t depth = MAX_SEARCH_PLY;
+        uint64_t nodes = 0;
+        uint64_t soft_nodes = 0;
+        int32_t num_games = 0;
+    };
+
     struct Report {
         int16_t depth;
         int64_t time;
@@ -110,9 +103,16 @@ namespace episteme::search {
         Line line;
     };
 
+    struct Config {
+        Parameters params = {};
+        uint32_t hash_size = 32;
+        uint16_t num_threads = 1;
+        Position position;
+    };
+
     class Worker {
         public:
-            Worker(tt::Table& ttable) : ttable(ttable), should_stop(false) {};
+            Worker(tt::Table& ttable, time::Limiter& limiter) : ttable(ttable), limiter(limiter), nodes(0), should_stop(false) {};
 
             inline void reset_accum() {
                 accumulator = {};
@@ -153,40 +153,41 @@ namespace episteme::search {
                 return generate_scored_targets(position, generate_all_captures, tt_entry);
             }
 
+            int32_t eval_correction(const Position& position);
+
             template<bool PV_node>
-            int32_t search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, SearchLimits limits = {});
+            int32_t search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node);
 
-            int32_t quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta, SearchLimits limits);
+            template<bool PV_node>
+            int32_t quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta);
 
-            Report run(int32_t last_score, const Parameters& params, Position& position, const SearchLimits& limits, bool is_absolute);
+            Report run(int32_t last_score, const Parameters& params, Position& position, bool is_absolute);
             int32_t eval(Position& position);
             void bench(int depth);
 
         private:
-            nn::Accumulator accumulator;
-            std::vector<nn::Accumulator> accum_history;
+            eval::nn::Accumulator accumulator;
+            std::vector<eval::nn::Accumulator> accum_history;
 
             Position position;
 
             tt::Table& ttable;
+            time::Limiter& limiter;
             hist::Table history;
             stack::Stack stack;
 
-            uint64_t nodes;
-
-            bool should_stop;
-    };
-
-    struct Config {
-        Parameters params = {};
-        uint32_t hash_size = 32;
-        uint16_t num_threads = 1;
-        Position position;
+            std::atomic<uint64_t> nodes;
+            std::atomic<bool> should_stop;
     };
 
     class Engine {
         public:
-            Engine(Config& cfg) : ttable(cfg.hash_size), params(cfg.params), worker(ttable) {};
+            Engine(const search::Config& search_cfg) : ttable(search_cfg.hash_size), params(search_cfg.params), limiter() {
+                workers.reserve(search_cfg.num_threads);
+                for (uint16_t i = 0; i < search_cfg.num_threads; ++i) {
+                    workers.emplace_back(std::make_unique<Worker>(ttable, limiter));
+                }
+            }
 
             inline void set_hash(search::Config& cfg) {
                 ttable.resize(cfg.hash_size);
@@ -196,16 +197,25 @@ namespace episteme::search {
                 params = new_params;
             }
 
+            inline void reset_nodes() {
+                for (auto& worker : workers) {
+                    worker->reset_nodes();
+                }
+            }
+
             inline void reset_go() {
-                worker.reset_history();
-                worker.reset_stop();
+                for (auto& worker : workers) {
+                    worker->reset_stop();
+                }
             }
 
             inline void reset_game() {
                 ttable.reset();
-                worker.reset_accum();
-                worker.reset_history();
-                worker.reset_stop();
+                for (auto& worker : workers) {
+                    worker->reset_history();
+                    worker->reset_accum();
+                    worker->reset_stop();
+                }
             }
 
             void run(Position& position);
@@ -216,7 +226,8 @@ namespace episteme::search {
         private:
             tt::Table ttable;
             Parameters params;
+            time::Limiter limiter;
 
-            Worker worker;
+            std::vector<std::unique_ptr<Worker>> workers;
     };
 }
