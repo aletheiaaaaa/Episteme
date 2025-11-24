@@ -144,15 +144,20 @@ namespace episteme::search {
 
         bool tt_PV = tt_entry.tt_PV;
         bool improving = false;
+        bool worsening = false;
 
         if (!in_check(position, position.STM())) {
             if (ply > 1 && stack[ply - 2].eval != -INF) {
                 improving = static_eval > stack[ply - 2].eval;
             }
+
+            if (ply > 2 && stack[ply - 1].eval != -INF && stack[ply - 3].eval != -INF) {
+                worsening = stack[ply - 1].eval < stack[ply - 3].eval;
+            }
         }
 
         if (!stack[ply].excluded && !in_check(position, position.STM())) {
-            if (!is_PV && depth <= 5 && static_eval >= beta + std::max(depth - improving, 0) * 100) return static_eval;
+            if (!is_PV && depth <= 5 && static_eval >= beta + (depth * 50 - improving * 100 - worsening * 25)) return static_eval;
 
             if (!is_PV && depth >= 3) {
                 const uint64_t no_pawns_or_kings = position.color_bb(position.STM()) & ~position.piece_bb(PieceType::King, position.STM()) & ~position.piece_bb(PieceType::Pawn, position.STM());
