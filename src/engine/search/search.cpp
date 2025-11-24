@@ -151,6 +151,10 @@ namespace episteme::search {
             }
         }
 
+        if (!stack[ply].excluded && ply > 0 && !in_check(position, position.STM())) {
+            if (depth > 0 && stack[ply - 1].reduction > 3 && stack[ply - 1].eval != -INF && static_eval > -stack[ply - 1].eval - 20) depth++;
+        }
+
         if (!stack[ply].excluded && !in_check(position, position.STM())) {
             if (!is_PV && depth <= 5 && static_eval >= beta + std::max(depth - improving, 0) * 100 + std::abs(correction) / 4) return static_eval;
 
