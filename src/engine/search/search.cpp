@@ -2,7 +2,6 @@
 #include "../../utils/bench.h"
 
 #include <cassert>
-#include <format>
 
 namespace episteme::search {
     using namespace std::chrono;

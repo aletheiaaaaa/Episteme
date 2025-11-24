@@ -1,7 +1,5 @@
 #include "perft.h"
 
-#include <format>
-
 namespace episteme {
     Position fen_to_position(const std::string& FEN) {
         Position position;
@@ -51,7 +49,7 @@ namespace episteme {
             if (!illegal) {
                 nodes = perft(position, depth - 1);
                 total += nodes;
-                std::cout << std::format("{}: {}\n", move.to_string(), nodes);
+                std::cout << move.to_string() << ": " << nodes << "\n";
             }
 
             position.unmake_move();
