@@ -278,13 +278,12 @@ namespace episteme::search {
                 stack[ply].reduction = reduction;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
-
                 score = -search<false>(position, candidate, reduced, ply + 1, -alpha - 1, -alpha, true);
+                stack[ply].reduction = 0;
+
                 if (score > alpha && reduced < depth - 1) {
                     score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node);
                 }
-
-                stack[ply].reduction = 0;
             } else if (!is_PV || num_legal > 1) {
                 score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node);
             }
