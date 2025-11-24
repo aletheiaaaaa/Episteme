@@ -288,6 +288,8 @@ namespace episteme::search {
                 if (score > alpha && reduced < depth - 1) {
                     score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node);
                 }
+
+                stack[ply].reduction = 0;
             } else if (!is_PV || num_legal > 1) {
                 score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node);
             }
