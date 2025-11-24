@@ -152,7 +152,7 @@ namespace episteme::search {
             }
 
             if (ply > 2 && stack[ply - 1].eval != -INF && stack[ply - 3].eval != -INF) {
-                worsening = stack[ply - 1].eval < stack[ply - 3].eval;
+                worsening = stack[ply].eval < -stack[ply - 1].eval;
             }
         }
 
