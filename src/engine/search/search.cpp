@@ -152,7 +152,7 @@ namespace episteme::search {
         }
 
         if (!stack[ply].excluded && !is_PV && !in_check(position, position.STM()) && stack[ply - 1].eval != -INF) {
-            if (depth > 1 && stack[ply - 1].reduction > 3 && static_eval < -stack[ply - 1].eval) depth++;
+            if (depth > 1 && stack[ply - 1].reduction > 3 && static_eval + stack[ply - 1].eval < 0) depth++;
             else if (depth > 3 && stack[ply - 1].reduction > 1 && static_eval > -stack[ply - 1].eval) depth--;
         }
 
@@ -282,8 +282,9 @@ namespace episteme::search {
                 stack[ply].reduction = reduction;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
-
                 score = -search<false>(position, candidate, reduced, ply + 1, -alpha - 1, -alpha, true);
+                stack[ply].reduction = 0;
+
                 if (score > alpha && reduced < depth - 1) {
                     score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node);
                 }
