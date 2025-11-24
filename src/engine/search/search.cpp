@@ -147,7 +147,7 @@ namespace episteme::search {
         }
 
         if (!stack[ply].excluded && !in_check(position, position.STM())) {
-            if (!is_PV && depth <= 5 && static_eval >= beta + rfp_base() + std::max(depth - improving, 0) * rfp_mult()) return static_eval;
+            if (!is_PV && depth <= 5 && static_eval >= beta + std::max(depth - improving, 0) * 100 + std::abs(correction) / 4) return static_eval;
 
             if (!is_PV && depth >= 3) {
                 const uint64_t no_pawns_or_kings = position.color_bb(position.STM()) & ~position.piece_bb(PieceType::King, position.STM()) & ~position.piece_bb(PieceType::Pawn, position.STM());
