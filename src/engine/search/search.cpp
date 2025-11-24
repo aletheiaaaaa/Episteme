@@ -151,8 +151,8 @@ namespace episteme::search {
             }
         }
 
-        if (!stack[ply].excluded && ply > 0 && !in_check(position, position.STM())) {
-            if (depth > 0 && stack[ply - 1].reduction > 3 && stack[ply - 1].eval != -INF && static_eval > -stack[ply - 1].eval - 20) depth++;
+        if (!stack[ply].excluded && ply > 0 && !in_check(position, position.STM()) && stack[ply - 1].eval != -INF) {
+            if (depth > 0 && stack[ply - 1].reduction > 3 && static_eval < -stack[ply - 1].eval - 20) depth++;
         }
 
         if (!stack[ply].excluded && !in_check(position, position.STM())) {
@@ -277,6 +277,8 @@ namespace episteme::search {
                 reduction += cut_node * 2;
                 reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
                 reduction -= std::abs(correction) > 250;
+
+                stack[ply].reduction = reduction;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
 
