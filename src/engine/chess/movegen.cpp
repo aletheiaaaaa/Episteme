@@ -1,7 +1,5 @@
 #include "movegen.h"
 
-#include <format>
-
 namespace episteme {
     std::array<uint64_t, 64> fill_king_attacks() {
         std::array<uint64_t, 64> king_attacks;
@@ -172,12 +170,12 @@ namespace episteme {
         std::cout << "const std::array<uint64_t, 64> ROOK_MAGICS = {";
         for (int i = 0; i < 64; i++) {
             uint64_t rook_magic = find_rook_magics(sq_from_idx(i)).first;
-            std::cout << std::format("0x{:x},\n", rook_magic);
+            std::cout << "0x" << std::hex << rook_magic << std::dec << ",\n";
         }
         std::cout << "}\nconst std::array<uint64_t, 64> BISHOP_MAGICS = {";
         for (int i = 0; i < 64; i++) {
             uint64_t bishop_magic = find_bishop_magics(sq_from_idx(i)).first;
-            std::cout << std::format("0x{:x},\n", bishop_magic);
+            std::cout << "0x" << std::hex << bishop_magic << std::dec << ",\n";
         }
         std::cout << "}";
     }
