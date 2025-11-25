@@ -89,8 +89,8 @@ namespace episteme::search {
         std::array<int32_t, 2> inc = {};
 
         int16_t depth = MAX_SEARCH_PLY;
-        uint64_t nodes = 0;
-        uint64_t soft_nodes = 0;
+        int32_t nodes = 0;
+        int32_t soft_nodes = 0;
         int32_t num_games = 0;
     };
 

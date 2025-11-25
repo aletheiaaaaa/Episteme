@@ -27,8 +27,8 @@ namespace episteme::datagen {
     inline std::atomic<bool> stop = false;
 
     struct Parameters {
-        uint32_t soft_limit = 5000;
-        uint32_t hard_limit = 1000000;
+        int32_t soft_limit = 5000;
+        int32_t hard_limit = 1000000;
         int32_t num_games = 100000;
 
         uint16_t num_threads = 1;
