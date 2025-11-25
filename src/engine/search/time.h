@@ -21,10 +21,6 @@ namespace episteme::time {
                 this->config = config;
             }
 
-            inline void start() {
-                start_time = steady_clock::now();
-            }
-
             inline bool time_approaching() const {
                 return soft_limit && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
             }
@@ -49,7 +45,8 @@ namespace episteme::time {
                 return time_exceeded() || nodes_exceeded(nodes);
             }
 
-            inline void calculate_limits() {
+            inline void start() {
+                start_time = steady_clock::now();
                 if (config.move_time) {
                     hard_limit = config.move_time;
                 } else if (config.time_left) {

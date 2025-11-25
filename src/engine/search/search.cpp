@@ -556,7 +556,6 @@ namespace episteme::search {
         reset_nodes();
 
         limiter.set_config(cfg);
-        limiter.calculate_limits();
         limiter.start();
 
         for (int depth = 1; depth <= params.depth; depth++) {
@@ -600,7 +599,6 @@ namespace episteme::search {
         reset_nodes();
 
         limiter.set_config(cfg);
-        limiter.calculate_limits();
         limiter.start();
 
         for (int depth = 1; depth <= 10; depth++) {
