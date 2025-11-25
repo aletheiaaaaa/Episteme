@@ -26,7 +26,7 @@ namespace episteme::time {
             }
 
             inline bool time_approaching() const {
-                return (soft_limit > 0) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
+                return (soft_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
             }
 
             inline bool time_exceeded() const {
