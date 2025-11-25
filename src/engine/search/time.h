@@ -25,12 +25,19 @@ namespace episteme::time {
                 start_time = steady_clock::now();
             }
 
+            inline void reset() {
+                config = {};
+                start_time = steady_clock::time_point{};
+                hard_end = steady_clock::time_point::min();
+                soft_end = steady_clock::time_point::min();
+            }
+
             inline bool time_approaching() const {
-                return (soft_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
+                return (soft_end != steady_clock::time_point::min()) && steady_clock::now() >= soft_end;
             }
 
             inline bool time_exceeded() const {
-                return (hard_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= hard_limit;
+                return (hard_end != steady_clock::time_point::min()) && steady_clock::now() >= hard_end;
             }
 
             inline bool nodes_approaching(int32_t nodes) const {
@@ -51,10 +58,10 @@ namespace episteme::time {
 
             inline void calculate_limits() {
                 if (config.move_time) {
-                    hard_limit = config.move_time;
+                    hard_end = start_time + milliseconds(config.move_time);
                 } else if (config.time_left) {
-                    hard_limit = config.time_left / 20 + config.increment / 2;
-                    soft_limit = hard_limit * 3 / 5;
+                    hard_end = start_time + milliseconds(config.time_left / 20 + config.increment / 2);
+                    soft_end = start_time + milliseconds((config.time_left / 20 + config.increment / 2) * 3 / 5);
                 }
             }
 
@@ -63,7 +70,7 @@ namespace episteme::time {
 
             steady_clock::time_point start_time;
 
-            int32_t hard_limit = -1;
-            int32_t soft_limit = -1;
+            steady_clock::time_point hard_end = steady_clock::time_point::min();
+            steady_clock::time_point soft_end = steady_clock::time_point::min();
     };
 }

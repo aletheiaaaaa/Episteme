@@ -599,6 +599,7 @@ namespace episteme::search {
 
         reset_nodes();
 
+        limiter.reset();
         limiter.set_config(cfg);
         limiter.calculate_limits();
         limiter.start();
