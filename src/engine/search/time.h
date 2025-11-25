@@ -24,16 +24,16 @@ namespace episteme::time {
             inline void reset() {
                 config = {};
                 start_time = steady_clock::time_point{};
-                hard_end = steady_clock::time_point::min();
-                soft_end = steady_clock::time_point::min();
+                hard_end = -1;
+                soft_end = -1;
             }
 
             inline bool time_approaching() const {
-                return (soft_end != steady_clock::time_point::min()) && steady_clock::now() >= soft_end;
+                return (soft_end != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_end;
             }
 
             inline bool time_exceeded() const {
-                return (hard_end != steady_clock::time_point::min()) && steady_clock::now() > hard_end;
+                return (hard_end != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() > hard_end;
             }
 
             inline bool nodes_approaching(int32_t nodes) const {
@@ -55,10 +55,10 @@ namespace episteme::time {
             inline void start() {
                 start_time = steady_clock::now();
                 if (config.move_time) {
-                    hard_end = start_time + milliseconds(config.move_time);
+                    hard_end = config.move_time;
                 } else if (config.time_left) {
-                    hard_end = start_time + milliseconds(config.time_left / 20 + config.increment / 2);
-                    soft_end = start_time + milliseconds((config.time_left / 20 + config.increment / 2) * 3 / 5);
+                    hard_end = config.time_left / 20 + config.increment / 2;
+                    soft_end = (config.time_left / 20 + config.increment / 2) * 3 / 5;
                 }
             }
 
@@ -67,7 +67,7 @@ namespace episteme::time {
 
             steady_clock::time_point start_time;
 
-            steady_clock::time_point hard_end = steady_clock::time_point::min();
-            steady_clock::time_point soft_end = steady_clock::time_point::min();
+            int32_t hard_end = -1;
+            int32_t soft_end = -1;
     };
 }
