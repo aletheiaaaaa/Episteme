@@ -1,12 +1,13 @@
 #include <cstdint>
 #include <chrono>
+#include <iostream>
 
 namespace episteme::time {
     using namespace std::chrono;
 
     struct Config {
-        int32_t nodes = -1;
-        int32_t soft_nodes = -1;
+        int32_t nodes = 0;
+        int32_t soft_nodes = 0;
 
         int32_t move_time = 0;
         int32_t time_left = 0;
@@ -33,11 +34,11 @@ namespace episteme::time {
             }
 
             inline bool nodes_approaching(int32_t nodes) const {
-                return (config.soft_nodes != -1) && nodes >= config.soft_nodes;
+                return (config.soft_nodes) && nodes >= config.soft_nodes;
             }
 
             inline bool nodes_exceeded(int32_t nodes) const {
-                return config.nodes != -1 && nodes >= config.nodes;
+                return (config.nodes) && nodes >= config.nodes;
             }
 
             inline bool limits_approaching(int32_t nodes) const {
