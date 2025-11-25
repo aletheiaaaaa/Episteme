@@ -151,7 +151,7 @@ namespace episteme::search {
             }
         }
 
-        if (!stack[ply].excluded && !is_PV && !in_check(position, position.STM()) && stack[ply - 1].eval != INF) {
+        if (!stack[ply].excluded && !is_PV && !in_check(position, position.STM()) && stack[ply - 1].eval != -INF) {
             if (depth > 1 && stack[ply - 1].reduction > 3 && static_eval + stack[ply - 1].eval < -20) depth++;
             else if (depth > 3 && stack[ply - 1].reduction > 1 && static_eval + stack[ply - 1].eval > 50) depth--;
         }
