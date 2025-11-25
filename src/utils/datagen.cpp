@@ -137,7 +137,7 @@ namespace episteme::datagen {
             std::ostringstream oss;
             oss << params.out_dir << "/temp_" << i << "." << Format::EXTENSION;
             const auto file = std::filesystem::path(oss.str());
-            files.push_back(file);
+            files.push_back(file.string());
 
             threads.emplace_back(
                 [&params, file = std::move(file), i]() {
