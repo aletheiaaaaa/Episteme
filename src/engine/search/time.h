@@ -25,6 +25,10 @@ namespace episteme::time {
                 this->config = config;
             }
 
+            inline bool time_approaching() const {
+                return soft_limit && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
+            }
+
             inline bool time_exceeded() const {
                 return (hard_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= hard_limit;
             }
