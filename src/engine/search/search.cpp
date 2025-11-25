@@ -84,7 +84,7 @@ namespace episteme::search {
 
     template<bool PV_node>
     int32_t Worker::search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node) {
-        if (nodes % 2000 == 0 && limiter.time_exceeded()) {
+        if (nodes % 1024 == 0 && limiter.time_exceeded()) {
             should_stop = true;
             return 0;
         };
@@ -151,8 +151,8 @@ namespace episteme::search {
             }
         }
 
-        if (!stack[ply].excluded && !is_PV && !in_check(position, position.STM()) && stack[ply - 1].eval != -INF) {
-            if (depth > 1 && stack[ply - 1].reduction > 3 && static_eval + stack[ply - 1].eval < -20) depth++;
+        if (!stack[ply].excluded && !is_PV && !in_check(position, position.STM())) {
+            if (depth > 1 && stack[ply - 1].eval != -INF && stack[ply - 1].reduction > 3 && static_eval + stack[ply - 1].eval < -20) depth++;
         }
 
         if (!stack[ply].excluded && !in_check(position, position.STM())) {
@@ -380,7 +380,7 @@ namespace episteme::search {
 
     template<bool PV_node>
     int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta) {
-        if (nodes % 2000 == 0 && limiter.time_exceeded()) {
+        if (nodes % 1024 == 0 && limiter.time_exceeded()) {
             should_stop = true;
             return 0;
         };

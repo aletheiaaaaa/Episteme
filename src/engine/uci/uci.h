@@ -23,4 +23,5 @@ namespace episteme::uci {
     auto bench(const std::string& args, search::Config& cfg);
     auto perft(const std::string& args, search::Config& cfg);
     auto datagen(const std::string& args);
+    auto fen(search::Config& cfg);
 }

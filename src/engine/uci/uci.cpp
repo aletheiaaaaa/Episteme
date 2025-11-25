@@ -31,7 +31,7 @@ namespace episteme::uci {
     }
 
     auto isready() {
-        std::cout << "readyok\n";
+        std::cout << "readyok" << std::endl;
     }
 
     auto position(const std::string& args, search::Config& cfg) {
@@ -133,6 +133,10 @@ namespace episteme::uci {
         datagen::run(params);
     }
 
+    auto fen(search::Config& cfg) {
+        std::cout << cfg.position.to_FEN() << std::endl;
+    }
+
     int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine) {
         std::string keyword = cmd.substr(0, cmd.find(' '));
 
@@ -157,6 +161,7 @@ namespace episteme::uci {
 
         else if (keyword == "eval") eval(cfg, engine);
         else if (keyword == "datagen") datagen(cmd.substr(cmd.find(" ")+1));
+        else if (keyword == "fen") fen(cfg);
 
         else std::cout << "invalid command\n";
 
