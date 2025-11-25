@@ -558,7 +558,6 @@ namespace episteme::search {
         limiter.reset();
         limiter.set_config(cfg);
         limiter.start();
-        limiter.calculate_limits();
 
         for (int depth = 1; depth <= params.depth; depth++) {
             Parameters iter_params = params;
@@ -603,7 +602,6 @@ namespace episteme::search {
         limiter.reset();
         limiter.set_config(cfg);
         limiter.start();
-        limiter.calculate_limits();
 
         for (int depth = 1; depth <= 10; depth++) {
             Parameters iter_params = params;

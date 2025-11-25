@@ -21,10 +21,6 @@ namespace episteme::time {
                 this->config = config;
             }
 
-            inline void start() {
-                start_time = steady_clock::now();
-            }
-
             inline void reset() {
                 config = {};
                 start_time = steady_clock::time_point{};
@@ -33,7 +29,7 @@ namespace episteme::time {
             }
 
             inline bool time_approaching() const {
-                return (soft_end != steady_clock::time_point::min()) && steady_clock::now() > soft_end;
+                return (soft_end != steady_clock::time_point::min()) && steady_clock::now() >= soft_end;
             }
 
             inline bool time_exceeded() const {
@@ -52,11 +48,12 @@ namespace episteme::time {
                 return time_approaching() || nodes_approaching(nodes);
             }
 
-            inline bool limits_exceeded(int32_t nodes, int16_t depth) const {
+            inline bool limits_exceeded(int32_t nodes) const {
                 return time_exceeded() || nodes_exceeded(nodes);
             }
 
-            inline void calculate_limits() {
+            inline void start() {
+                start_time = steady_clock::now();
                 if (config.move_time) {
                     hard_end = start_time + milliseconds(config.move_time);
                 } else if (config.time_left) {
