@@ -12,6 +12,7 @@ namespace episteme::stack {
         int16_t reduction = 0;
         Move move{};
         Piece piece;
+        Piece captured;
 
         Move excluded{};
         Move killer{};

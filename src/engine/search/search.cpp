@@ -151,9 +151,14 @@ namespace episteme::search {
             }
         }
 
-        if (!stack[ply].excluded && !is_PV && !in_check(position, position.STM()) && stack[ply - 1].eval != -INF) {
-            if (depth > 1 && stack[ply - 1].reduction > 3 && static_eval + stack[ply - 1].eval < -20) depth++;
-            else if (depth > 3 && stack[ply - 1].reduction > 1 && static_eval + stack[ply - 1].eval > 50) depth--;
+        if (!stack[ply].excluded && ply > 0 && !in_check(position, position.STM()) && stack[ply - 1].eval != -INF) {
+            if (stack[ply - 1].move && stack[ply - 1].captured == Piece::None) {
+                int32_t bonus = std::clamp(-(stack[ply - 1].eval + stack[ply].eval) * 10, -100, 200);
+                history.update_quiet_hist(position.STM(), stack[ply - 1].move, bonus);
+            }
+
+            if (depth > 1 && !is_PV && stack[ply - 1].reduction > 3 && static_eval + stack[ply - 1].eval < -20) depth++;
+            else if (depth > 3 && !is_PV && stack[ply - 1].reduction > 1 && static_eval + stack[ply - 1].eval > 50) depth--;
         }
 
         if (!stack[ply].excluded && !in_check(position, position.STM())) {
@@ -250,6 +255,7 @@ namespace episteme::search {
             num_legal++;
             stack[ply].move = move;
             stack[ply].piece = from_pc;
+            stack[ply].captured = to_pc;
 
             if (is_quiet) explored_quiets.add(move);
             else explored_noisies.add(move);

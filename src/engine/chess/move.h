@@ -76,6 +76,10 @@ namespace episteme {
                 return move_data == 0x0000;
             }
 
+            [[nodiscard]] inline operator bool() const {
+                return move_data != 0x0000;
+            }
+
             std::string to_string() const;
         private:
             uint16_t move_data;
