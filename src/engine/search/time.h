@@ -33,7 +33,7 @@ namespace episteme::time {
             }
 
             inline bool time_exceeded() const {
-                return (hard_end != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() > hard_end;
+                return (hard_end != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= hard_end;
             }
 
             inline bool nodes_approaching(int32_t nodes) const {
