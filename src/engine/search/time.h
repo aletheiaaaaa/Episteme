@@ -41,7 +41,7 @@ namespace episteme::time {
                 return time_approaching() || nodes_approaching(nodes);
             }
 
-            inline bool limits_exceeded(uint64_t nodes, int16_t depth) const {
+            inline bool limits_exceeded(uint64_t nodes) const {
                 return time_exceeded() || nodes_exceeded(nodes);
             }
 
