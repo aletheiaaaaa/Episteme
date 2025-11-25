@@ -33,11 +33,11 @@ namespace episteme::time {
             }
 
             inline bool time_approaching() const {
-                return (soft_end != steady_clock::time_point::min()) && steady_clock::now() >= soft_end;
+                return (soft_end != steady_clock::time_point::min()) && steady_clock::now() > soft_end;
             }
 
             inline bool time_exceeded() const {
-                return (hard_end != steady_clock::time_point::min()) && steady_clock::now() >= hard_end;
+                return (hard_end != steady_clock::time_point::min()) && steady_clock::now() > hard_end;
             }
 
             inline bool nodes_approaching(int32_t nodes) const {
