@@ -89,6 +89,8 @@ namespace episteme::search {
             return 0;
         };
 
+        if (should_stop) return 0;
+
         if (ply > 0) {
             if (position.half_move_clock() >= 100) {
                 if (!in_check(position, position.STM())) return 0;
@@ -384,7 +386,9 @@ namespace episteme::search {
             should_stop = true;
             return 0;
         };
-        
+
+        if (should_stop) return 0;
+
         tt::Entry tt_entry = ttable.probe(position.full_hash());
         if ((tt_entry.node_type == tt::NodeType::PVNode)
             || (tt_entry.node_type == tt::NodeType::AllNode && tt_entry.score <= alpha)
