@@ -8,9 +8,9 @@ namespace episteme::time {
         int32_t nodes = -1;
         int32_t soft_nodes = -1;
 
-        int32_t move_time = -1;
-        int32_t time_left = -1;
-        int32_t increment = -1;
+        int32_t move_time = 0;
+        int32_t time_left = 0;
+        int32_t increment = 0;
         bool infinite = false;
     };
 
