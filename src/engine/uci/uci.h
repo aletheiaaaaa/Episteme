@@ -30,4 +30,5 @@ namespace episteme::uci {
 #if ENABLE_TUNING
     auto print_tunables();
 #endif
+    auto fen(search::Config& cfg);
 }

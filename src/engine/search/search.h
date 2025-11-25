@@ -211,6 +211,7 @@ namespace episteme::search {
             inline void reset_go() {
                 for (auto& worker : workers) {
                     worker->reset_stop();
+                    worker->reset_stack();
                 }
             }
 
