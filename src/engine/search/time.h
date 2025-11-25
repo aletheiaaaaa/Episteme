@@ -22,11 +22,11 @@ namespace episteme::time {
             }
 
             inline bool time_approaching() const {
-                return (soft_limit > 0) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
+                return (soft_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
             }
 
             inline bool time_exceeded() const {
-                return (hard_limit > 0) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= hard_limit;
+                return (hard_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= hard_limit;
             }
 
             inline bool nodes_approaching(uint64_t nodes) const {
