@@ -50,8 +50,8 @@ namespace episteme::time {
                 if (config.move_time) {
                     hard_limit = config.move_time;
                 } else if (config.time_left) {
-                    hard_limit = config.time_left / 20 + config.increment / 2;
-                    soft_limit = hard_limit * 3 / 5;
+                    hard_limit = std::max(1, config.time_left / 20 + config.increment / 2);
+                    soft_limit = std::max(1, hard_limit * 5 / 8);
                 }
             }
 
