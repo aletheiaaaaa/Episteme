@@ -27,6 +27,6 @@ namespace episteme::stack {
                 return stack[idx];
             }
         private:
-            std::array<Entry, 256> stack{};
+            std::array<Entry, 1024> stack{};
     };
 }

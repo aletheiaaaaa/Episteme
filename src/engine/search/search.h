@@ -132,6 +132,10 @@ namespace episteme::search {
                 should_stop = false;
             }
 
+            inline void reset_stack() {
+                stack.reset();
+            }
+
             [[nodiscard]] inline bool stopped() {
                 return should_stop;
             }
@@ -206,6 +210,7 @@ namespace episteme::search {
             inline void reset_go() {
                 for (auto& worker : workers) {
                     worker->reset_stop();
+                    worker->reset_stack();
                 }
             }
 
@@ -215,6 +220,7 @@ namespace episteme::search {
                     worker->reset_history();
                     worker->reset_accum();
                     worker->reset_stop();
+                    worker->reset_stack();
                 }
             }
 

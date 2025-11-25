@@ -84,7 +84,7 @@ namespace episteme::search {
 
     template<bool PV_node>
     int32_t Worker::search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node) {
-        if (nodes % 2000 == 0 && limiter.time_exceeded()) {
+        if (nodes % 1024 == 0 && limiter.time_exceeded()) {
             should_stop = true;
             return 0;
         };
@@ -381,7 +381,7 @@ namespace episteme::search {
 
     template<bool PV_node>
     int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta) {
-        if (nodes % 2000 == 0 && limiter.time_exceeded()) {
+        if (nodes % 1024 == 0 && limiter.time_exceeded()) {
             should_stop = true;
             return 0;
         };
@@ -557,7 +557,6 @@ namespace episteme::search {
         reset_nodes();
 
         limiter.set_config(cfg);
-        limiter.calculate_limits();
         limiter.start();
 
         for (int depth = 1; depth <= params.depth; depth++) {
@@ -601,7 +600,6 @@ namespace episteme::search {
         reset_nodes();
 
         limiter.set_config(cfg);
-        limiter.calculate_limits();
         limiter.start();
 
         for (int depth = 1; depth <= 10; depth++) {

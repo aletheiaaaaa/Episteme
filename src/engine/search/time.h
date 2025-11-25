@@ -21,16 +21,12 @@ namespace episteme::time {
                 this->config = config;
             }
 
-            inline void start() {
-                start_time = steady_clock::now();
-            }
-
             inline bool time_approaching() const {
-                return soft_limit && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
+                return (soft_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
             }
 
             inline bool time_exceeded() const {
-                return hard_limit && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= hard_limit;
+                return (hard_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= hard_limit;
             }
 
             inline bool nodes_approaching(uint64_t nodes) const {
@@ -45,16 +41,17 @@ namespace episteme::time {
                 return time_approaching() || nodes_approaching(nodes);
             }
 
-            inline bool limits_exceeded(uint64_t nodes, int16_t depth) const {
+            inline bool limits_exceeded(uint64_t nodes) const {
                 return time_exceeded() || nodes_exceeded(nodes);
             }
 
-            inline void calculate_limits() {
+            inline void start() {
+                start_time = steady_clock::now();
                 if (config.move_time) {
                     hard_limit = config.move_time;
                 } else if (config.time_left) {
-                    hard_limit = config.time_left / 20 + config.increment / 2;
-                    soft_limit = hard_limit * 3 / 5;
+                    hard_limit = std::max(1, config.time_left / 20 + config.increment / 2);
+                    soft_limit = std::max(1, hard_limit * 5 / 8);
                 }
             }
 
@@ -63,7 +60,7 @@ namespace episteme::time {
 
             steady_clock::time_point start_time;
 
-            uint64_t hard_limit = 0;
-            uint64_t soft_limit = 0;
+            int32_t hard_limit = -1;
+            int32_t soft_limit = -1;
     };
 }
