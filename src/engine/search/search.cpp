@@ -219,7 +219,7 @@ namespace episteme::search {
 
             if (move == stack[ply].excluded) continue;
 
-            int16_t extension = 0;
+            int16_t extension = in_check(position, position.STM());
             if (ply > 0 && depth >= 8 && move == tt_entry.move && !stack[ply].excluded && tt_entry.depth >= depth - 3 && tt_entry.node_type != tt::NodeType::AllNode) {
                 const int32_t new_beta = std::max(-INF + 1, tt_entry.score - depth * 2);
                 const int16_t new_depth = (depth - 1) / 2;
