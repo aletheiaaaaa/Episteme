@@ -1,6 +1,10 @@
+#pragma once
+
+#include "../chess/move.h"
+
 #include <cstdint>
 #include <chrono>
-#include <optional>
+#include <array>
 
 namespace episteme::time {
     using namespace std::chrono;
@@ -21,10 +25,6 @@ namespace episteme::time {
                 this->config = config;
             }
 
-            inline bool time_approaching() const {
-                return (soft_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
-            }
-
             inline bool time_exceeded() const {
                 return (hard_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= hard_limit;
             }
@@ -37,23 +37,12 @@ namespace episteme::time {
                 return config.nodes && nodes >= config.nodes;
             }
 
-            inline bool limits_approaching(uint64_t nodes) const {
-                return time_approaching() || nodes_approaching(nodes);
+            inline void update_node_count(Move move, uint64_t count) {
+                node_counts[move.data() & 0x0FFF] += count;
             }
 
-            inline bool limits_exceeded(uint64_t nodes) const {
-                return time_exceeded() || nodes_exceeded(nodes);
-            }
-
-            inline void start() {
-                start_time = steady_clock::now();
-                if (config.move_time) {
-                    hard_limit = config.move_time;
-                } else if (config.time_left) {
-                    hard_limit = std::max(1, config.time_left / 20 + config.increment / 2);
-                    soft_limit = std::max(1, hard_limit * 5 / 8);
-                }
-            }
+            bool time_approaching(Move move, uint64_t nodes) const;
+            void start();
 
         private:
             Config config{};
@@ -62,5 +51,7 @@ namespace episteme::time {
 
             int32_t hard_limit = -1;
             int32_t soft_limit = -1;
+
+            std::array<uint64_t, 4096> node_counts{};
     };
 }
