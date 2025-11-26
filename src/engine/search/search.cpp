@@ -203,6 +203,8 @@ namespace episteme::search {
 
             bool is_quiet = position.mailbox(move.to_square()) == Piece::None && move.move_type() != MoveType::EnPassant;
 
+            uint64_t prev_nodes = nodes;
+
             if (ply > 0 && best > -MATE + MAX_SEARCH_PLY) {
                 const int32_t lmp_threshold = 3 + depth * depth;
                 if (is_quiet && num_legal >= lmp_threshold) break;
@@ -233,8 +235,6 @@ namespace episteme::search {
                 if (score < new_beta) extension = (!is_PV && score < new_beta - 50) ? 2 : 1;
                 else if (new_beta >= beta && std::abs(score) < MATE - MAX_SEARCH_PLY) return new_beta;
             }
-
-            uint64_t prev_nodes = nodes;
 
             accumulator = eval::update(position, move, accumulator);
             accum_history.emplace_back(accumulator);
