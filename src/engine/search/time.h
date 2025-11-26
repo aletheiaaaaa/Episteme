@@ -41,7 +41,7 @@ namespace episteme::time {
                 node_counts[move.data() & 0x0FFF] += count;
             }
 
-            bool time_approaching(Move move, uint64_t nodes) const;
+            bool time_approaching(Move move, uint64_t nodes);
             void start();
 
         private:
@@ -53,5 +53,7 @@ namespace episteme::time {
             int32_t soft_limit = -1;
 
             std::array<uint64_t, 4096> node_counts{};
+            Move prev_best{};
+            int32_t move_stability = 0;
     };
 }
