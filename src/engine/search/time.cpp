@@ -9,12 +9,12 @@ namespace episteme::time {
 
         if (move != prev_best) {
             prev_best = move;
-            move_stability = 1;
+            move_stability = 0;
         } else {
             move_stability++;
         }
 
-        float move_scale = 1.25f - (static_cast<float>(move_stability) / 20.0f);
+        float move_scale = 1.5f - (static_cast<float>(move_stability) / 20.0f);
 
         return (soft_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= static_cast<int32_t>(soft_limit * node_scale * move_scale);
     }
