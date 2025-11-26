@@ -234,6 +234,8 @@ namespace episteme::search {
                 else if (new_beta >= beta && std::abs(score) < MATE - MAX_SEARCH_PLY) return new_beta;
             }
 
+            uint64_t prev_nodes = nodes;
+
             accumulator = eval::update(position, move, accumulator);
             accum_history.emplace_back(accumulator);
             position.make_move(move);
@@ -304,7 +306,9 @@ namespace episteme::search {
             stack[ply].piece = Piece::None;
             
             if (should_stop) return 0;
-            
+
+            if (ply == 0) limiter.update_node_count(move, nodes - prev_nodes);
+
             if (score > best) {
                 best = score;
             }
@@ -581,7 +585,7 @@ namespace episteme::search {
                       << " nps " << report.nps << " score " << (is_mate ? "mate" : "cp") << " " << display_score
                       << " pv " << pv << "\n";
 
-            if (limiter.time_approaching() || limiter.time_exceeded()) break;
+            if (limiter.time_approaching(report.line.moves[0], workers[0]->node_count()) || limiter.time_exceeded()) break;
         }
     
         Move best = last_report.line.moves[0];
