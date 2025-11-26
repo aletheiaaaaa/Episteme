@@ -9,8 +9,8 @@ namespace episteme::time {
 
         if (move != prev_best) {
             prev_best = move;
-            move_stability = 0;
-        } else if (move_stability < 10) {
+            move_stability = 1;
+        } else {
             move_stability++;
         }
 
