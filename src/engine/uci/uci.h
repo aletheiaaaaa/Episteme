@@ -6,7 +6,6 @@
 #include "../../utils/datagen.h"
 #include "../../utils/tunable.h"
 
-#include <format>
 #include <string>
 #include <sstream>
 #include <iostream>
