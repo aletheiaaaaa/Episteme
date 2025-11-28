@@ -9,7 +9,7 @@
 #include <vector>
 
 #ifndef ENABLE_TUNING
-    #define ENABLE_TUNING 1
+    #define ENABLE_TUNING 0
 #endif
 
 namespace episteme::tunable {
@@ -60,12 +60,12 @@ void init_lmr_table();
     TUNABLE(pawn_hist_mult, 128, 0, 512, 8, nullptr);
     TUNABLE(capt_hist_mult, 128, 0, 512, 8, nullptr);
 
-    TUNABLE(pawn_corrhist_mult, 250, 0, 1024, 64, nullptr);
-    TUNABLE(minor_corrhist_mult, 220, 0, 1024, 64, nullptr);
+    TUNABLE(pawn_corrhist_mult, 200, 0, 1024, 64, nullptr);
+    TUNABLE(minor_corrhist_mult, 180, 0, 1024, 64, nullptr);
     // TUNABLE(major_corrhist_mult, 220, 0, 1024, 64, nullptr);
-    TUNABLE(nonpawn_stm_corrhist_mult, 240, 0, 1024, 64, nullptr);
-    TUNABLE(nonpawn_ntm_corrhist_mult, 240, 0, 1024, 64, nullptr);
-    TUNABLE(cont_corrhist_mult, 230, 0, 1024, 64, nullptr);
+    TUNABLE(nonpawn_stm_corrhist_mult, 190, 0, 1024, 64, nullptr);
+    TUNABLE(nonpawn_ntm_corrhist_mult, 190, 0, 1024, 64, nullptr);
+    TUNABLE(cont_corrhist_mult, 180, 0, 1024, 64, nullptr);
 
     TUNABLE(rfp_mult, 100, 16, 512, 8, nullptr);
     TUNABLE(rfp_base, 25, -256, 512, 16, nullptr);
