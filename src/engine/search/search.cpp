@@ -57,9 +57,15 @@ namespace episteme::search {
             int32_t src_val = piece_vals[piece_type_idx(src)];
             int32_t dst_val = move.move_type() == MoveType::EnPassant ? piece_vals[piece_type_idx(PieceType::Pawn)] : piece_vals[piece_type_idx(dst)];
 
+            scored_move.score += dst_val * 10 - src_val;
+
             scored_move.score += mvv_lva_mult() * (dst_val * 10 - src_val);
-            scored_move.score += capt_hist_mult() * history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
+            scored_move.score += ply ? 
+                capt_hist_mult() * history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst) :
+                qs_capt_hist_mult() * history.get_qs_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
+
             if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
+
         } else {
             if (stack[ply.value()].killer == move) {
                 scored_move.score = 800000;
@@ -413,12 +419,16 @@ namespace episteme::search {
             }
         };
 
+        MoveList explored_noisies;
         ScoredList captures_list = generate_scored_captures(position, tt_entry);
         tt::NodeType node_type = tt::NodeType::AllNode;
 
         for (size_t i = 0; i < captures_list.count; i++) {
             pick_move(captures_list, i);
             Move move = captures_list[i].move;
+
+            Piece from_pc = position.mailbox(move.from_square());
+            Piece to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(move.to_square());
 
             if (!eval::SEE(position, move, 0)) continue;
 
@@ -435,6 +445,7 @@ namespace episteme::search {
             }
 
             nodes++;
+            explored_noisies.add(move);
 
             if (limiter.nodes_exceeded(nodes)) {
                 should_stop = true;
@@ -462,6 +473,19 @@ namespace episteme::search {
                 PV.update_line(move, candidate);
 
                 if (score >= beta) {
+                    int16_t bonus = hist::bonus(std::max(1, seldepth - ply));
+                    history.update_qs_capt_hist(from_pc, move, to_pc, bonus);
+
+                    for (size_t j = 0; j < explored_noisies.count; j++) {
+                        Move prev_move = explored_noisies.list[j];
+                        if (prev_move.data() == move.data()) continue;
+
+                        Piece prev_from_pc = position.mailbox(prev_move.from_square());
+                        Piece prev_to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(prev_move.to_square());
+
+                        history.update_qs_capt_hist(prev_from_pc, prev_move, prev_to_pc, -bonus);
+                    }
+
                     node_type = tt::NodeType::CutNode;
                     break;
                 }

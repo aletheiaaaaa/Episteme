@@ -59,6 +59,7 @@ void init_lmr_table();
     TUNABLE(cont_hist_mult, 128, 0, 512, 8, nullptr);
     TUNABLE(pawn_hist_mult, 128, 0, 512, 8, nullptr);
     TUNABLE(capt_hist_mult, 128, 0, 512, 8, nullptr);
+    TUNABLE(qs_capt_hist_mult, 96, 0, 512, 8, nullptr);
 
     TUNABLE(pawn_corrhist_mult, 250, 0, 1024, 64, nullptr);
     TUNABLE(minor_corrhist_mult, 220, 0, 1024, 64, nullptr);
