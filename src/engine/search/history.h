@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../utils/tunable.h"
 #include "../chess/move.h"
 #include "stack.h"
 
@@ -8,11 +9,13 @@
 #include <algorithm>
 
 namespace episteme::hist {
+    using namespace tunable;
+
     constexpr int MAX_HIST = 16384;
     constexpr int MAX_CORR_HIST = 1024;
 
     [[nodiscard]] inline int16_t bonus(int16_t depth) {
-        return static_cast<int16_t>(std::clamp(depth * 300, 0, 2500));
+        return static_cast<int16_t>(std::clamp(depth * hist_bonus_mult(), 0, hist_bonus_max()));
     }
 
     struct Entry {
@@ -88,29 +91,35 @@ namespace episteme::hist {
                 return non_pawn_ntm_corr_hist[color_idx(stm)][non_pawn_ntm_hash % 16384].value;
             }
 
-            [[nodiscard]] inline int32_t get_cont_corr_hist(stack::Stack& stack, int16_t ply, int16_t diff) {
+            [[nodiscard]] inline int32_t get_cont_corr_hist(stack::Stack& stack, int16_t ply) {
                 int32_t value = 0;
 
-                if (ply > diff) {
-                    Move first_move = stack[ply - 1].move;
-                    Piece first_piece = stack[ply - 1].piece;
+                auto get_hist = [&](int16_t diff) {
+                    int16_t ply_value = 0;
+                    if (ply > diff) {
+                        Move first_move = stack[ply - 1].move;
+                        Piece first_piece = stack[ply - 1].piece;
 
-                    Move second_move = stack[ply - diff - 1].move;
-                    Piece second_piece = stack[ply - diff - 1].piece;
+                        Move second_move = stack[ply - diff - 1].move;
+                        Piece second_piece = stack[ply - diff - 1].piece;
 
-                    if (!first_move) {
-                        first_move = Move(Square::A2, Square::A1);
-                        first_piece = Piece::WhitePawn;
-                    }
-                    if (!second_move) {
-                        second_move = Move(Square::A2, Square::A1);
-                        second_piece = Piece::WhitePawn;
-                    }
+                        if (!first_move) {
+                            first_move = Move(Square::A2, Square::A1);
+                            first_piece = Piece::WhitePawn;
+                        }
+                        if (!second_move) {
+                            second_move = Move(Square::A2, Square::A1);
+                            second_piece = Piece::WhitePawn;
+                        }
 
-                    if (first_piece != Piece::None && second_piece != Piece::None) {
-                        value += cont_corr_hist[piece_idx(first_piece)][sq_idx(first_move.to_square())][piece_idx(second_piece)][sq_idx(second_move.to_square())].value;
+                        if (first_piece != Piece::None && second_piece != Piece::None) {
+                            ply_value += cont_corr_hist[piece_idx(first_piece)][sq_idx(first_move.to_square())][piece_idx(second_piece)][sq_idx(second_move.to_square())].value;
+                        }
                     }
-                }
+                    return ply_value;
+                };
+
+                value += get_hist(1);
 
                 return value;
             }

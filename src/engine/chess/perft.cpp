@@ -51,10 +51,10 @@ namespace episteme {
                 total += nodes;
                 std::cout << move.to_string() << ": " << nodes << "\n";
             }
-    
+
             position.unmake_move();
         }
-    
+
         std::cout << "Total nodes: " << total << "\n";
     }
     
@@ -71,7 +71,7 @@ namespace episteme {
             double seconds = duration.count() / 1000.0;
             double nps = nodes / (seconds > 0 ? seconds : 1.0);
 
-            std::cout << "info depth " << i << " nodes " << nodes << " nps " << static_cast<uint64_t>(nps) << std::endl;
+            std::cout << "info depth " << i << " nodes " << nodes << " nps " << static_cast<uint64_t>(nps) << "\n";
         }
     }
 
