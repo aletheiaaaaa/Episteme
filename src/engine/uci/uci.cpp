@@ -1,11 +1,17 @@
 #include "uci.h"
 
 namespace episteme::uci {
+    using namespace tunable;
 
     auto uci() {
         std::cout << "id name Episteme \nid author aletheia\n";
         std::cout << "option name Hash type spin default 32 min 1 max 128\n";
         std::cout << "option name Threads type spin default 1 min 1 max 1\n";
+#if ENABLE_TUNING
+        for (const auto& tunable : tunables()) {
+            std::cout << std::format("option name {} type spin default {} min {} max {}\n", tunable.name, tunable.value, tunable.min, tunable.max);
+        }
+#endif
         std::cout << "uciok\n";
     }
 
@@ -23,7 +29,24 @@ namespace episteme::uci {
             cfg.hash_size = std::stoi(option_value);
         } else if (option_name == "Threads") {
             cfg.num_threads = std::stoi(option_value);
-        } else {
+        } 
+#if ENABLE_TUNING
+        else if (!tunables().empty()) {
+            for (auto& tunable : tunables()) {
+                if (tunable.name == option_name) {
+                    int32_t new_value = std::stoi(option_value);
+                    if (new_value < tunable.min || new_value > tunable.max) {
+                        std::cout << "value out of range" << std::endl;
+                        return;
+                    }
+                    tunable.value = new_value;
+                    if (tunable.setter) tunable.setter();
+                    break;
+                }
+            }
+        }
+#endif
+        else {
             std::cout << "invalid option" << std::endl;
         }
 
@@ -31,7 +54,7 @@ namespace episteme::uci {
     }
 
     auto isready() {
-        std::cout << "readyok\n";
+        std::cout << "readyok" << std::endl;
     }
 
     auto position(const std::string& args, search::Config& cfg) {
@@ -133,6 +156,18 @@ namespace episteme::uci {
         datagen::run(params);
     }
 
+#if ENABLE_TUNING
+    auto print_tunables() {
+        for (const auto& tunable : tunables()) {
+            std::cout << std::format("{}, int, {}.0, {}.0, {}.0, {}, 0.002\n", tunable.name, tunable.value, tunable.min, tunable.max, tunable.step);
+        }
+    }
+#endif
+
+    auto fen(search::Config& cfg) {
+        std::cout << cfg.position.to_FEN() << std::endl;
+    }
+
     int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine) {
         std::string keyword = cmd.substr(0, cmd.find(' '));
 
@@ -157,6 +192,10 @@ namespace episteme::uci {
 
         else if (keyword == "eval") eval(cfg, engine);
         else if (keyword == "datagen") datagen(cmd.substr(cmd.find(" ")+1));
+#if ENABLE_TUNING
+        else if (keyword == "printob") print_tunables();
+#endif 
+        else if (keyword == "fen") fen(cfg);
 
         else std::cout << "invalid command\n";
 

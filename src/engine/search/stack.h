@@ -9,6 +9,7 @@ namespace episteme::stack {
 
     struct Entry {
         int32_t eval = -INF;
+        int16_t reduction = 0;
         Move move{};
         Piece piece;
 
@@ -26,6 +27,6 @@ namespace episteme::stack {
                 return stack[idx];
             }
         private:
-            std::array<Entry, 256> stack{};
+            std::array<Entry, 1024> stack{};
     };
 }
