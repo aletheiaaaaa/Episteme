@@ -469,14 +469,14 @@ namespace episteme {
         std::string src_str = move.substr(0, 2);
         std::string dst_str = move.substr(2, 2);
 
-        auto str2Sq = [](const std::string& square) {
+        auto str_2_sq = [](const std::string& square) {
             int file = square[0] - 'a';
             int rank = square[1] - '1';
             return static_cast<Square>(rank * 8 + file);
         };
 
-        Square src = str2Sq(src_str);
-        Square dst = str2Sq(dst_str);
+        Square src = str_2_sq(src_str);
+        Square dst = str_2_sq(dst_str);
 
         auto is_castling = [&]() {
             Color stm = position.STM();
@@ -494,7 +494,7 @@ namespace episteme {
         bool is_promo = (move.length() == 5);
         bool is_en_passant = (piece_type(position.mailbox(sq_idx(src))) == PieceType::Pawn) && (dst == position.ep_square());
 
-        auto char2Piece = [&](char promo) {
+        auto char_2_piece = [&](char promo) {
             switch (promo) {
                 case ('q'): return PromoPiece::Queen;
                 case ('r'): return PromoPiece::Rook;
@@ -506,7 +506,7 @@ namespace episteme {
 
         if (is_castling()) return Move(src, dst, MoveType::Castling);
         else if (is_en_passant) return Move(src, dst, MoveType::EnPassant);
-        else if (is_promo) return Move(src, dst, MoveType::Promotion, char2Piece(move.at(4)));
+        else if (is_promo) return Move(src, dst, MoveType::Promotion, char_2_piece(move.at(4)));
         else return Move(src, dst);
     }
 }
