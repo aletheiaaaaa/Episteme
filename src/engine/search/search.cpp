@@ -473,7 +473,7 @@ namespace episteme::search {
                 PV.update_line(move, candidate);
 
                 if (score >= beta) {
-                    int16_t bonus = hist::bonus(seldepth - ply);
+                    int16_t bonus = hist::bonus(std::max(1, seldepth - ply));
                     history.update_qs_capt_hist(from_pc, move, to_pc, bonus);
 
                     for (size_t j = 0; j < explored_noisies.count; j++) {
