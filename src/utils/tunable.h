@@ -61,12 +61,12 @@ void init_lmr_table();
     TUNABLE(capt_hist_mult, 128, 0, 512, 8, nullptr);
     TUNABLE(qs_capt_hist_mult, 96, 0, 512, 8, nullptr);
 
-    TUNABLE(pawn_corrhist_mult, 200, 0, 1024, 64, nullptr);
-    TUNABLE(minor_corrhist_mult, 180, 0, 1024, 64, nullptr);
+    TUNABLE(pawn_corrhist_mult, 180, 0, 1024, 64, nullptr);
+    TUNABLE(minor_corrhist_mult, 160, 0, 1024, 64, nullptr);
     // TUNABLE(major_corrhist_mult, 220, 0, 1024, 64, nullptr);
-    TUNABLE(nonpawn_stm_corrhist_mult, 190, 0, 1024, 64, nullptr);
-    TUNABLE(nonpawn_ntm_corrhist_mult, 190, 0, 1024, 64, nullptr);
-    TUNABLE(cont_corrhist_mult, 180, 0, 1024, 64, nullptr);
+    TUNABLE(nonpawn_stm_corrhist_mult, 170, 0, 1024, 64, nullptr);
+    TUNABLE(nonpawn_ntm_corrhist_mult, 170, 0, 1024, 64, nullptr);
+    TUNABLE(cont_corrhist_mult, 160, 0, 1024, 64, nullptr);
 
     TUNABLE(rfp_mult, 100, 16, 512, 8, nullptr);
     TUNABLE(rfp_base, 25, -256, 512, 16, nullptr);
