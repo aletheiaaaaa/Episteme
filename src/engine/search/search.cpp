@@ -89,6 +89,8 @@ namespace episteme::search {
             return 0;
         };
 
+        seldepth = std::max(seldepth, ply);
+
         if (ply > 0) {
             if (position.half_move_clock() >= 100) {
                 if (!in_check(position, position.STM())) return 0;
@@ -393,7 +395,9 @@ namespace episteme::search {
             should_stop = true;
             return 0;
         };
-        
+
+        seldepth = std::max(seldepth, ply);
+
         tt::Entry tt_entry = ttable.probe(position.full_hash());
         if ((tt_entry.node_type == tt::NodeType::PVNode)
             || (tt_entry.node_type == tt::NodeType::AllNode && tt_entry.score <= alpha)
@@ -527,6 +531,7 @@ namespace episteme::search {
 
         Report report {
             .depth = params.depth,
+            .seldepth = seldepth,
             .time = elapsed,
             .nodes = nodes,
             .score = score,
@@ -603,7 +608,7 @@ namespace episteme::search {
             for (size_t i = 0; i < report.line.length; ++i) {
                 pv += report.line.moves[i].to_string() + " ";
             }
-            std::cout << "info depth " << report.depth << " time " << total_time << " nodes " << report.nodes
+            std::cout << "info depth " << report.depth << " seldepth " << report.seldepth << " time " << total_time << " nodes " << report.nodes
                       << " nps " << nps << " score " << (is_mate ? "mate" : "cp") << " " << display_score
                       << " pv " << pv << "\n";
 
