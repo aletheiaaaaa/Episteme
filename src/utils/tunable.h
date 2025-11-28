@@ -9,7 +9,7 @@
 #include <vector>
 
 #ifndef ENABLE_TUNING
-    #define ENABLE_TUNING 1
+    #define ENABLE_TUNING 0
 #endif
 
 namespace episteme::tunable {
