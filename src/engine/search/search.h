@@ -98,6 +98,7 @@ namespace episteme::search {
 
     struct Report {
         int16_t depth;
+        int16_t seldepth;
         int64_t time;
         uint64_t nodes;
         int32_t score;
@@ -180,6 +181,8 @@ namespace episteme::search {
             time::Limiter& limiter;
             hist::Table history;
             stack::Stack stack;
+
+            int16_t seldepth;
 
             std::atomic<uint64_t> nodes;
             std::atomic<bool> should_stop;
