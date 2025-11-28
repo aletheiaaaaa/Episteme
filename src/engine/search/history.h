@@ -55,16 +55,24 @@ namespace episteme::hist {
             [[nodiscard]] inline int32_t get_hist(stack::Stack& stack, Piece attacker, Piece victim, Move move, Color stm, int16_t ply, const Position& position) {
                 int32_t value = 0;
 
-                value += get_quiet_hist(stm, move);
-                value += get_cont_hist(stack, attacker, move, ply);
-                value += get_pawn_hist(stm, position.pawn_hash(), attacker, move);
-                if (victim != Piece::None) value += get_capt_hist(attacker, move, victim);
+                if (victim != Piece::None || move.move_type() == MoveType::EnPassant) {
+                    Piece to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : victim;
+                    value += get_capt_hist(attacker, move, to_pc);
+                } else {
+                    value += get_quiet_hist(stm, move);
+                    value += get_cont_hist(stack, attacker, move, ply);
+                    value += get_pawn_hist(stm, position.pawn_hash(), attacker, move);
+                }
 
                 return value;
             }
 
             [[nodiscard]] inline int32_t get_capt_hist(Piece attacker, Move move, Piece victim) {
                 return capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].value;
+            }
+
+            [[nodiscard]] inline int32_t get_qs_capt_hist(Piece attacker, Move move, Piece victim) {
+                return qs_capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].value;
             }
 
             [[nodiscard]] inline int32_t get_pawn_hist(Color stm, uint64_t pawn_hash, Piece piece, Move move) {
@@ -137,6 +145,10 @@ namespace episteme::hist {
                 capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].update(bonus, MAX_HIST);
             }
 
+            inline void update_qs_capt_hist(Piece attacker, Move move, Piece victim, int16_t bonus) {
+                qs_capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].update(bonus, MAX_HIST);
+            }
+
             inline void update_pawn_hist(Color stm, uint64_t pawn_hash, Piece piece, Move move, int16_t bonus) {
                 pawn_hist[color_idx(stm)][pawn_hash % 1024][piece_type_idx(piece)][sq_idx(move.to_square())].update(bonus, MAX_HIST);
             }
@@ -177,6 +189,8 @@ namespace episteme::hist {
                 non_pawn_stm_corr_hist = {};
                 non_pawn_ntm_corr_hist = {};
                 cont_corr_hist = {};
+
+                qs_capt_hist = {};
             }
 
         private:
@@ -191,5 +205,7 @@ namespace episteme::hist {
             std::array<std::array<Entry, 16384>, 2> non_pawn_stm_corr_hist{};
             std::array<std::array<Entry, 16384>, 2> non_pawn_ntm_corr_hist{};
             std::array<std::array<std::array<std::array<Entry, 64>, 12>, 64>, 12> cont_corr_hist{};
+
+            std::array<std::array<std::array<Entry, 6>, 64>, 12> qs_capt_hist{};
     };
 }
