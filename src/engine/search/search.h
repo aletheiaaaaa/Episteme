@@ -9,7 +9,6 @@
 #include "stack.h"
 #include "time.h"
 
-#include <format>
 #include <cstdint>
 #include <chrono>
 #include <algorithm>
