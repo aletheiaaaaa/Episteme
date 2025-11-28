@@ -4,7 +4,6 @@
 #include "../engine/search/search.h"
 #include "format.h"
 
-#include <format>
 #include <iostream>
 #include <random>
 #include <cstdint>
