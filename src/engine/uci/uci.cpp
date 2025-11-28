@@ -9,7 +9,8 @@ namespace episteme::uci {
         std::cout << "option name Threads type spin default 1 min 1 max 1\n";
 #if ENABLE_TUNING
         for (const auto& tunable : tunables()) {
-            std::cout << std::format("option name {} type spin default {} min {} max {}\n", tunable.name, tunable.value, tunable.min, tunable.max);
+            std::cout << "option name " << tunable.name << " type spin default "
+                      << tunable.value << " min " << tunable.min << " max " << tunable.max << "\n";
         }
 #endif
         std::cout << "uciok\n";
@@ -159,7 +160,9 @@ namespace episteme::uci {
 #if ENABLE_TUNING
     auto print_tunables() {
         for (const auto& tunable : tunables()) {
-            std::cout << std::format("{}, int, {}.0, {}.0, {}.0, {}, 0.002\n", tunable.name, tunable.value, tunable.min, tunable.max, tunable.step);
+            std::cout << tunable.name << ", int, " << tunable.value << ".0, "
+                      << tunable.min << ".0, " << tunable.max << ".0, "
+                      << tunable.step << ", 0.002\n";
         }
     }
 #endif
