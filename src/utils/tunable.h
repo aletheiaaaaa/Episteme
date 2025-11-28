@@ -69,6 +69,9 @@ void init_lmr_table();
     TUNABLE(rfp_mult, 100, 16, 512, 8, nullptr);
     TUNABLE(rfp_base, 25, -256, 512, 16, nullptr);
 
+    TUNABLE(hindsight_ext_thresh, -20, -100, 100, 4, nullptr);
+    TUNABLE(hindsight_red_thresh, 50, -100, 100, 4, nullptr);
+
     TUNABLE(fp_base, 25, -256, 512, 16, nullptr);
     TUNABLE(fp_mult, 250, 64, 2048, 16, nullptr);
 
