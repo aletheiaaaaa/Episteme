@@ -4,6 +4,11 @@
 #include "../chess/position.h"
 #include "../chess/movegen.h"
 #include "../../external/incbin.h"
+#include "../../utils/tunable.h"
+
+#include <memory>
+
+#include <memory>
 
 #include <memory>
 

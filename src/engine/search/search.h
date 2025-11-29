@@ -3,6 +3,7 @@
 #include "../chess/movegen.h"
 #include "../eval/eval.h"
 #include "../../utils/datagen.h"
+#include "../../utils/tunable.h"
 #include "ttable.h"
 #include "history.h"
 #include "stack.h"
@@ -96,9 +97,9 @@ namespace episteme::search {
 
     struct Report {
         int16_t depth;
+        int16_t seldepth;
         int64_t time;
         uint64_t nodes;
-        int64_t nps;
         int32_t score;
         Line line;
     };
@@ -132,6 +133,10 @@ namespace episteme::search {
                 should_stop = false;
             }
 
+            inline void reset_stack() {
+                stack.reset();
+            }
+
             [[nodiscard]] inline bool stopped() {
                 return should_stop;
             }
@@ -153,7 +158,7 @@ namespace episteme::search {
                 return generate_scored_targets(position, generate_all_captures, tt_entry);
             }
 
-            int32_t eval_correction(const Position& position);
+            int32_t eval_correction(int16_t ply, Position& position);
 
             template<bool PV_node>
             int32_t search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node);
@@ -175,6 +180,8 @@ namespace episteme::search {
             time::Limiter& limiter;
             hist::Table history;
             stack::Stack stack;
+
+            int16_t seldepth;
 
             std::atomic<uint64_t> nodes;
             std::atomic<bool> should_stop;
@@ -206,6 +213,7 @@ namespace episteme::search {
             inline void reset_go() {
                 for (auto& worker : workers) {
                     worker->reset_stop();
+                    worker->reset_stack();
                 }
             }
 
@@ -215,6 +223,7 @@ namespace episteme::search {
                     worker->reset_history();
                     worker->reset_accum();
                     worker->reset_stop();
+                    worker->reset_stack();
                 }
             }
 

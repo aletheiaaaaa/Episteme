@@ -5,6 +5,7 @@
 
 namespace episteme::search {
     using namespace std::chrono;
+    using namespace tunable;
 
     void pick_move(ScoredList& scored_list, int start) {
         for (size_t i = start + 1; i < scored_list.count; i++)    {
@@ -27,14 +28,15 @@ namespace episteme::search {
         return scored_list;
     }
 
-    int32_t Worker::eval_correction(const Position& position) {
+    int32_t Worker::eval_correction(int16_t ply, Position& position) {
         int32_t correction = 0;
 
-        correction += 250 * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
-        // correction += 220 * history.get_major_corr_hist(position.major_hash(), position.STM());
-        correction += 220 * history.get_minor_corr_hist(position.minor_hash(), position.STM());
-        correction += 240 * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
-        correction += 240 * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
+        correction += pawn_corrhist_mult() * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
+        // correction += 110 * history.get_major_corr_hist(position.major_hash(), position.STM());
+        correction += minor_corrhist_mult() * history.get_minor_corr_hist(position.minor_hash(), position.STM());
+        correction += nonpawn_stm_corrhist_mult() * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
+        correction += nonpawn_ntm_corrhist_mult() * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
+        correction += cont_corrhist_mult() * history.get_cont_corr_hist(stack, ply);
 
         return correction / 2048;
     }
@@ -57,37 +59,38 @@ namespace episteme::search {
             int32_t dst_val = move.move_type() == MoveType::EnPassant ? piece_vals[piece_type_idx(PieceType::Pawn)] : piece_vals[piece_type_idx(dst)];
 
             scored_move.score += dst_val * 10 - src_val;
-            scored_move.score += history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
+
+            scored_move.score += mvv_lva_mult() * (dst_val * 10 - src_val);
+            scored_move.score += ply ? 
+                capt_hist_mult() * history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst) :
+                qs_capt_hist_mult() * history.get_qs_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
+
             if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
+
         } else {
             if (stack[ply.value()].killer == move) {
                 scored_move.score = 800000;
                 return scored_move;
             }
 
-            scored_move.score += history.get_quiet_hist(position.STM(), move);
-            scored_move.score += history.get_cont_hist(stack, src, move, *ply);
-            scored_move.score += history.get_pawn_hist(position.STM(), position.pawn_hash(), src, move);
+            scored_move.score += quiet_hist_mult() * history.get_quiet_hist(position.STM(), move);
+            scored_move.score += cont_hist_mult() * history.get_cont_hist(stack, src, move, *ply);
+            scored_move.score += pawn_hist_mult() * history.get_pawn_hist(position.STM(), position.pawn_hash(), src, move);
         }
+
+        scored_move.score /= 128;
 
         return scored_move;
     }
 
-    std::array<std::array<int16_t, 64>, 64> lmr_table{};
-    void init_lmr_table() {
-        for (int i = 1; i < 64; i++) {
-            for (int j = 1; j < 64; j++) {
-                lmr_table[i][j] = 0.5 + std::log(i) * std::log(j) / 3.0;
-            }
-        }
-    }
-
     template<bool PV_node>
     int32_t Worker::search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node) {
-        if (nodes % 2000 == 0 && limiter.time_exceeded()) {
+        if (nodes % 1024 == 0 && limiter.time_exceeded()) {
             should_stop = true;
             return 0;
         };
+
+        seldepth = std::max(seldepth, ply);
 
         if (ply > 0) {
             if (position.half_move_clock() >= 100) {
@@ -136,7 +139,7 @@ namespace episteme::search {
         int32_t correction = 0;
         if (!in_check(position, position.STM())) {
             static_eval = eval::evaluate(accumulator, position.STM());
-            correction = eval_correction(position);
+            correction = eval_correction(ply, position);
             static_eval += correction;
 
             stack[ply].eval = static_eval;
@@ -151,8 +154,13 @@ namespace episteme::search {
             }
         }
 
+        if (!stack[ply].excluded && !is_PV && !in_check(position, position.STM()) && stack[ply - 1].eval != -INF) {
+            if (depth > 1 && stack[ply - 1].reduction > 3 && static_eval + stack[ply - 1].eval < hindsight_ext_thresh()) depth++;
+            else if (depth > 3 && stack[ply - 1].reduction > 1 && static_eval + stack[ply - 1].eval > hindsight_red_thresh()) depth--;
+        }
+
         if (!stack[ply].excluded && !in_check(position, position.STM())) {
-            if (!is_PV && depth <= 5 && static_eval >= beta + std::max(depth - improving, 0) * 100) return static_eval;
+            if (!is_PV && depth <= 5 && static_eval >= beta + std::max(depth - improving, 0) * 100 + std::abs(correction) / 4) return static_eval;
 
             if (!is_PV && depth >= 3) {
                 const uint64_t no_pawns_or_kings = position.color_bb(position.STM()) & ~position.piece_bb(PieceType::King, position.STM()) & ~position.piece_bb(PieceType::Pawn, position.STM());
@@ -198,17 +206,19 @@ namespace episteme::search {
 
             bool is_quiet = position.mailbox(move.to_square()) == Piece::None && move.move_type() != MoveType::EnPassant;
 
+            uint64_t prev_nodes = nodes;
+
             if (ply > 0 && best > -MATE + MAX_SEARCH_PLY) {
                 const int32_t lmp_threshold = 3 + depth * depth;
                 if (is_quiet && num_legal >= lmp_threshold) break;
 
-                const int32_t fp_margin = depth * 250;
+                const int32_t fp_margin = fp_base() + depth * fp_mult();
                 if (!is_PV && is_quiet && !in_check(position, position.STM()) && static_eval + fp_margin <= alpha) break;
 
-                const int32_t see_threshold = (is_quiet) ? -60 * depth : -30 * depth * depth;
+                const int32_t see_threshold = (is_quiet) ? quiet_see_base() + quiet_see_mult() * depth : noisy_see_base() + noisy_see_mult() * depth * depth;
                 if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
 
-                const int32_t history_margin = depth * -2600 + 600;
+                const int32_t history_margin = (is_quiet) ? hist_prune_quiet_base() + hist_prune_quiet_mult() * depth : hist_prune_noisy_base() + hist_prune_noisy_mult() * depth;
                 if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) <= history_margin) continue;
             }
 
@@ -225,7 +235,7 @@ namespace episteme::search {
 
                 if (should_stop) return 0;
 
-                if (score < new_beta) extension = (!is_PV && score < new_beta - 50) ? 2 + (is_quiet && score < new_beta - 250) : 1;
+                if (score < new_beta) extension = (!is_PV && score < new_beta - double_ext_margin()) ? 2 + (is_quiet && score < new_beta - triple_ext_margin()) : 1;
                 else if (new_beta >= beta && std::abs(score) < MATE - MAX_SEARCH_PLY) return new_beta;
             }
 
@@ -265,18 +275,25 @@ namespace episteme::search {
             int16_t new_depth = depth - 1 + extension;
 
             if (num_legal >= 4 && depth >= 3) {
-                reduction = lmr_table[depth][num_legal];
+                reduction = (is_quiet) ? lmr_table_quiet[depth][num_legal] : lmr_table_noisy[depth][num_legal];
 
-                reduction += !improving;
-                reduction += !is_PV;
-                reduction -= tt_PV;
-                reduction += cut_node * 2;
-                reduction -= history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
-                reduction -= std::abs(correction) > 250;
+                reduction += lmr_improving_mult() * !improving;
+                reduction += lmr_is_PV_mult() * !is_PV;
+                reduction -= lmr_tt_PV_mult() * tt_PV;
+                reduction += lmr_cut_node_mult() * cut_node;
+                reduction -= lmr_hist_mult() * history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
+                reduction -= lmr_corrplexity_mult() * (std::abs(correction) > lmr_corrplexity_thresh());
+
+                reduction /= 128;
+
+                stack[ply].reduction = reduction;
+
+                stack[ply].reduction = reduction;
 
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
-
                 score = -search<false>(position, candidate, reduced, ply + 1, -alpha - 1, -alpha, true);
+                stack[ply].reduction = 0;
+
                 if (score > alpha && reduced < depth - 1) {
                     score = -search<false>(position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node);
                 }
@@ -296,7 +313,9 @@ namespace episteme::search {
             stack[ply].piece = Piece::None;
             
             if (should_stop) return 0;
-            
+
+            if (ply == 0) limiter.update_node_count(move, nodes - prev_nodes);
+
             if (score > best) {
                 best = score;
             }
@@ -353,8 +372,8 @@ namespace episteme::search {
             && !(node_type == tt::NodeType::CutNode && best <= static_eval)
             && !(node_type == tt::NodeType::AllNode && best >= static_eval) 
         ) {
-            int16_t diff = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 4, hist::MAX_CORR_HIST / 4);
-            history.update_corr_hist(position, position.STM(), diff);
+            int16_t correction = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 4, hist::MAX_CORR_HIST / 4);
+            history.update_corr_hist(position, stack, position.STM(), ply, correction);
         }
 
         if (!stack[ply].excluded) {
@@ -373,11 +392,13 @@ namespace episteme::search {
 
     template<bool PV_node>
     int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta) {
-        if (nodes % 2000 == 0 && limiter.time_exceeded()) {
+        if (nodes % 1024 == 0 && limiter.time_exceeded()) {
             should_stop = true;
             return 0;
         };
-        
+
+        seldepth = std::max(seldepth, ply);
+
         tt::Entry tt_entry = ttable.probe(position.full_hash());
         if ((tt_entry.node_type == tt::NodeType::PVNode)
             || (tt_entry.node_type == tt::NodeType::AllNode && tt_entry.score <= alpha)
@@ -399,12 +420,16 @@ namespace episteme::search {
             }
         };
 
+        MoveList explored_noisies;
         ScoredList captures_list = generate_scored_captures(position, tt_entry);
         tt::NodeType node_type = tt::NodeType::AllNode;
 
         for (size_t i = 0; i < captures_list.count; i++) {
             pick_move(captures_list, i);
             Move move = captures_list[i].move;
+
+            Piece from_pc = position.mailbox(move.from_square());
+            Piece to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(move.to_square());
 
             if (!eval::SEE(position, move, 0)) continue;
 
@@ -421,6 +446,7 @@ namespace episteme::search {
             }
 
             nodes++;
+            explored_noisies.add(move);
 
             if (limiter.nodes_exceeded(nodes)) {
                 should_stop = true;
@@ -448,6 +474,19 @@ namespace episteme::search {
                 PV.update_line(move, candidate);
 
                 if (score >= beta) {
+                    int16_t bonus = hist::bonus(std::max(1, seldepth - ply));
+                    history.update_qs_capt_hist(from_pc, move, to_pc, bonus);
+
+                    for (size_t j = 0; j < explored_noisies.count; j++) {
+                        Move prev_move = explored_noisies.list[j];
+                        if (prev_move.data() == move.data()) continue;
+
+                        Piece prev_from_pc = position.mailbox(prev_move.from_square());
+                        Piece prev_to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(prev_move.to_square());
+
+                        history.update_qs_capt_hist(prev_from_pc, prev_move, prev_to_pc, -bonus);
+                    }
+
                     node_type = tt::NodeType::CutNode;
                     break;
                 }
@@ -488,15 +527,14 @@ namespace episteme::search {
         }
 
         int64_t elapsed = duration_cast<milliseconds>(steady_clock::now() - start).count();
-        int64_t nps = (elapsed > 0) ? (1000 * nodes.load()) / elapsed : nodes.load();
 
         score = (is_absolute) ? score * (!color_idx(position.STM()) ? 1 : -1) : score;
 
         Report report {
             .depth = params.depth,
+            .seldepth = seldepth,
             .time = elapsed,
             .nodes = nodes,
-            .nps = nps,
             .score = score,
             .line = PV
         };
@@ -549,7 +587,6 @@ namespace episteme::search {
         reset_nodes();
 
         limiter.set_config(cfg);
-        limiter.calculate_limits();
         limiter.start();
 
         for (int depth = 1; depth <= params.depth; depth++) {
@@ -563,6 +600,8 @@ namespace episteme::search {
             last_score = report.score;
             total_time += report.time;
 
+            int32_t nps = report.time > 0 ? (report.nodes * 1000) / total_time : report.nodes;
+
             bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
             int32_t display_score = is_mate ? (report.score > 0 ? (MATE - report.score + 1) / 2 : -(MATE + report.score) / 2) : report.score;
 
@@ -570,11 +609,11 @@ namespace episteme::search {
             for (size_t i = 0; i < report.line.length; ++i) {
                 pv += report.line.moves[i].to_string() + " ";
             }
-            std::cout << "info depth " << report.depth << " time " << total_time << " nodes " << report.nodes
-                      << " nps " << report.nps << " score " << (is_mate ? "mate" : "cp") << " " << display_score
+            std::cout << "info depth " << report.depth << " seldepth " << report.seldepth << " time " << total_time << " nodes " << report.nodes
+                      << " nps " << nps << " score " << (is_mate ? "mate" : "cp") << " " << display_score
                       << " pv " << pv << "\n";
 
-            if (limiter.time_approaching() || limiter.time_exceeded()) break;
+            if (limiter.time_approaching(report.line.moves[0], workers[0]->node_count()) || limiter.time_exceeded()) break;
         }
     
         Move best = last_report.line.moves[0];
@@ -593,7 +632,6 @@ namespace episteme::search {
         reset_nodes();
 
         limiter.set_config(cfg);
-        limiter.calculate_limits();
         limiter.start();
 
         for (int depth = 1; depth <= 10; depth++) {

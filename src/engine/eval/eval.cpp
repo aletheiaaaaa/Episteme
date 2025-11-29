@@ -4,6 +4,7 @@ INCBIN(NNUE, EVALFILE);
 
 namespace episteme::eval {
     using namespace nn;
+    using namespace tunable;
 
     auto nnue_deleter = [](const NNUE*) {};
     std::unique_ptr<const NNUE, decltype(nnue_deleter)> nnue(
@@ -84,22 +85,22 @@ namespace episteme::eval {
             int32_t threat_val;
 
             if ((next_threat = our_threats & pawn_bb)) {
-                threat_val = piece_vals[piece_type_idx(PieceType::Pawn)];
+                threat_val = SEE_pawn_val();
                 occupied_bb &= ~((uint64_t)1 << std::countr_zero(next_threat));
                 all_threats |= get_bishop_attacks_direct(to_sq, occupied_bb) & (bishop_bb | queen_bb);
             } else if ((next_threat = our_threats & knight_bb)) {
-                threat_val = piece_vals[piece_type_idx(PieceType::Knight)];
+                threat_val = SEE_knight_val();
                 occupied_bb &= ~((uint64_t)1 << std::countr_zero(next_threat));
             } else if ((next_threat = our_threats & bishop_bb)) {
-                threat_val = piece_vals[piece_type_idx(PieceType::Bishop)];
+                threat_val = SEE_bishop_val();
                 occupied_bb &= ~((uint64_t)1 << std::countr_zero(next_threat));
                 all_threats |= get_bishop_attacks_direct(to_sq, occupied_bb) & (bishop_bb | queen_bb);
             } else if ((next_threat = our_threats & rook_bb)) {
-                threat_val = piece_vals[piece_type_idx(PieceType::Rook)];
+                threat_val = SEE_rook_val();
                 occupied_bb &= ~((uint64_t)1 << std::countr_zero(next_threat));
                 all_threats |= get_rook_attacks_direct(to_sq, occupied_bb) & (rook_bb | queen_bb);
             } else if ((next_threat = our_threats & queen_bb)) {
-                threat_val = piece_vals[piece_type_idx(PieceType::Queen)];
+                threat_val = SEE_queen_val();
                 occupied_bb &= ~((uint64_t)1 << std::countr_zero(next_threat));
                 all_threats |= (get_bishop_attacks_direct(to_sq, occupied_bb) & (bishop_bb | queen_bb)) | (get_rook_attacks_direct(to_sq, occupied_bb) & (rook_bb | queen_bb));
             } else {

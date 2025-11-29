@@ -1,6 +1,10 @@
+#pragma once
+
+#include "../chess/move.h"
+
 #include <cstdint>
 #include <chrono>
-#include <optional>
+#include <array>
 
 namespace episteme::time {
     using namespace std::chrono;
@@ -21,16 +25,8 @@ namespace episteme::time {
                 this->config = config;
             }
 
-            inline void start() {
-                start_time = steady_clock::now();
-            }
-
-            inline bool time_approaching() const {
-                return soft_limit && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= soft_limit;
-            }
-
             inline bool time_exceeded() const {
-                return hard_limit && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= hard_limit;
+                return (hard_limit != -1) && duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= hard_limit;
             }
 
             inline bool nodes_approaching(uint64_t nodes) const {
@@ -41,29 +37,23 @@ namespace episteme::time {
                 return config.nodes && nodes >= config.nodes;
             }
 
-            inline bool limits_approaching(uint64_t nodes) const {
-                return time_approaching() || nodes_approaching(nodes);
+            inline void update_node_count(Move move, uint64_t count) {
+                node_counts[move.data() & 0x0FFF] += count;
             }
 
-            inline bool limits_exceeded(uint64_t nodes, int16_t depth) const {
-                return time_exceeded() || nodes_exceeded(nodes);
-            }
-
-            inline void calculate_limits() {
-                if (config.move_time) {
-                    hard_limit = config.move_time;
-                } else if (config.time_left) {
-                    hard_limit = config.time_left / 20 + config.increment / 2;
-                    soft_limit = hard_limit * 3 / 5;
-                }
-            }
+            bool time_approaching(Move move, uint64_t nodes);
+            void start();
 
         private:
             Config config{};
 
             steady_clock::time_point start_time;
 
-            uint64_t hard_limit = 0;
-            uint64_t soft_limit = 0;
+            int32_t hard_limit = -1;
+            int32_t soft_limit = -1;
+
+            std::array<uint64_t, 4096> node_counts{};
+            Move prev_best{};
+            int32_t move_stability = 0;
     };
 }
