@@ -101,18 +101,12 @@ namespace episteme::pretty {
 
     std::string get_piece_symbol(Piece piece) {
         static const std::string symbols[] = {
-            "P", "p",  
-
-            "N", "n",  
-
-            "B", "b",  
-
-            "R", "r",  
-
-            "Q", "q",  
-
-            "K", "k"   
-
+            "P", "p",
+            "N", "n",
+            "B", "b",
+            "R", "r",
+            "Q", "q",
+            "K", "k"
         };
 
         if (piece == Piece::None) return " ";
