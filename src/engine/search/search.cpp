@@ -287,9 +287,6 @@ namespace episteme::search {
                 reduction /= 128;
 
                 stack[ply].reduction = reduction;
-
-                stack[ply].reduction = reduction;
-
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
                 score = -search<false>(position, candidate, reduced, ply + 1, -alpha - 1, -alpha, true);
                 stack[ply].reduction = 0;
