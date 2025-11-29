@@ -1,4 +1,5 @@
 #include "engine/uci/uci.h"
+#include "engine/uci/display.h"
 
 using namespace episteme;
 
@@ -18,10 +19,12 @@ int main(int argc, char *argv[]) {
         uci::parse(cmd, cfg, engine);
 
     } else {
+        uci::set_pretty(true);
+
         std::string line;
         while (std::getline(std::cin, line)) {
-            uci::parse(line, cfg, engine);    
-        }    
+            uci::parse(line, cfg, engine);
+        }
     }
 
     return 0;

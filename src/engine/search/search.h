@@ -16,6 +16,7 @@
 #include <atomic>
 #include <optional>
 #include <memory>
+#include <functional>
 
 namespace episteme::search {
     using namespace std::chrono;
@@ -86,6 +87,8 @@ namespace episteme::search {
     };
 
     struct Parameters {
+        int32_t move_time = 0;
+
         std::array<int32_t, 2> time = {};
         std::array<int32_t, 2> inc = {};
 
@@ -101,6 +104,7 @@ namespace episteme::search {
         int64_t time;
         uint64_t nodes;
         int32_t score;
+        int32_t hashfull;
         Line line;
     };
 
@@ -113,7 +117,9 @@ namespace episteme::search {
 
     class Worker {
         public:
-            Worker(tt::Table& ttable, time::Limiter& limiter) : ttable(ttable), limiter(limiter), nodes(0), should_stop(false) {};
+            using LiveUpdateCallback = std::function<void(uint64_t nodes, const Line& exploring)>;
+
+            Worker(tt::Table& ttable, time::Limiter& limiter) : ttable(ttable), limiter(limiter), nodes(0), should_stop(false), live_update_callback(nullptr) {};
 
             inline void reset_accum() {
                 accumulator = {};
@@ -147,6 +153,14 @@ namespace episteme::search {
 
             [[nodiscard]] inline uint64_t node_count() {
                 return nodes;
+            }
+
+            inline void set_live_update_callback(LiveUpdateCallback callback) {
+                live_update_callback = std::move(callback);
+            }
+
+            inline void clear_live_update_callback() {
+                live_update_callback = nullptr;
             }
 
             ScoredMove score_move(const Position& position, const Move& move, const tt::Entry& tt_entry, std::optional<int32_t> ply);
@@ -187,6 +201,10 @@ namespace episteme::search {
 
             int16_t seldepth;
 
+            Line exploring;
+            LiveUpdateCallback live_update_callback;
+            steady_clock::time_point last_update_time;
+
             std::atomic<uint64_t> nodes;
             std::atomic<bool> should_stop;
     };
@@ -205,7 +223,7 @@ namespace episteme::search {
             }
 
             inline void update_params(search::Parameters& new_params) {
-                params = new_params;
+                this->params = new_params;
             }
 
             inline void reset_nodes() {
@@ -241,6 +259,10 @@ namespace episteme::search {
             ScoredMove datagen_search(Position& position);
             void eval(Position& position);
             void bench(int depth);
+
+            inline Worker* get_worker(size_t idx = 0) {
+                return (idx < workers.size()) ? workers[idx].get() : nullptr;
+            }
 
         private:
             tt::Table ttable;
