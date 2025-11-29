@@ -90,6 +90,8 @@ namespace episteme::search {
             return 0;
         };
 
+        if (ply > MAX_SEARCH_PLY) return eval::evaluate(accumulator, position.STM());
+
         seldepth = std::max(seldepth, ply);
 
         if (ply > 0) {
@@ -393,6 +395,8 @@ namespace episteme::search {
             should_stop = true;
             return 0;
         };
+
+        if (ply > MAX_SEARCH_PLY) return eval::evaluate(accumulator, position.STM());
 
         seldepth = std::max(seldepth, ply);
 
