@@ -1,6 +1,6 @@
-#include "nnue.h"
+#include "common.h"
 
-namespace episteme::nn {
+namespace episteme::eval::nn {
     Accumulator NNUE::update_accumulator(const Position& position, const Move& move, Accumulator accum) const {
         Square sq_src = move.from_square();
         Square sq_dst = move.to_square();
@@ -111,67 +111,6 @@ namespace episteme::nn {
         return accum;
     }
 
-    int32_t NNUE::l1_forward(const Accumulator& accum, Color stm) const {
-
-        const auto& accum_stm = (!color_idx(stm)) ? (accum.white) : (accum.black);
-        const auto& accum_ntm = (!color_idx(stm)) ? (accum.black) : (accum.white);
-
-        __m256i temp_0 = _mm256_setzero_si256();
-        __m256i temp_1 = _mm256_setzero_si256();
-        __m256i temp_2 = _mm256_setzero_si256();
-        __m256i temp_3 = _mm256_setzero_si256();
-
-        for (int i = 0; i < L1_WIDTH; i += 64) {
-            auto partial = [&](__m256i temp, int offset) {
-                __m256i stm_pre = _mm256_load_si256(reinterpret_cast<const __m256i*>(&accum_stm[i + offset]));
-                __m256i ntm_pre = _mm256_load_si256(reinterpret_cast<const __m256i*>(&accum_ntm[i + offset]));
-                __m256i l1w0 = _mm256_load_si256(reinterpret_cast<const __m256i*>(&l1_weights[0][i + offset]));
-                __m256i l1w1 = _mm256_load_si256(reinterpret_cast<const __m256i*>(&l1_weights[1][i + offset]));
-
-                __m256i stm = _mm256_min_epi16(_mm256_max_epi16(stm_pre, _mm256_setzero_si256()), _mm256_set1_epi16(QA));
-                __m256i ntm = _mm256_min_epi16(_mm256_max_epi16(ntm_pre, _mm256_setzero_si256()), _mm256_set1_epi16(QA));
-
-                __m256i temp_stm = _mm256_mullo_epi16(stm, l1w0);
-                __m256i temp_ntm = _mm256_mullo_epi16(ntm, l1w1);
-    
-                temp += _mm256_madd_epi16(stm, temp_stm); 
-                temp += _mm256_madd_epi16(ntm, temp_ntm);    
-
-                return temp;
-            };
-
-            temp_0 = partial(temp_0, 0);
-            temp_1 = partial(temp_1, 16);
-            temp_2 = partial(temp_2, 32);
-            temp_3 = partial(temp_3, 48);
-        }
-
-        auto hadd = [&](__m256i temp) {
-            __m128i temp_lo = _mm256_castsi256_si128(temp); 
-            __m128i temp_hi = _mm256_extracti128_si256(temp, 1);
-
-            __m128i out_pre = _mm_hadd_epi32(temp_lo, temp_hi);
-            out_pre = _mm_hadd_epi32(out_pre, out_pre);
-            out_pre = _mm_hadd_epi32(out_pre, out_pre);
-
-            return _mm_cvtsi128_si32(out_pre);
-        };
-
-        int32_t out_0 = hadd(temp_0);
-        int32_t out_1 = hadd(temp_1);
-        int32_t out_2 = hadd(temp_2);
-        int32_t out_3 = hadd(temp_3);
-
-        int32_t out = out_0 + out_1 + out_2 + out_3;
-
-        out /= QA;
-        out += l1_bias;
-        out *= EVAL_SCALE;
-        out /= (QA * QB);
-
-        return out;
-    }
-
     void NNUE::init_random() {
         std::mt19937 gen(42);
         std::uniform_int_distribution<int16_t> dist(-255, 255);
@@ -183,9 +122,8 @@ namespace episteme::nn {
         for (auto& val : l0_biases)
             val = dist(gen);
 
-        for (auto& arr : l1_weights)
-            for (auto& val : arr)
-                val = dist(gen);
+        for (auto& val : l1_weights)
+            val = dist(gen);
 
         l1_bias = dist(gen);
     }

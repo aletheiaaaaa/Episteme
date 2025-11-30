@@ -18,6 +18,16 @@ namespace episteme {
         return mailbox;
     }
 
+    struct Hashes {
+        uint64_t full_hash = 0;
+
+        uint64_t pawn_hash = 0;
+        uint64_t major_hash = 0;
+        uint64_t minor_hash = 0;
+        uint64_t non_pawn_white_hash = 0;
+        uint64_t non_pawn_black_hash = 0;
+    };
+
     struct PositionState {
         std::array<uint64_t, 8> bitboards{};
         std::array<Piece, 64> mailbox = empty_mailbox();
@@ -34,8 +44,7 @@ namespace episteme {
         uint16_t full_move_number = 0;
         Square ep_square = Square::None;
 
-        uint64_t hash = 0;
-        uint64_t pawn_hash = 0;
+        Hashes hashes;
     };
 
     class Position {
@@ -43,75 +52,91 @@ namespace episteme {
             Position();
 
             [[nodiscard]] inline uint64_t total_bb() const {
-                return (state.bitboards[color_idx(Color::White) + COLOR_OFFSET] | state.bitboards[color_idx(Color::Black) + COLOR_OFFSET]);
+                return (current.bitboards[color_idx(Color::White) + COLOR_OFFSET] | current.bitboards[color_idx(Color::Black) + COLOR_OFFSET]);
             }
 
             [[nodiscard]] inline uint64_t piece_bb(PieceType piece_type, Color color) const {
-                return (state.bitboards[piece_type_idx(piece_type)] & state.bitboards[color_idx(color) + COLOR_OFFSET]);
+                return (current.bitboards[piece_type_idx(piece_type)] & current.bitboards[color_idx(color) + COLOR_OFFSET]);
             }
 
             [[nodiscard]] inline uint64_t piece_type_bb(PieceType piece_type) const {
-                return state.bitboards[piece_type_idx(piece_type)];
+                return current.bitboards[piece_type_idx(piece_type)];
             }
 
             [[nodiscard]] inline uint64_t color_bb(Color color) const {
-                return state.bitboards[color_idx(color) + COLOR_OFFSET];
+                return current.bitboards[color_idx(color) + COLOR_OFFSET];
             }
 
             [[nodiscard]] inline std::array<uint64_t, 8> bitboards_all() const {
-                return state.bitboards;
+                return current.bitboards;
             }
 
             [[nodiscard]] inline uint64_t bitboard(int index) const {
-                return state.bitboards[index];
+                return current.bitboards[index];
             }
         
             [[nodiscard]] inline Color STM() const {
-                return static_cast<Color>(state.stm);
+                return static_cast<Color>(current.stm);
             }
         
             [[nodiscard]] inline Color NTM() const {
-                return static_cast<Color>(!state.stm);
+                return static_cast<Color>(!current.stm);
             }
         
             [[nodiscard]] inline uint8_t half_move_clock() const {
-                return state.half_move_clock; 
+                return current.half_move_clock; 
             }
         
             [[nodiscard]] inline uint32_t full_move_number() const {
-                return state.full_move_number;
+                return current.full_move_number;
             }
         
             [[nodiscard]] inline Square ep_square() const {
-                return state.ep_square;    
+                return current.ep_square;    
             }
 
             [[nodiscard]] inline AllowedCastles all_rights() const {
-                return state.allowed_castles;
+                return current.allowed_castles;
             }
         
             [[nodiscard]] inline AllowedCastles::RookPair castling_rights(Color stm) const {
-                return state.allowed_castles.rooks[color_idx(stm)];
+                return current.allowed_castles.rooks[color_idx(stm)];
             }
 
             [[nodiscard]] inline Piece mailbox(Square square) const {
-                return state.mailbox[sq_idx(square)];
+                return current.mailbox[sq_idx(square)];
             }
 
             [[nodiscard]] inline Piece mailbox(int index) const {
-                return state.mailbox[index];
+                return current.mailbox[index];
             }
 
             [[nodiscard]] inline std::array<Piece, 64> mailbox_all() const {
-                return state.mailbox;
+                return current.mailbox;
             }
 
-            [[nodiscard]] inline uint64_t hash() const {
-                return state.hash;
+            [[nodiscard]] inline uint64_t full_hash() const {
+                return current.hashes.full_hash;
             }
 
             [[nodiscard]] inline uint64_t pawn_hash() const {
-                return state.pawn_hash;
+                return current.hashes.pawn_hash;
+            }
+
+            [[nodiscard]] inline uint64_t major_hash() const {
+                return current.hashes.major_hash;
+            }
+
+            [[nodiscard]] inline uint64_t minor_hash() const {
+                return current.hashes.minor_hash;
+            }
+
+            [[nodiscard]] inline uint64_t non_pawn_stm_hash() const {
+                return (!current.stm) ? current.hashes.non_pawn_white_hash : current.hashes.non_pawn_black_hash;
+            }
+
+            [[nodiscard]] inline uint64_t non_pawn_ntm_hash() const {
+                return (!current.stm) ? current.hashes.non_pawn_black_hash : current.hashes.non_pawn_white_hash;
             }
 
             void from_FEN(const std::string& FEN);
@@ -125,14 +150,14 @@ namespace episteme {
             bool is_insufficient();
 
             std::string to_FEN() const; 
-            uint64_t explicit_hash();
-            uint64_t explicit_pawn_hash();
+
+            Hashes explicit_hashes();
         public:
             static const uint16_t COLOR_OFFSET = 6;
 
         private:
-            std::vector<PositionState> position_history;
-            PositionState state;
+            std::vector<PositionState> history;
+            PositionState current;
     };
 
     Move from_UCI(const Position& position, const std::string& move);

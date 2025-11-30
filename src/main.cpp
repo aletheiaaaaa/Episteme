@@ -1,16 +1,10 @@
-#include "engine/chess/movegen.h"
-#include "engine/chess/perft.h"
-#include "engine/search/search.h"
-#include "engine/search/bench.h"
 #include "engine/uci/uci.h"
-
-#include <string>
 
 using namespace episteme;
 
 int main(int argc, char *argv[]) {
-    zobrist::init();
-    search::init_lmr_table();
+    hash::init();
+    tunable::init_lmr_table();
 
     search::Config cfg;
     search::Engine engine(cfg);
