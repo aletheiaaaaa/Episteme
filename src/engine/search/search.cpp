@@ -222,7 +222,7 @@ namespace episteme::search {
                     noisy_see_base() + noisy_see_mult() * depth * depth - std::max(history.get_capt_hist(from_pc, move, to_pc) / 128, 0);
                 if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
 
-                const int32_t history_margin = (is_quiet) ? hist_prune_quiet_base() + hist_prune_quiet_mult() * depth : hist_prune_noisy_base() + hist_prune_noisy_mult() * depth;
+                const int32_t history_margin = hist_prune_base() + hist_prune_mult() * depth;
                 if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) <= history_margin) continue;
             }
 
