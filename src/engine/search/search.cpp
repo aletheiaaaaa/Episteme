@@ -28,14 +28,15 @@ namespace episteme::search {
         return scored_list;
     }
 
-    int32_t Worker::eval_correction(const Position& position) {
+    int32_t Worker::eval_correction(int16_t ply, Position& position) {
         int32_t correction = 0;
 
         correction += pawn_corrhist_mult() * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
-        // correction += major_corrhist_mult() * history.get_major_corr_hist(position.major_hash(), position.STM());
+        // correction += 110 * history.get_major_corr_hist(position.major_hash(), position.STM());
         correction += minor_corrhist_mult() * history.get_minor_corr_hist(position.minor_hash(), position.STM());
         correction += nonpawn_stm_corrhist_mult() * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
         correction += nonpawn_ntm_corrhist_mult() * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
+        correction += cont_corrhist_mult() * history.get_cont_corr_hist(stack, ply);
 
         return correction / 2048;
     }
@@ -138,7 +139,7 @@ namespace episteme::search {
         int32_t correction = 0;
         if (!in_check(position, position.STM())) {
             static_eval = eval::evaluate(accumulator, position.STM());
-            correction = eval_correction(position);
+            correction = eval_correction(ply, position);
             static_eval += correction;
 
             stack[ply].eval = static_eval;
@@ -286,9 +287,6 @@ namespace episteme::search {
                 reduction /= 128;
 
                 stack[ply].reduction = reduction;
-
-                stack[ply].reduction = reduction;
-
                 int16_t reduced = std::min(std::max(new_depth - reduction, 1), static_cast<int>(new_depth));
                 score = -search<false>(position, candidate, reduced, ply + 1, -alpha - 1, -alpha, true);
                 stack[ply].reduction = 0;
@@ -371,8 +369,8 @@ namespace episteme::search {
             && !(node_type == tt::NodeType::CutNode && best <= static_eval)
             && !(node_type == tt::NodeType::AllNode && best >= static_eval) 
         ) {
-            int16_t diff = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 4, hist::MAX_CORR_HIST / 4);
-            history.update_corr_hist(position, position.STM(), diff);
+            int16_t correction = std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 4, hist::MAX_CORR_HIST / 4);
+            history.update_corr_hist(position, stack, position.STM(), ply, correction);
         }
 
         if (!stack[ply].excluded) {
@@ -584,6 +582,7 @@ namespace episteme::search {
         int32_t total_time = 0;
 
         reset_nodes();
+        reset_seldepth();
 
         limiter.set_config(cfg);
         limiter.start();
