@@ -240,6 +240,7 @@ namespace episteme::search {
                 if (score < new_beta) extension = (!is_PV && score < new_beta - double_ext_margin()) ? 2 : 1;
                 else if (new_beta >= beta && std::abs(score) < MATE - MAX_SEARCH_PLY) return new_beta;
                 else if (tt_entry.score >= beta) extension = -1;
+                else if (cut_node) extension = -2;
             }
 
             accumulator = eval::update(position, move, accumulator);
