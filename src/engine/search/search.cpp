@@ -186,7 +186,7 @@ namespace episteme::search {
             }
         }
 
-        if (!stack[ply].excluded.data() && (is_PV || cut_node) && !tt_entry.move.data() && depth >= 6) depth--;
+        if (!stack[ply].excluded.data() && cut_node && !tt_entry.move.data() && depth >= 6) depth--;
 
         ScoredList move_list = generate_scored_moves(position, tt_entry, ply);
         int32_t best = -INF;
