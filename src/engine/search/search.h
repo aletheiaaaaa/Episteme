@@ -129,6 +129,10 @@ namespace episteme::search {
                 nodes = 0;
             }
 
+            inline void reset_seldepth() {
+                seldepth = 0;
+            }
+
             inline void reset_stop() {
                 should_stop = false;
             }
@@ -207,6 +211,12 @@ namespace episteme::search {
             inline void reset_nodes() {
                 for (auto& worker : workers) {
                     worker->reset_nodes();
+                }
+            }
+
+            inline void reset_seldepth() {
+                for (auto& worker : workers) {
+                    worker->reset_seldepth();
                 }
             }
 

@@ -586,6 +586,7 @@ namespace episteme::search {
         int32_t total_time = 0;
 
         reset_nodes();
+        reset_seldepth();
 
         limiter.set_config(cfg);
         limiter.start();
