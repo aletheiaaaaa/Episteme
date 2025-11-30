@@ -220,7 +220,7 @@ namespace episteme::search {
                 const int32_t see_threshold = (is_quiet) ? quiet_see_base() + quiet_see_mult() * depth : noisy_see_base() + noisy_see_mult() * depth * depth;
                 if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
 
-                const int32_t history_margin = (is_quiet) ? hist_prune_quiet_base() + hist_prune_quiet_mult() * depth : hist_prune_noisy_base() + hist_prune_noisy_mult() * depth;
+                const int32_t history_margin = hist_prune_base() + hist_prune_mult() * depth;
                 if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) <= history_margin) continue;
             }
 
