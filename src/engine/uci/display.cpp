@@ -37,7 +37,6 @@ namespace episteme::uci {
             update_thread.join();
         }
 
-        // Clear callback from worker
         if (engine_ptr) {
             auto* worker = engine_ptr->get_worker(0);
             if (worker) {
@@ -56,7 +55,6 @@ namespace episteme::uci {
         live_nodes = 0;
         current_exploring.clear();
 
-        // Set up live update callback on worker
         if (engine_ptr) {
             auto* worker = engine_ptr->get_worker(0);
             if (worker) {
@@ -77,7 +75,6 @@ namespace episteme::uci {
     }
 
     void PrettyDisplay::on_completion(const search::Report& report, Move best_move) {
-        // Clear callback from worker
         if (engine_ptr) {
             auto* worker = engine_ptr->get_worker(0);
             if (worker) {
@@ -90,7 +87,6 @@ namespace episteme::uci {
             update_thread.join();
         }
 
-        // Calculate total elapsed time from search start
         search::Report final_report = report;
         auto elapsed = steady_clock::now() - search_start;
         final_report.time = duration_cast<milliseconds>(elapsed).count();

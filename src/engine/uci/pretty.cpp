@@ -27,9 +27,9 @@ namespace episteme::pretty {
         std::cout << CLEAR_SCREEN << HIDE_CURSOR;
 
         std::vector<std::string> possible_paths = {
-            "nodes.txt",
-            "../nodes.txt",
-            "../../nodes.txt",
+            "logo.txt",
+            "../logo.txt",
+            "../../logo.txt",
         };
 
         std::vector<std::string> logo_lines;
@@ -49,6 +49,8 @@ namespace episteme::pretty {
         }
 
         std::vector<std::string> info_lines = {
+            "",
+            "",
             "",
             "",
             BOLD + std::string("EPISTEME"),
@@ -82,11 +84,11 @@ namespace episteme::pretty {
             if (i < logo_lines.size()) {
                 std::cout << logo_color << logo_lines[i] << RESET;
 
-                if (logo_lines[i].length() < 105) {
-                    std::cout << std::string(105 - logo_lines[i].length(), ' ');
+                if (logo_lines[i].length() < 75) {
+                    std::cout << std::string(75 - logo_lines[i].length(), ' ');
                 }
             } else {
-                std::cout << std::string(105, ' ');
+                std::cout << std::string(75, ' ');
             }
 
             if (i < info_lines.size()) {
@@ -106,7 +108,7 @@ namespace episteme::pretty {
             "B", "b",
             "R", "r",
             "Q", "q",
-            "K", "k"
+            "K", "k" 
         };
 
         if (piece == Piece::None) return " ";
@@ -282,18 +284,15 @@ namespace episteme::pretty {
         bool is_white_to_move = (pos.STM() == Color::White);
 
         for (size_t i = 0; i < std::min(line.length, max_moves); ++i) {
-            // Add move number
             if (is_white_to_move) {
                 ss << move_number << ". ";
             } else if (i == 0) {
-                // First move is black, use "N..."
                 ss << move_number << "... ";
             }
 
             ss << line.moves[i].to_PGN(pos) << " ";
             pos.make_move(line.moves[i]);
 
-            // Update move tracking
             if (is_white_to_move) {
                 is_white_to_move = false;
             } else {
@@ -327,7 +326,6 @@ namespace episteme::pretty {
         ss << LIGHT_LAVENDER << "    NPS:         " << RESET << MED_INDIGO << format_number(nps) << RESET << "\n";
         ss << LIGHT_LAVENDER << "    Hashfull:    " << RESET << MED_INDIGO << (report.hashfull / 10.0) << "%" << RESET << "\n";
 
-        // Display currently exploring line
         if (state.exploring_line.length > 0 && state.searching) {
             ss << "\n";
             ss << LIGHT_LAVENDER << "    Exploring:   " << RESET << DIM << DEEP_INDIGO;

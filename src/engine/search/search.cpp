@@ -92,7 +92,6 @@ namespace episteme::search {
                 return 0;
             }
 
-            // Poll nodes every 50ms for pretty mode (only if callback is set)
             if (live_update_callback) {
                 auto now = steady_clock::now();
                 auto elapsed = duration_cast<milliseconds>(now - last_update_time).count();
@@ -272,14 +271,11 @@ namespace episteme::search {
             if (is_quiet) explored_quiets.add(move);
             else explored_noisies.add(move);
 
-            // Track exploring line for pretty mode (only if callback is set)
             if (live_update_callback) {
-                // At root, clear and start new line
                 if (ply == 0) {
                     exploring.clear();
                 }
 
-                // Ensure we have space and set the move at this ply
                 if (ply < exploring.moves.size()) {
                     exploring.moves[ply] = move;
                     exploring.length = ply + 1;
