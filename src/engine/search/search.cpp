@@ -584,7 +584,6 @@ namespace episteme::search {
         int32_t total_time = 0;
 
         reset_nodes();
-        reset_seldepth();
 
         limiter.set_config(cfg);
         limiter.start();
@@ -592,6 +591,8 @@ namespace episteme::search {
         for (int depth = 1; depth <= params.depth; depth++) {
             Parameters iter_params = params;
             iter_params.depth = depth;
+
+            reset_seldepth();
 
             Report report = workers[0]->run(last_score, iter_params, position, false);
             if (workers[0]->stopped()) break;
