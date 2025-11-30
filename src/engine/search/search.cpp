@@ -188,6 +188,8 @@ namespace episteme::search {
             }
         }
 
+        if (!stack[ply].excluded.data() && cut_node && !tt_entry.move.data() && depth >= 6) depth--;
+
         ScoredList move_list = generate_scored_moves(position, tt_entry, ply);
         int32_t best = -INF;
 
@@ -220,7 +222,7 @@ namespace episteme::search {
                 const int32_t see_threshold = (is_quiet) ? quiet_see_base() + quiet_see_mult() * depth : noisy_see_base() + noisy_see_mult() * depth * depth;
                 if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
 
-                const int32_t history_margin = (is_quiet) ? hist_prune_quiet_base() + hist_prune_quiet_mult() * depth : hist_prune_noisy_base() + hist_prune_noisy_mult() * depth;
+                const int32_t history_margin = hist_prune_base() + hist_prune_mult() * depth;
                 if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) <= history_margin) continue;
             }
 
@@ -586,7 +588,6 @@ namespace episteme::search {
         int32_t total_time = 0;
 
         reset_nodes();
-        reset_seldepth();
 
         limiter.set_config(cfg);
         limiter.start();
@@ -594,6 +595,8 @@ namespace episteme::search {
         for (int depth = 1; depth <= params.depth; depth++) {
             Parameters iter_params = params;
             iter_params.depth = depth;
+
+            reset_seldepth();
 
             Report report = workers[0]->run(last_score, iter_params, position, false);
             if (workers[0]->stopped()) break;

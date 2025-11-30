@@ -82,10 +82,8 @@ void init_lmr_table();
     TUNABLE(noisy_see_base, -15, -256, 64, 4, nullptr);
     TUNABLE(noisy_see_mult, -30, -256, 16, 2, nullptr);
 
-    TUNABLE(hist_prune_quiet_base, -2600, -8192, 1024, 128, nullptr);
-    TUNABLE(hist_prune_quiet_mult, 600, 0, 4096, 64, nullptr);
-    TUNABLE(hist_prune_noisy_base, -2600, -8192, 1024, 128, nullptr);
-    TUNABLE(hist_prune_noisy_mult, 600, 0, 4096, 64, nullptr);
+    TUNABLE(hist_prune_base, -2600, -8192, 1024, 128, nullptr);
+    TUNABLE(hist_prune_mult, 600, 0, 4096, 64, nullptr);
 
     TUNABLE(double_ext_margin, 20, 0, 512, 8, nullptr);
     TUNABLE(triple_ext_margin, 140, 0, 2048, 16, nullptr);
