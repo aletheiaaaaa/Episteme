@@ -612,7 +612,7 @@ namespace episteme::search {
         limiter.set_config(cfg);
         limiter.start();
 
-        uci::mode().on_start(position);
+        uci::on_start(position);
 
         for (int depth = 1; depth <= params.depth; depth++) {
             Parameters iter_params = params;
@@ -628,7 +628,7 @@ namespace episteme::search {
             total_time += report.time;
 
             report.hashfull = ttable.hashfull();
-            uci::mode().on_update(report);
+            uci::on_update(report);
 
             if (limiter.time_approaching(report.line.moves[0], workers[0]->node_count()) || limiter.time_exceeded()) break;
         }
@@ -636,7 +636,7 @@ namespace episteme::search {
         Move best = last_report.line.moves[0];
 
         last_report.hashfull = ttable.hashfull();
-        uci::mode().on_completion(last_report, best);
+        uci::on_completion(last_report, best);
     }
 
     ScoredMove Engine::datagen_search(Position& position) {
@@ -676,7 +676,7 @@ namespace episteme::search {
 
     void Engine::eval(Position& position) {
         int32_t eval_cp = workers[0]->eval(position);
-        uci::mode().show_position(position, eval_cp);
+        uci::show_position(position, eval_cp);
     }
 
     void Engine::bench(int depth) {

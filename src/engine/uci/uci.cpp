@@ -94,7 +94,7 @@ namespace episteme::uci {
 
         cfg.position = position;
 
-        mode().show_position(position, 0);
+        show_position(position, 0);
     }
 
     auto go(const std::string& args, search::Config& cfg, search::Engine& engine) {
@@ -119,7 +119,7 @@ namespace episteme::uci {
 
         engine.reset_go();
         engine.update_params(cfg.params);
-        mode().set_engine(&engine);
+        set_engine(&engine);
         engine.run(cfg.position);
     }
 
@@ -128,10 +128,10 @@ namespace episteme::uci {
         cfg.position = {};
         engine.reset_game();
 
-        mode().clear();
+        clear();
 
         Position empty_position;
-        mode().show_position(empty_position, 0);
+        show_position(empty_position, 0);
     }
     
     auto eval(search::Config& cfg, search::Engine& engine) {
@@ -199,7 +199,7 @@ namespace episteme::uci {
         else if (keyword == "go") go(cmd.substr(cmd.find(" ")+1), cfg, engine);
         else if (keyword == "ucinewgame") ucinewgame(cfg, engine);
         else if (keyword == "quit") {
-            if (dynamic_cast<PrettyDisplay*>(&mode())) {
+            if (is_pretty()) {
                 std::cout << "\033[2J\033[3J\033[H" << "\033[?25h" << std::flush;
             }
             std::exit(0);
