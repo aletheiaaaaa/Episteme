@@ -77,6 +77,7 @@ namespace episteme {
             }
 
             std::string to_string() const;
+            std::string to_PGN(const class Position& position) const;
         private:
             uint16_t move_data;
     };

@@ -20,7 +20,11 @@ namespace episteme::time {
     }
 
     void Limiter::start() {
+        hard_limit = -1;
+        soft_limit = -1;
+
         start_time = steady_clock::now();
+
         node_counts.fill(0);
         prev_best = Move();
 

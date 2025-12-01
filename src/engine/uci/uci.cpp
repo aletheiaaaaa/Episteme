@@ -4,6 +4,8 @@ namespace episteme::uci {
     using namespace tunable;
 
     auto uci() {
+        set_pretty(false);
+
         std::cout << "id name Episteme \nid author aletheia\n";
         std::cout << "option name Hash type spin default 32 min 1 max 128\n";
         std::cout << "option name Threads type spin default 1 min 1 max 1\n";
@@ -14,6 +16,10 @@ namespace episteme::uci {
         }
 #endif
         std::cout << "uciok\n";
+    }
+
+    auto pretty_cmd() {
+        set_pretty(true);
     }
 
     auto setoption(const std::string& args, search::Config& cfg, search::Engine& engine) {
@@ -68,7 +74,7 @@ namespace episteme::uci {
         if (token == "startpos") {
             position.from_startpos();
 
-        } else if (token == "fen") {    
+        } else if (token == "fen") {
             std::string fen;
             for (int i = 0; i < 6 && iss >> token; ++i) {
                 if (!fen.empty()) fen += " ";
@@ -87,11 +93,15 @@ namespace episteme::uci {
         }
 
         cfg.position = position;
+
+        show_position(position, 0);
     }
 
     auto go(const std::string& args, search::Config& cfg, search::Engine& engine) {
         std::istringstream iss(args);
         std::string token;
+
+        cfg.params = {};
 
         while (iss >> token) {
             if (token == "wtime" && iss >> token) cfg.params.time[0] = std::stoi(token);
@@ -100,14 +110,16 @@ namespace episteme::uci {
             else if (token == "binc" && iss >> token) cfg.params.inc[1] = std::stoi(token);
             else if (token == "depth" && iss >> token) cfg.params.depth = std::stoi(token);
             else if (token == "nodes" && iss >> token) cfg.params.nodes = std::stoi(token);
+            else if (token == "movetime" && iss >> token) cfg.params.move_time = std::stoi(token);
             else {
-                std::cout << "invalid command\n"; 
+                std::cout << "invalid command\n";
                 break;
             }
         }
 
         engine.reset_go();
         engine.update_params(cfg.params);
+        set_engine(&engine);
         engine.run(cfg.position);
     }
 
@@ -115,6 +127,11 @@ namespace episteme::uci {
         cfg.params = {};
         cfg.position = {};
         engine.reset_game();
+
+        clear();
+
+        Position empty_position;
+        show_position(empty_position, 0);
     }
     
     auto eval(search::Config& cfg, search::Engine& engine) {
@@ -175,12 +192,18 @@ namespace episteme::uci {
         std::string keyword = cmd.substr(0, cmd.find(' '));
 
         if (keyword == "uci") uci();
+        else if (keyword == "pretty") pretty_cmd();
         else if (keyword == "setoption") setoption(cmd.substr(cmd.find(" ")+1), cfg, engine);
         else if (keyword == "isready") isready();
         else if (keyword == "position") position(cmd.substr(cmd.find(" ")+1), cfg);
         else if (keyword == "go") go(cmd.substr(cmd.find(" ")+1), cfg, engine);
         else if (keyword == "ucinewgame") ucinewgame(cfg, engine);
-        else if (keyword == "quit") std::exit(0);
+        else if (keyword == "quit") {
+            if (is_pretty()) {
+                std::cout << "\033[2J\033[3J\033[H" << "\033[?25h" << std::flush;
+            }
+            std::exit(0);
+        }
 
         else if (keyword == "bench") {
             size_t space = cmd.find(' ');
