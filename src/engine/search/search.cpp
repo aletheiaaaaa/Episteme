@@ -1,5 +1,6 @@
 #include "search.h"
 #include "../../utils/bench.h"
+#include "../uci/display.h"
 
 #include <cassert>
 
@@ -85,10 +86,21 @@ namespace episteme::search {
 
     template<bool PV_node>
     int32_t Worker::search(Position& position, Line& PV, int16_t depth, int16_t ply, int32_t alpha, int32_t beta, bool cut_node) {
-        if (nodes % 1024 == 0 && limiter.time_exceeded()) {
-            should_stop = true;
-            return 0;
-        };
+        if (nodes % 1024 == 0) {
+            if (limiter.time_exceeded()) {
+                should_stop = true;
+                return 0;
+            }
+
+            if (live_update_callback) {
+                auto now = steady_clock::now();
+                auto elapsed = duration_cast<milliseconds>(now - last_update_time).count();
+                if (elapsed >= 50) {
+                    live_update_callback(nodes.load(), exploring);
+                    last_update_time = now;
+                }
+            }
+        }
 
         seldepth = std::max(seldepth, ply);
 
@@ -260,6 +272,17 @@ namespace episteme::search {
 
             if (is_quiet) explored_quiets.add(move);
             else explored_noisies.add(move);
+
+            if (live_update_callback) {
+                if (ply == 0) {
+                    exploring.clear();
+                }
+
+                if (ply < exploring.moves.size()) {
+                    exploring.moves[ply] = move;
+                    exploring.length = ply + 1;
+                }
+            }
 
             if (limiter.nodes_exceeded(nodes)) {
                 should_stop = true;
@@ -575,6 +598,7 @@ namespace episteme::search {
     void Engine::run(Position& position) {
         time::Config cfg {
             .nodes = params.nodes,
+            .move_time = params.move_time,
             .time_left = params.time[color_idx(position.STM())],
             .increment = params.inc[color_idx(position.STM())],
         };
@@ -587,6 +611,8 @@ namespace episteme::search {
 
         limiter.set_config(cfg);
         limiter.start();
+
+        uci::mode().on_start(position);
 
         for (int depth = 1; depth <= params.depth; depth++) {
             Parameters iter_params = params;
@@ -601,24 +627,16 @@ namespace episteme::search {
             last_score = report.score;
             total_time += report.time;
 
-            int32_t nps = report.time > 0 ? (report.nodes * 1000) / total_time : report.nodes;
-
-            bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
-            int32_t display_score = is_mate ? (report.score > 0 ? (MATE - report.score + 1) / 2 : -(MATE + report.score) / 2) : report.score;
-
-            std::string pv;
-            for (size_t i = 0; i < report.line.length; ++i) {
-                pv += report.line.moves[i].to_string() + " ";
-            }
-            std::cout << "info depth " << report.depth << " seldepth " << report.seldepth << " time " << total_time << " nodes " << report.nodes
-                      << " nps " << nps << " score " << (is_mate ? "mate" : "cp") << " " << display_score
-                      << " pv " << pv << "\n";
+            report.hashfull = ttable.hashfull();
+            uci::mode().on_update(report);
 
             if (limiter.time_approaching(report.line.moves[0], workers[0]->node_count()) || limiter.time_exceeded()) break;
         }
-    
+
         Move best = last_report.line.moves[0];
-        std::cout << "bestmove " << best.to_string() << "\n";
+
+        last_report.hashfull = ttable.hashfull();
+        uci::mode().on_completion(last_report, best);
     }
 
     ScoredMove Engine::datagen_search(Position& position) {
@@ -657,7 +675,8 @@ namespace episteme::search {
     }
 
     void Engine::eval(Position& position) {
-        std::cout << "info score cp " << workers[0]->eval(position) << "\n";
+        int32_t eval_cp = workers[0]->eval(position);
+        uci::mode().show_position(position, eval_cp);
     }
 
     void Engine::bench(int depth) {

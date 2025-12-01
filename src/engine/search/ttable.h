@@ -52,6 +52,17 @@ namespace episteme::tt {
                 uint64_t index = table_index(tt_entry.hash);
                 ttable[index] = tt_entry;
             }
+
+            [[nodiscard]] inline int32_t hashfull() const {
+                size_t filled = 0;
+                size_t sample_size = std::min(size_t(1000), ttable.size());
+
+                for (size_t i = 0; i < sample_size; ++i) {
+                    if (ttable[i].hash != 0) filled++;
+                }
+
+                return (filled * 1000) / sample_size;
+            }
         private:
             std::vector<Entry> ttable;
     };
