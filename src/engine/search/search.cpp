@@ -376,7 +376,7 @@ namespace episteme::search {
                         if (prev_move == move) continue;
 
                         Piece prev_from_pc = position.mailbox(prev_move.from_square());
-                        Piece prev_to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(prev_move.to_square());
+                        Piece prev_to_pc = prev_move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(prev_move.to_square());
 
                         history.update_capt_hist(prev_from_pc, prev_move, prev_to_pc, -bonus);
                     }

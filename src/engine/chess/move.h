@@ -18,6 +18,7 @@ namespace episteme {
     class Move {
         public:
             Move();
+            Move(uint16_t data);
             Move(Square from_square, Square to_square, MoveType move_type = MoveType::Normal, PromoPiece promo_piece = PromoPiece::None);
 
             [[nodiscard]] inline uint16_t data() const {

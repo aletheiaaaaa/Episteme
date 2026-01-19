@@ -4,6 +4,8 @@
 namespace episteme {
     Move::Move() : move_data(0x0000) {};
 
+    Move::Move(uint16_t data) : move_data(data) {};
+
     Move::Move(Square from_square, Square to_square, MoveType move_type, PromoPiece promo_piece) : move_data(
         static_cast<uint16_t>(from_square)
         | (static_cast<uint16_t>(to_square) << 6)

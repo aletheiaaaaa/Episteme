@@ -38,7 +38,7 @@ endif
 ifeq ($(DETECTED_ARCH),avx512_vnni)
     ARCH_FLAGS := -mavx512f -mavx512bw -mavx512dq -mavx512vl -mavx512vnni
     ARCH_DEF := -DUSE_AVX512 -DUSE_VNNI
-    $(info Building with AVX-512 + VNNI support)
+    $(info Building with AVX-512 support)
 else ifeq ($(DETECTED_ARCH),avx2)
     ARCH_FLAGS := -mavx2 -mfma
     ARCH_DEF := -DUSE_AVX2
