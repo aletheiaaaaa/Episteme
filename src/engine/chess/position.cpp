@@ -1,5 +1,10 @@
 #include "position.h"
 
+#include <bit>
+#include <cctype>
+#include <cstdlib>
+#include <sstream>
+
 namespace episteme {
     Position::Position() : history{}, current{} {
         history.reserve(1024);

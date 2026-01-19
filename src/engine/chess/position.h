@@ -4,12 +4,9 @@
 #include "zobrist.h"
 
 #include <array>
-#include <vector>
-#include <string>
-#include <ranges>
 #include <cstdint>
-#include <cstdlib>
-#include <sstream>
+#include <string>
+#include <vector>
 
 namespace episteme {
     static constexpr std::array<Piece, 64> empty_mailbox() {

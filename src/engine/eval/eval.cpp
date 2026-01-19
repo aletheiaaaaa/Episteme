@@ -1,4 +1,7 @@
 #include "eval.h"
+#include "../../external/incbin.h"
+
+#include <memory>
 
 INCBIN(NNUE, EVALFILE);
 

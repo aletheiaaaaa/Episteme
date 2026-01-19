@@ -2,7 +2,7 @@
 #include "../../utils/bench.h"
 #include "../uci/display.h"
 
-#include <cassert>
+#include <iostream>
 
 namespace episteme::search {
     using namespace std::chrono;
