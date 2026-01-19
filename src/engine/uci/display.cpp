@@ -12,13 +12,12 @@ namespace episteme::uci {
 
     namespace {
         enum class DisplayMode {
-            PRETTY,
+            Pretty,
             UCI
         };
 
-        DisplayMode current_mode = DisplayMode::PRETTY;
+        DisplayMode current_mode = DisplayMode::Pretty;
 
-        // PrettyDisplay state
         std::thread update_thread;
         std::atomic<bool> searching{false};
         std::atomic<uint64_t> live_nodes{0};
@@ -28,7 +27,6 @@ namespace episteme::uci {
         std::mutex exploring_mutex;
         search::Engine* engine_ptr{nullptr};
 
-        // Forward declarations
         void pretty_update_loop();
         void cleanup_pretty();
     }
@@ -37,7 +35,7 @@ namespace episteme::uci {
         cleanup_pretty();
 
         if (enabled) {
-            current_mode = DisplayMode::PRETTY;
+            current_mode = DisplayMode::Pretty;
             pretty::show_banner();
         } else {
             current_mode = DisplayMode::UCI;
@@ -46,18 +44,18 @@ namespace episteme::uci {
     }
 
     bool is_pretty() {
-        return current_mode == DisplayMode::PRETTY;
+        return current_mode == DisplayMode::Pretty;
     }
 
     void show_position(const Position& position, int32_t eval_cp) {
-        if (current_mode == DisplayMode::PRETTY) {
+        if (current_mode == DisplayMode::Pretty) {
             pretty::show_position(position, eval_cp);
         }
         // UCI mode doesn't show position
     }
 
     void on_start(const Position& position) {
-        if (current_mode == DisplayMode::PRETTY) {
+        if (current_mode == DisplayMode::Pretty) {
             searching = true;
             search_start = steady_clock::now();
             live_nodes = 0;
@@ -76,15 +74,13 @@ namespace episteme::uci {
 
             update_thread = std::thread(pretty_update_loop);
         }
-        // UCI mode doesn't need start handling
     }
 
     void on_update(const search::Report& report) {
-        if (current_mode == DisplayMode::PRETTY) {
+        if (current_mode == DisplayMode::Pretty) {
             current_report = report;
             live_nodes = report.nodes;
         } else {
-            // UCI mode
             constexpr int32_t MATE = 1048575;
             constexpr int32_t MAX_SEARCH_PLY = 256;
 
@@ -112,7 +108,7 @@ namespace episteme::uci {
     }
 
     void on_completion(const search::Report& report, Move best_move) {
-        if (current_mode == DisplayMode::PRETTY) {
+        if (current_mode == DisplayMode::Pretty) {
             if (engine_ptr) {
                 auto* worker = engine_ptr->get_worker(0);
                 if (worker) {
@@ -132,17 +128,15 @@ namespace episteme::uci {
             pretty::show_search_update(final_report, true, best_move);
             std::cout << pretty::SHOW_CURSOR;
         } else {
-            // UCI mode
             std::cout << "bestmove " << best_move.to_string() << "\n";
         }
     }
 
     void update_exploring(const search::Line& line) {
-        if (current_mode == DisplayMode::PRETTY) {
+        if (current_mode == DisplayMode::Pretty) {
             std::lock_guard<std::mutex> lock(exploring_mutex);
             current_exploring = line;
         }
-        // UCI mode doesn't track exploring
     }
 
     void set_engine(search::Engine* engine) {
@@ -150,10 +144,9 @@ namespace episteme::uci {
     }
 
     void clear() {
-        if (current_mode == DisplayMode::PRETTY) {
+        if (current_mode == DisplayMode::Pretty) {
             pretty::clear();
         }
-        // UCI mode doesn't need clearing
     }
 
     namespace {

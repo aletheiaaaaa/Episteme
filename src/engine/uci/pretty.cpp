@@ -310,14 +310,6 @@ namespace episteme::pretty {
         return ss.str();
     }
 
-    std::string render_pv(const search::Line& line) {
-        std::ostringstream ss;
-        ss << BOLD << LIGHT_LAVENDER << "Best Line: " << RESET << DEEP_INDIGO;
-        ss << format_move_sequence(line, 10);
-        ss << RESET;
-        return ss.str();
-    }
-
     std::string render_stats(const search::Report& report, Move best_move) {
         std::ostringstream ss;
 
@@ -335,7 +327,7 @@ namespace episteme::pretty {
         if (state.exploring_line.length > 0 && state.searching) {
             ss << "\n";
             ss << LIGHT_LAVENDER << "    Exploring:   " << RESET << DIM << DEEP_INDIGO;
-            ss << format_move_sequence(state.exploring_line, 6);
+            ss << format_move_sequence(state.exploring_line, 8);
             ss << RESET << "\n";
         }
 
@@ -345,7 +337,7 @@ namespace episteme::pretty {
             const auto& entry = state.pv_history[i];
             ss << DIM << LIGHT_LAVENDER << "    Depth " << (entry.depth < 10 ? " " : "") << entry.depth << ":   " << RESET;
             ss << MED_INDIGO << format_score(entry.score) << " " << RESET;
-            ss << DEEP_INDIGO << format_move_sequence(entry.line, 6) << RESET << "\n";
+            ss << DEEP_INDIGO << format_move_sequence(entry.line, 8) << RESET << "\n";
         }
 
         if (report.line.length > 0) {
