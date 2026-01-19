@@ -2,21 +2,19 @@
 
 #include "../chess/movegen.h"
 #include "../eval/eval.h"
-#include "../../utils/datagen.h"
 #include "../../utils/tunable.h"
 #include "ttable.h"
 #include "history.h"
 #include "stack.h"
 #include "time.h"
 
-#include <cstdint>
-#include <chrono>
 #include <algorithm>
-#include <iostream>
 #include <atomic>
-#include <optional>
-#include <memory>
+#include <chrono>
+#include <cstdint>
 #include <functional>
+#include <memory>
+#include <optional>
 
 namespace episteme::search {
     using namespace std::chrono;

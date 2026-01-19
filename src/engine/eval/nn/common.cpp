@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include <random>
+
 namespace episteme::eval::nn {
     Accumulator NNUE::update_accumulator(const Position& position, const Move& move, Accumulator accum) const {
         Square sq_src = move.from_square();

@@ -1,5 +1,9 @@
 #include "uci.h"
 
+#include <cstdlib>
+#include <iostream>
+#include <sstream>
+
 namespace episteme::uci {
     using namespace tunable;
 

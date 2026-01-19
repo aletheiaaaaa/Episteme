@@ -1,5 +1,7 @@
 #include "tunable.h"
 
+#include <cmath>
+
 namespace episteme::tunable {
     std::array<std::array<int16_t, 64>, 64> lmr_table_noisy{};
     std::array<std::array<int16_t, 64>, 64> lmr_table_quiet{};

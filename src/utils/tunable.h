@@ -1,11 +1,9 @@
 #pragma once
 
 #include <array>
-#include <cmath>
-#include <string>
+#include <cstdint>
 #include <functional>
-#include <exception>
-#include <iostream>
+#include <string>
 #include <vector>
 
 #ifndef ENABLE_TUNING
