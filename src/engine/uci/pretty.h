@@ -4,8 +4,13 @@
 #include "../search/search.h"
 
 #include <sstream>
+#include <iomanip>
+#include <iostream>
+#include <fstream>
+#include <algorithm>
 #include <string>
 #include <vector>
+#include <cmath>
 
 namespace episteme::pretty {
     constexpr const char* DEEP_INDIGO = "\033[38;5;63m";

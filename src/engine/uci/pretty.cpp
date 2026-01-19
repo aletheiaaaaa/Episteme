@@ -1,11 +1,5 @@
 #include "pretty.h"
 
-#include <algorithm>
-#include <cmath>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-
 namespace episteme::pretty {
     DisplayState state;
 

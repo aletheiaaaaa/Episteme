@@ -1,7 +1,5 @@
 #include "time.h"
 
-#include <algorithm>
-
 namespace episteme::time {
     using namespace std::chrono;
 

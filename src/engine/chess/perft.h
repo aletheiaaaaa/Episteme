@@ -1,8 +1,11 @@
 #pragma once
 
 #include "movegen.h"
-
 #include <string>
+#include <iostream>
+#include <vector>
+#include <chrono>
+#include <iomanip>
 
 namespace episteme {
     Position fen_to_position(const std::string& FEN);

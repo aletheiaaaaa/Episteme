@@ -9,6 +9,11 @@
 #include "display.h"
 
 #include <string>
+#include <sstream>
+#include <iostream>
+#include <array>
+#include <vector>
+#include <typeinfo>
 
 namespace episteme::uci {
     int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine);

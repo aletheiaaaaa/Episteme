@@ -4,10 +4,18 @@
 #include "../engine/search/search.h"
 #include "format.h"
 
-#include <atomic>
+#include <iostream>
+#include <random>
 #include <cstdint>
-#include <ostream>
-#include <string>
+#include <algorithm>
+#include <thread>
+#include <csignal>
+#include <filesystem>
+#include <fstream>
+#include <atomic>
+#include <sstream>
+#include <vector>
+#include <optional>
 
 namespace episteme::datagen {
     constexpr int32_t WIN_SCORE_MIN = 2500;

@@ -2,8 +2,11 @@
 
 #include "position.h"
 
-#include <algorithm>
+#include <unordered_set>
 #include <bit>
+#include <random>
+#include <iostream>
+#include <algorithm>
 #include <random>
 
 namespace episteme {

@@ -2,9 +2,10 @@
 
 #include "../chess/move.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <vector>
+#include <random>
+#include <bit>
 
 namespace episteme::tt {
     enum class NodeType : uint8_t {

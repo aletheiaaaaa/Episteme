@@ -1,9 +1,5 @@
 #include "perft.h"
 
-#include <chrono>
-#include <iomanip>
-#include <iostream>
-
 namespace episteme {
     Position fen_to_position(const std::string& FEN) {
         Position position;

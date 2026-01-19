@@ -1,8 +1,6 @@
 #include "engine/uci/uci.h"
 #include "engine/uci/display.h"
 
-#include <iostream>
-
 using namespace episteme;
 
 int main(int argc, char *argv[]) {

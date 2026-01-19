@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core.h"
-
+#include <array>
 #include <string>
 
 namespace episteme {
