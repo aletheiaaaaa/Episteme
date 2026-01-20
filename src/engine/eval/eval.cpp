@@ -1,5 +1,7 @@
 #include "eval.h"
 
+#include <memory>
+
 INCBIN(NNUE, EVALFILE);
 
 namespace episteme::eval {

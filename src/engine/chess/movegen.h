@@ -2,12 +2,9 @@
 
 #include "position.h"
 
-#include <unordered_set>
 #include <bit>
 #include <random>
-#include <iostream>
 #include <algorithm>
-#include <random>
 
 namespace episteme {
     struct MoveList {

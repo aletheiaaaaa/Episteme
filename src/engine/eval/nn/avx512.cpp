@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include <immintrin.h>
+
 namespace episteme::eval::nn {
 #if defined(USE_AVX512) && defined(USE_VNNI)
     int32_t NNUE::l1_forward(const Accumulator& accum, Color stm) const {

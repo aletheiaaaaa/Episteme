@@ -12,7 +12,6 @@
 #include <cstdint>
 #include <chrono>
 #include <algorithm>
-#include <iostream>
 #include <atomic>
 #include <optional>
 #include <memory>

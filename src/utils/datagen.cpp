@@ -1,6 +1,15 @@
 #include "datagen.h"
 
 #include <cassert>
+#include <iostream>
+#include <thread>
+#include <csignal>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <optional>
+#include <chrono>
 
 namespace episteme::datagen {
     using namespace std::chrono;

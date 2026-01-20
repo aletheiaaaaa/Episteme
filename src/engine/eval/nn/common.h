@@ -5,12 +5,7 @@
 #include "../../chess/position.h"
 
 #include <cstdint>
-#include <cmath>
 #include <array>
-#include <algorithm>
-#include <cstring>
-#include <immintrin.h>
-#include <random>
 
 namespace episteme::eval::nn {
     constexpr int16_t QA = 255;
