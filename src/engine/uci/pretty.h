@@ -12,6 +12,9 @@ namespace episteme::pretty {
     constexpr const char* LIGHT_LAVENDER = "\033[38;5;189m";
     constexpr const char* ALMOST_WHITE = "\033[38;5;231m";
 
+    constexpr const char* BG_FROM_SQUARE   = "\033[48;5;60m";
+    constexpr const char* BG_TO_SQUARE = "\033[48;5;17m";
+
     constexpr const char* RESET = "\033[0m";
     constexpr const char* BOLD = "\033[1m";
     constexpr const char* DIM = "\033[2m";
@@ -57,7 +60,7 @@ namespace episteme::pretty {
     void show_search_update(const search::Report& report, bool final = false, Move best_move = Move(), const search::Line& exploring = search::Line());
     void clear();
 
-    std::string render_board(const Position& position);
+    std::string render_board(const Position& position, Square highlight_from = Square::None, Square highlight_to = Square::None);
     std::string render_metadata(const Position& position);
     std::string render_stats(const search::Report& report, Move best_move = Move());
     std::string render_pv(const search::Line& line);

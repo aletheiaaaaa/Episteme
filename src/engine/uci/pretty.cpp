@@ -121,80 +121,128 @@ namespace episteme::pretty {
         return symbols[piece_idx(piece)];
     }
 
-    std::string render_square_line(const Position& position, int rank, int file, int line_type) {
+    const char* get_square_bg(int rank, int file, Square highlight_from, Square highlight_to) {
+        int sq = rank * 8 + file;
+        if (static_cast<Square>(sq) == highlight_from) return BG_FROM_SQUARE;
+        if (static_cast<Square>(sq) == highlight_to) return BG_TO_SQUARE;
+        return nullptr;
+    }
+
+    std::string render_square_line(const Position& position, int rank, int file, int line_type, Square highlight_from, Square highlight_to) {
         std::ostringstream ss;
 
+        const char* bg = get_square_bg(rank, file, highlight_from, highlight_to);
+        const char* prev_bg = file > 0 ? get_square_bg(rank, file - 1, highlight_from, highlight_to) : nullptr;
+        const char* border_bg = prev_bg ? prev_bg : bg;
+
+        if (border_bg) ss << border_bg;
         ss << LIGHT_LAVENDER << "║" << RESET;
 
         if (line_type == 0 || line_type == 2) {
-            ss << "       ";
+            if (bg) ss << bg << "       " << RESET;
+            else    ss << "       ";
         } else {
-
             int square = rank * 8 + file;
             Piece piece = position.mailbox(square);
             std::string piece_symbol = get_piece_symbol(piece);
 
+            if (bg) ss << bg;
             ss << "   ";
 
             if (piece != Piece::None && episteme::color(piece) == Color::White) {
                 ss << BOLD << ALMOST_WHITE << piece_symbol << RESET;
+                if (bg) ss << bg;
             } else if (piece != Piece::None && episteme::color(piece) == Color::Black) {
                 ss << BOLD << DEEP_INDIGO << piece_symbol << RESET;
+                if (bg) ss << bg;
             } else {
                 ss << " ";
             }
 
             ss << "   ";
+            if (bg) ss << RESET;
         }
 
         return ss.str();
     }
 
-    std::string render_board(const Position& position) {
+    void render_hborder(std::ostringstream& ss, Square highlight_from, Square highlight_to,
+                        int rank_a, int rank_b, const char* left, const char* mid, const char* right) {
+        const char* bg0 = nullptr;
+        if (rank_a >= 0) bg0 = get_square_bg(rank_a, 0, highlight_from, highlight_to);
+        if (!bg0 && rank_b >= 0) bg0 = get_square_bg(rank_b, 0, highlight_from, highlight_to);
+
+        ss << "     ";
+        if (bg0) ss << bg0;
+        ss << LIGHT_LAVENDER << left;
+        if (bg0) ss << RESET;
+
+        for (int i = 0; i < 8; i++) {
+            const char* bg = nullptr;
+            if (rank_a >= 0) bg = get_square_bg(rank_a, i, highlight_from, highlight_to);
+            if (!bg && rank_b >= 0) bg = get_square_bg(rank_b, i, highlight_from, highlight_to);
+
+            if (bg) ss << bg;
+            ss << LIGHT_LAVENDER << "═══════";
+            if (bg) ss << RESET;
+
+            if (i < 7) {
+                const char* next_bg = nullptr;
+                if (rank_a >= 0) next_bg = get_square_bg(rank_a, i + 1, highlight_from, highlight_to);
+                if (!next_bg && rank_b >= 0) next_bg = get_square_bg(rank_b, i + 1, highlight_from, highlight_to);
+
+                const char* junc_bg = bg ? bg : next_bg;
+                if (junc_bg) ss << junc_bg;
+                ss << LIGHT_LAVENDER << mid;
+                if (junc_bg) ss << RESET;
+            }
+        }
+
+        const char* bg7 = nullptr;
+        if (rank_a >= 0) bg7 = get_square_bg(rank_a, 7, highlight_from, highlight_to);
+        if (!bg7 && rank_b >= 0) bg7 = get_square_bg(rank_b, 7, highlight_from, highlight_to);
+
+        if (bg7) ss << bg7;
+        ss << LIGHT_LAVENDER << right;
+        ss << RESET << "\n";
+    }
+
+    std::string render_board(const Position& position, Square highlight_from, Square highlight_to) {
         std::ostringstream ss;
 
-        ss << "     ╔" << LIGHT_LAVENDER;
-        for (int i = 0; i < 8; i++) {
-            ss << "═══════";
-            if (i < 7) ss << "╦";
-        }
-        ss << "╗\n" << RESET;
+        render_hborder(ss, highlight_from, highlight_to, 7, -1, "╔", "╦", "╗");
 
         for (int rank = 7; rank >= 0; rank--) {
             ss << "     ";
             for (int file = 0; file < 8; file++) {
-                ss << render_square_line(position, rank, file, 0);
+                ss << render_square_line(position, rank, file, 0, highlight_from, highlight_to);
             }
-            ss << LIGHT_LAVENDER << "║\n" << RESET;
+            const char* bg7 = get_square_bg(rank, 7, highlight_from, highlight_to);
+            if (bg7) ss << bg7;
+            ss << LIGHT_LAVENDER << "║" << RESET << "\n";
 
             ss << "  " << LIGHT_LAVENDER << rank + 1 << "  " << RESET;
             for (int file = 0; file < 8; file++) {
-                ss << render_square_line(position, rank, file, 1);
+                ss << render_square_line(position, rank, file, 1, highlight_from, highlight_to);
             }
-            ss << LIGHT_LAVENDER << "║\n" << RESET;
+            bg7 = get_square_bg(rank, 7, highlight_from, highlight_to);
+            if (bg7) ss << bg7;
+            ss << LIGHT_LAVENDER << "║" << RESET << "\n";
 
             ss << "     ";
             for (int file = 0; file < 8; file++) {
-                ss << render_square_line(position, rank, file, 2);
+                ss << render_square_line(position, rank, file, 2, highlight_from, highlight_to);
             }
-            ss << LIGHT_LAVENDER << "║\n" << RESET;
+            bg7 = get_square_bg(rank, 7, highlight_from, highlight_to);
+            if (bg7) ss << bg7;
+            ss << LIGHT_LAVENDER << "║" << RESET << "\n";
 
             if (rank > 0) {
-                ss << "     ╠";
-                for (int i = 0; i < 8; i++) {
-                    ss << LIGHT_LAVENDER << "═══════";
-                    if (i < 7) ss << "╬";
-                }
-                ss << "╣\n" << RESET;
+                render_hborder(ss, highlight_from, highlight_to, rank, rank - 1, "╠", "╬", "╣");
             }
         }
 
-        ss << "     ╚" << LIGHT_LAVENDER;
-        for (int i = 0; i < 8; i++) {
-            ss << "═══════";
-            if (i < 7) ss << "╩";
-        }
-        ss << "╝\n" << RESET;
+        render_hborder(ss, highlight_from, highlight_to, 0, -1, "╚", "╩", "╝");
 
         ss << "         " << LIGHT_LAVENDER;
         for (char file = 'a'; file <= 'h'; file++) {
@@ -313,7 +361,7 @@ namespace episteme::pretty {
     std::string render_pv(const search::Line& line) {
         std::ostringstream ss;
         ss << BOLD << LIGHT_LAVENDER << "Best Line: " << RESET << DEEP_INDIGO;
-        ss << format_move_sequence(line, 10);
+        ss << format_move_sequence(line, 8);
         ss << RESET;
         return ss.str();
     }
@@ -335,7 +383,7 @@ namespace episteme::pretty {
         if (state.exploring_line.length > 0 && state.searching) {
             ss << "\n";
             ss << LIGHT_LAVENDER << "    Exploring:   " << RESET << DIM << DEEP_INDIGO;
-            ss << format_move_sequence(state.exploring_line, 6);
+            ss << format_move_sequence(state.exploring_line, 8);
             ss << RESET << "\n";
         }
 
@@ -345,7 +393,7 @@ namespace episteme::pretty {
             const auto& entry = state.pv_history[i];
             ss << DIM << LIGHT_LAVENDER << "    Depth " << (entry.depth < 10 ? " " : "") << entry.depth << ":   " << RESET;
             ss << MED_INDIGO << format_score(entry.score) << " " << RESET;
-            ss << DEEP_INDIGO << format_move_sequence(entry.line, 6) << RESET << "\n";
+            ss << DEEP_INDIGO << format_move_sequence(entry.line, 8) << RESET << "\n";
         }
 
         if (report.line.length > 0) {
@@ -444,7 +492,13 @@ namespace episteme::pretty {
 
         state.exploring_line = exploring;
 
-        std::string board = render_board(state.current_position);
+        Square hl_from = Square::None, hl_to = Square::None;
+        if (report.line.length > 0) {
+            hl_from = report.line.moves[0].from_square();
+            hl_to   = report.line.moves[0].to_square();
+        }
+
+        std::string board = render_board(state.current_position, hl_from, hl_to);
         std::string metadata = render_metadata(state.current_position);
         std::string stats = render_stats(report, best_move);
         std::string combined_panel = metadata + stats;
