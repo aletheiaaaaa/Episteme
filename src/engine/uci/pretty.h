@@ -12,7 +12,7 @@ namespace episteme::pretty {
     constexpr const char* LIGHT_LAVENDER = "\033[38;5;189m";
     constexpr const char* ALMOST_WHITE = "\033[38;5;231m";
 
-    constexpr const char* BG_FROM_SQUARE   = "\033[48;5;60m";
+    constexpr const char* BG_FROM_SQUARE = "\033[48;5;60m";
     constexpr const char* BG_TO_SQUARE = "\033[48;5;17m";
 
     constexpr const char* RESET = "\033[0m";
