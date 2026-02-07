@@ -36,7 +36,7 @@ namespace episteme::tunable {
         F min;
         F max;
         F step;
-        std::function<void()> setter;
+        std::function<void()> callable;
 
         Tunable(std::string name, F default_value, F min_value, F max_value, F step_value, std::function<void()> func) : value(default_value) {
             if (default_value < min_value || default_value > max_value) {
@@ -48,11 +48,11 @@ namespace episteme::tunable {
                 min = min_value;
                 max = max_value;
                 step = step_value;
-                setter = func;
+                callable = func;
 
                 int_params.push_back(*this);
 
-                if (setter) setter();
+                if (callable) callable();
             }
         }
 
@@ -64,7 +64,7 @@ namespace episteme::tunable {
                 }
 
                 value = new_value;
-                if (setter) setter();
+                if (callable) callable();
             }
         }
 
