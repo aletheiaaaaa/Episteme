@@ -38,12 +38,13 @@ namespace episteme::tunable {
         F step;
         std::function<void()> setter;
 
-        Tunable(std::string name, F default_value, F min_value, F max_value, F step_value, std::function<void()> func) : name(name), value(default_value) {
+        Tunable(std::string name, F default_value, F min_value, F max_value, F step_value, std::function<void()> func) : value(default_value) {
             if (default_value < min_value || default_value > max_value) {
                 std::cerr << "out of range for tunable " << name << std::endl;
             }
 
             if constexpr (Enabled) {
+                this->name = std::move(name);
                 min = min_value;
                 max = max_value;
                 step = step_value;
@@ -68,8 +69,8 @@ namespace episteme::tunable {
         }
 
         void print(bool use_type = false) const {
-            constexpr bool is_int = std::is_same_v<F, int>;
             if constexpr (Enabled) {
+                constexpr bool is_int = std::is_same_v<F, int>;
                 std::cout << "option name " << name << " type " << type_names[use_type][is_int] << " default " << value << " min " << min << " max " << max << "\n";
             }
         }
