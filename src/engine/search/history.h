@@ -15,7 +15,7 @@ namespace episteme::hist {
     constexpr int MAX_CORR_HIST = 1024;
 
     [[nodiscard]] inline int16_t bonus(int16_t depth) {
-        return static_cast<int16_t>(std::clamp(depth * hist_bonus_mult(), 0, hist_bonus_max()));
+        return static_cast<int16_t>(std::clamp(depth * hist_bonus_mult.value, 0, hist_bonus_max.value));
     }
 
     struct Entry {

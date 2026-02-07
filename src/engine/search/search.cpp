@@ -1,6 +1,7 @@
 #include "search.h"
 #include "../../utils/bench.h"
 #include "../uci/display.h"
+#include "../../utils/tunable.h"
 
 #include <cassert>
 #include <iostream>
@@ -33,12 +34,12 @@ namespace episteme::search {
     int32_t Worker::eval_correction(int16_t ply, Position& position) {
         int32_t correction = 0;
 
-        correction += pawn_corrhist_mult() * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
+        correction += pawn_corrhist_mult * history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
         // correction += 110 * history.get_major_corr_hist(position.major_hash(), position.STM());
-        correction += minor_corrhist_mult() * history.get_minor_corr_hist(position.minor_hash(), position.STM());
-        correction += nonpawn_stm_corrhist_mult() * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
-        correction += nonpawn_ntm_corrhist_mult() * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
-        correction += cont_corrhist_mult() * history.get_cont_corr_hist(stack, ply);
+        correction += minor_corrhist_mult * history.get_minor_corr_hist(position.minor_hash(), position.STM());
+        correction += nonpawn_stm_corrhist_mult * history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(), position.STM());
+        correction += nonpawn_ntm_corrhist_mult * history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(), position.STM());
+        correction += cont_corrhist_mult * history.get_cont_corr_hist(stack, ply);
 
         return correction / 2048;
     }
@@ -62,10 +63,10 @@ namespace episteme::search {
 
             scored_move.score += dst_val * 10 - src_val;
 
-            scored_move.score += mvv_lva_mult() * (dst_val * 10 - src_val);
+            scored_move.score += mvv_lva_mult * (dst_val * 10 - src_val);
             scored_move.score += ply ? 
-                capt_hist_mult() * history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst) :
-                qs_capt_hist_mult() * history.get_qs_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
+                capt_hist_mult * history.get_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst) :
+                qs_capt_hist_mult * history.get_qs_capt_hist(src, move, move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : dst);
 
             if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
 
@@ -75,9 +76,9 @@ namespace episteme::search {
                 return scored_move;
             }
 
-            scored_move.score += quiet_hist_mult() * history.get_quiet_hist(position.STM(), move);
-            scored_move.score += cont_hist_mult() * history.get_cont_hist(stack, src, move, *ply);
-            scored_move.score += pawn_hist_mult() * history.get_pawn_hist(position.STM(), position.pawn_hash(), src, move);
+            scored_move.score += quiet_hist_mult * history.get_quiet_hist(position.STM(), move);
+            scored_move.score += cont_hist_mult * history.get_cont_hist(stack, src, move, *ply);
+            scored_move.score += pawn_hist_mult * history.get_pawn_hist(position.STM(), position.pawn_hash(), src, move);
         }
 
         scored_move.score /= 128;
@@ -168,8 +169,8 @@ namespace episteme::search {
         }
 
         if (!stack[ply].excluded && !is_PV && !in_check(position, position.STM()) && stack[ply - 1].eval != -INF) {
-            if (depth > 1 && stack[ply - 1].reduction > 3 && static_eval + stack[ply - 1].eval < hindsight_ext_thresh()) depth++;
-            else if (depth > 3 && stack[ply - 1].reduction > 1 && static_eval + stack[ply - 1].eval > hindsight_red_thresh()) depth--;
+            if (depth > 1 && stack[ply - 1].reduction > 3 && static_eval + stack[ply - 1].eval < hindsight_ext_thresh) depth++;
+            else if (depth > 3 && stack[ply - 1].reduction > 1 && static_eval + stack[ply - 1].eval > hindsight_red_thresh) depth--;
         }
 
         if (!stack[ply].excluded && !in_check(position, position.STM())) {
@@ -227,13 +228,13 @@ namespace episteme::search {
                 const int32_t lmp_threshold = 3 + depth * depth;
                 if (is_quiet && num_legal >= lmp_threshold) break;
 
-                const int32_t fp_margin = fp_base() + depth * fp_mult();
+                const int32_t fp_margin = fp_base + depth * fp_mult;
                 if (!is_PV && is_quiet && !in_check(position, position.STM()) && static_eval + fp_margin <= alpha) break;
 
-                const int32_t see_threshold = (is_quiet) ? quiet_see_base() + quiet_see_mult() * depth : noisy_see_base() + noisy_see_mult() * depth * depth;
+                const int32_t see_threshold = (is_quiet) ? quiet_see_base + quiet_see_mult * depth : noisy_see_base + noisy_see_mult * depth * depth;
                 if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
 
-                const int32_t history_margin = hist_prune_base() + hist_prune_mult() * depth;
+                const int32_t history_margin = hist_prune_base + hist_prune_mult * depth;
                 if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) <= history_margin) continue;
             }
 
@@ -250,7 +251,7 @@ namespace episteme::search {
 
                 if (should_stop) return 0;
 
-                if (score < new_beta) extension = (!is_PV && score < new_beta - double_ext_margin()) ? 2 : 1;
+                if (score < new_beta) extension = (!is_PV && score < new_beta - double_ext_margin) ? 2 : 1;
                 else if (new_beta >= beta && std::abs(score) < MATE - MAX_SEARCH_PLY) return new_beta;
             }
 
@@ -303,12 +304,12 @@ namespace episteme::search {
             if (num_legal >= 4 && depth >= 3) {
                 reduction = (is_quiet) ? lmr_table_quiet[depth][num_legal] : lmr_table_noisy[depth][num_legal];
 
-                reduction += lmr_improving_mult() * !improving;
-                reduction += lmr_is_PV_mult() * !is_PV;
-                reduction -= lmr_tt_PV_mult() * tt_PV;
-                reduction += lmr_cut_node_mult() * cut_node;
-                reduction -= lmr_hist_mult() * history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
-                reduction -= lmr_corrplexity_mult() * (std::abs(correction) > lmr_corrplexity_thresh());
+                reduction += lmr_improving_mult * !improving;
+                reduction += lmr_is_PV_mult * !is_PV;
+                reduction -= lmr_tt_PV_mult * tt_PV;
+                reduction += lmr_cut_node_mult * cut_node;
+                reduction -= lmr_hist_mult * history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) / 8192;
+                reduction -= lmr_corrplexity_mult * (std::abs(correction) > lmr_corrplexity_thresh);
 
                 reduction /= 128;
 
