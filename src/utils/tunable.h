@@ -120,7 +120,6 @@ namespace episteme::tunable {
     TUNABLE_INT(quiet_see_mult, -60, -256, 16, 4, nullptr)
     TUNABLE_INT(noisy_see_base, -15, -256, 64, 4, nullptr)
     TUNABLE_INT(noisy_see_mult, -30, -256, 16, 2, nullptr)
-    TUNABLE_INT(noisy_see_div, 64, 16, 256, 4, nullptr)
 
     TUNABLE_INT(hist_prune_base, -2600, -8192, 1024, 128, nullptr)
     TUNABLE_INT(hist_prune_mult, 600, 0, 4096, 64, nullptr)
