@@ -235,7 +235,7 @@ namespace episteme::search {
 
                 const int32_t see_threshold = (is_quiet) 
                     ? quiet_see_base + quiet_see_mult * depth 
-                    : std::min(noisy_see_base + noisy_see_mult * depth * depth - move_hist / 32, 0);
+                    : std::min(noisy_see_base + noisy_see_mult * depth * depth - move_hist / 128, 0);
                 if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
 
                 const int32_t history_margin = hist_prune_base + hist_prune_mult * depth;
