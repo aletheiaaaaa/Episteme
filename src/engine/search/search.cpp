@@ -220,6 +220,8 @@ namespace episteme::search {
             Piece from_pc = position.mailbox(move.from_square());
             Piece to_pc = move.move_type() == MoveType::EnPassant ? piece_type_with_color(PieceType::Pawn, position.NTM()) : position.mailbox(move.to_square());
 
+            int32_t move_hist = history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position);
+
             bool is_quiet = position.mailbox(move.to_square()) == Piece::None && move.move_type() != MoveType::EnPassant;
 
             uint64_t prev_nodes = nodes;
@@ -231,11 +233,11 @@ namespace episteme::search {
                 const int32_t fp_margin = fp_base + depth * fp_mult;
                 if (!is_PV && is_quiet && !in_check(position, position.STM()) && static_eval + fp_margin <= alpha) break;
 
-                const int32_t see_threshold = (is_quiet) ? quiet_see_base + quiet_see_mult * depth : noisy_see_base + noisy_see_mult * depth * depth;
+                const int32_t see_threshold = (is_quiet) ? quiet_see_base + quiet_see_mult * depth : std::min(noisy_see_base + noisy_see_mult * depth * depth - move_hist / noisy_see_div, 0);
                 if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
 
                 const int32_t history_margin = hist_prune_base + hist_prune_mult * depth;
-                if (!is_PV && is_quiet && history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply, position) <= history_margin) continue;
+                if (!is_PV && is_quiet && move_hist <= history_margin) continue;
             }
 
             if (move == stack[ply].excluded) continue;
