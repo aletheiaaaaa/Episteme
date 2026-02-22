@@ -14,8 +14,8 @@ auto uci() {
   std::cout << "id name Episteme \nid author aletheia\n";
   std::cout << "option name Hash type spin default 32 min 1 max 128\n";
   std::cout << "option name Threads type spin default 1 min 1 max 1\n";
-  for (int i = 0; i < int_params.size(); i++) {
-    int_params[i].print();
+  for (int i = 0; i < Tunable<int>::registry.size(); i++) {
+    Tunable<int>::registry[i]->print();
   }
   std::cout << "uciok\n";
 }
@@ -37,10 +37,10 @@ auto setoption(const std::string &args, search::Config &cfg,
     cfg.hash_size = std::stoi(option_value);
   } else if (option_name == "Threads") {
     cfg.num_threads = std::stoi(option_value);
-  } else if (!int_params.empty()) {
-    for (int i = 0; i < int_params.size(); i++) {
-      if (int_params[i].name == option_name) {
-        int_params[i].set(std::stoi(option_value));
+  } else if (!Tunable<int>::registry.empty()) {
+    for (int i = 0; i < Tunable<int>::registry.size(); i++) {
+      if (Tunable<int>::registry[i]->name == option_name) {
+        Tunable<int>::registry[i]->set(std::stoi(option_value));
         break;
       }
     }
@@ -179,8 +179,8 @@ auto datagen(const std::string &args) {
 }
 
 auto print_tunables() {
-  for (int i = 0; i < int_params.size(); i++) {
-    int_params[i].print(true);
+  for (int i = 0; i < Tunable<int>::registry.size(); i++) {
+    Tunable<int>::registry[i]->print(true);
   }
 }
 
