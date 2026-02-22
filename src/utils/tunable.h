@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cmath>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -23,15 +24,16 @@ extern std::array<std::array<int16_t, 64>, 64> lmr_table_noisy;
 extern std::array<std::array<int16_t, 64>, 64> lmr_table_quiet;
 void init_lmr_table();
 
-template <typename F, bool Enabled = ENABLE_TUNING> struct Tunable {
+template <typename F, bool Enabled = ENABLE_TUNING> struct Tunable;
+inline std::vector<Tunable<int>> int_params;
+
+template <typename F, bool Enabled> struct Tunable {
   std::string name;
   F value;
   F min;
   F max;
   F step;
   std::function<void()> callable;
-
-  static inline std::vector<Tunable<F, Enabled> *> registry;
 
   Tunable(std::string name, F default_value, F min_value, F max_value,
           F step_value, std::function<void()> func)
@@ -47,7 +49,7 @@ template <typename F, bool Enabled = ENABLE_TUNING> struct Tunable {
       step = step_value;
       callable = func;
 
-      registry.push_back(this);
+      int_params.push_back(*this);
 
       if (callable)
         callable();
