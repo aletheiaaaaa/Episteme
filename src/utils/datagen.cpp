@@ -14,7 +14,7 @@
 namespace episteme::datagen {
 using namespace std::chrono;
 
-void play_random(Position &position, int32_t num_moves) {
+void play_random(Position& position, int32_t num_moves) {
   for (int i = 0; i < num_moves; i++) {
     MoveList move_list;
     generate_all_moves(move_list, position);
@@ -32,26 +32,27 @@ void play_random(Position &position, int32_t num_moves) {
       position.unmake_move();
     }
 
-    if (!found_legal)
-      break;
+    if (!found_legal) break;
   }
 }
 
-void game_loop(const Parameters &params, std::ostream &stream, uint32_t id) {
+void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
   Position position;
   position.from_startpos();
 
   Format formatter{};
 
   search::Parameters search_params{
-      .nodes = params.hard_limit,
-      .soft_nodes = params.soft_limit,
+    .nodes = params.hard_limit,
+    .soft_nodes = params.soft_limit,
   };
 
-  search::Config cfg{.params = search_params,
-                     .hash_size = params.hash_size,
-                     .num_threads = params.num_threads,
-                     .position = {}};
+  search::Config cfg{
+    .params = search_params,
+    .hash_size = params.hash_size,
+    .num_threads = params.num_threads,
+    .position = {}
+  };
 
   search::Engine engine(cfg);
   time_point start = steady_clock::now();
@@ -79,20 +80,23 @@ void game_loop(const Parameters &params, std::ostream &stream, uint32_t id) {
 
       if (!scored_move.move) {
         wdl = in_check(position, position.STM())
-                  ? (position.STM() == Color::Black ? 2 : 0)
-                  : 1;
+                ? (position.STM() == Color::Black ? 2 : 0)
+                : 1;
         break;
       } else {
-        if (std::abs(scored_move.score) >=
-            search::MATE - search::MAX_SEARCH_PLY)
+        if (
+          std::abs(scored_move.score) >= search::MATE - search::MAX_SEARCH_PLY
+        )
           wdl = 2 * (scored_move.score > 0);
         else {
           if (scored_move.score >= WIN_SCORE_MIN)
             win_plies++, draw_plies = loss_plies = 0;
           else if (scored_move.score <= -WIN_SCORE_MIN)
             loss_plies++, win_plies = draw_plies = 0;
-          else if (std::abs(scored_move.score) <= DRAW_SCORE_MAX &&
-                   position.half_move_clock() >= 100)
+          else if (
+            std::abs(scored_move.score) <= DRAW_SCORE_MAX &&
+            position.half_move_clock() >= 100
+          )
             draw_plies++, win_plies = loss_plies = 0;
 
           if (win_plies >= WIN_PLIES_MIN)
@@ -104,8 +108,7 @@ void game_loop(const Parameters &params, std::ostream &stream, uint32_t id) {
         }
       }
 
-      if (wdl)
-        break;
+      if (wdl) break;
 
       position.make_move(scored_move.move);
 
@@ -137,7 +140,7 @@ void game_loop(const Parameters &params, std::ostream &stream, uint32_t id) {
   }
 }
 
-void run(Parameters &params) {
+void run(Parameters& params) {
   std::cout << "Beginning datagen.\n";
 
   std::signal(SIGINT, []([[maybe_unused]] int signum) {
@@ -147,7 +150,7 @@ void run(Parameters &params) {
   });
 
   params.num_games =
-      params.num_threads * (params.num_games / params.num_threads);
+    params.num_threads * (params.num_games / params.num_threads);
 
   std::vector<std::thread> threads;
   std::vector<std::string> files;
@@ -155,7 +158,6 @@ void run(Parameters &params) {
   std::filesystem::create_directory(std::filesystem::path(params.out_dir));
 
   for (size_t i = 0; i < params.num_threads; i++) {
-
     std::ostringstream oss;
     oss << params.out_dir << "/temp_" << i << "." << Format::EXTENSION;
     const auto file = std::filesystem::path(oss.str());
@@ -177,8 +179,7 @@ void run(Parameters &params) {
     });
   }
 
-  for (auto &thread : threads)
-    thread.join();
+  for (auto& thread : threads) thread.join();
 
   std::cout << "Generated " << params.num_threads
             << " data files. Concatenating.\n";
@@ -193,7 +194,7 @@ void run(Parameters &params) {
   }
 
   int32_t concats = 0;
-  for (const auto &file : files) {
+  for (const auto& file : files) {
     std::ifstream input(file, std::ios::binary);
     if (input) {
       final << input.rdbuf();
@@ -211,4 +212,4 @@ void run(Parameters &params) {
   std::cout << "Concatenated " << concats << " files\n";
   std::cout << "Datagen complete.\n";
 }
-} // namespace episteme::datagen
+}  // namespace episteme::datagen

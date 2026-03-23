@@ -3,8 +3,9 @@
 #include <random>
 
 namespace episteme::eval::nn {
-Accumulator NNUE::update_accumulator(const Position &position, const Move &move,
-                                     Accumulator accum) const {
+Accumulator NNUE::update_accumulator(
+  const Position& position, const Move& move, Accumulator accum
+) const {
   Square sq_src = move.from_square();
   Square sq_dst = move.to_square();
   std::array<Piece, 64> mailbox = position.mailbox_all();
@@ -72,11 +73,15 @@ Accumulator NNUE::update_accumulator(const Position &position, const Move &move,
 
   if (move.move_type() == MoveType::Promotion) {
     w_dst = piecesquare(
-        piece_type_with_color(move.promo_piece_type(), position.STM()), sq_dst,
-        false);
+      piece_type_with_color(move.promo_piece_type(), position.STM()),
+      sq_dst,
+      false
+    );
     b_dst = piecesquare(
-        piece_type_with_color(move.promo_piece_type(), position.STM()), sq_dst,
-        true);
+      piece_type_with_color(move.promo_piece_type(), position.STM()),
+      sq_dst,
+      true
+    );
   }
 
   for (int i = 0; i < L1_WIDTH; i++) {
@@ -90,7 +95,7 @@ Accumulator NNUE::update_accumulator(const Position &position, const Move &move,
   return accum;
 }
 
-Accumulator NNUE::reset_accumulator(const Position &position) const {
+Accumulator NNUE::reset_accumulator(const Position& position) const {
   Accumulator accum = {};
   std::array<Piece, 64> mailbox = position.mailbox_all();
 
@@ -123,16 +128,13 @@ void NNUE::init_random() {
   std::mt19937 gen(42);
   std::uniform_int_distribution<int16_t> dist(-255, 255);
 
-  for (auto &arr : l0_weights)
-    for (auto &val : arr)
-      val = dist(gen);
+  for (auto& arr : l0_weights)
+    for (auto& val : arr) val = dist(gen);
 
-  for (auto &val : l0_biases)
-    val = dist(gen);
+  for (auto& val : l0_biases) val = dist(gen);
 
-  for (auto &val : l1_weights)
-    val = dist(gen);
+  for (auto& val : l1_weights) val = dist(gen);
 
   l1_bias = dist(gen);
 }
-} // namespace episteme::eval::nn
+}  // namespace episteme::eval::nn

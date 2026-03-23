@@ -147,14 +147,12 @@ struct AllowedCastles {
     Square queenside{Square::None};
 
     [[nodiscard]] inline bool is_kingside_set() const {
-      if (kingside != Square::None)
-        return true;
+      if (kingside != Square::None) return true;
       return false;
     };
 
     [[nodiscard]] inline bool is_queenside_set() const {
-      if (queenside != Square::None)
-        return true;
+      if (queenside != Square::None) return true;
       return false;
     };
 
@@ -175,39 +173,38 @@ struct AllowedCastles {
 
   [[nodiscard]] inline uint8_t as_mask() {
     size_t mask = 0;
-    if (rooks[0].is_kingside_set())
-      mask |= WHITE_KINGSIDE;
-    if (rooks[0].is_queenside_set())
-      mask |= WHITE_QUEENSIDE;
-    if (rooks[1].is_kingside_set())
-      mask |= BLACK_KINGSIDE;
-    if (rooks[1].is_queenside_set())
-      mask |= BLACK_QUEENSIDE;
+    if (rooks[0].is_kingside_set()) mask |= WHITE_KINGSIDE;
+    if (rooks[0].is_queenside_set()) mask |= WHITE_QUEENSIDE;
+    if (rooks[1].is_kingside_set()) mask |= BLACK_KINGSIDE;
+    if (rooks[1].is_queenside_set()) mask |= BLACK_QUEENSIDE;
 
     return mask;
   }
 
   bool is_castling(Square square) {
-    if (rooks[0].kingside == square || rooks[0].queenside == square ||
-        rooks[1].kingside == square || rooks[1].queenside == square)
+    if (
+      rooks[0].kingside == square || rooks[0].queenside == square ||
+      rooks[1].kingside == square || rooks[1].queenside == square
+    )
       return true;
     return false;
   }
 };
 
 static const std::unordered_map<char, std::pair<PieceType, Color>> piece_map = {
-    {'P', {PieceType::Pawn, Color::White}},
-    {'N', {PieceType::Knight, Color::White}},
-    {'B', {PieceType::Bishop, Color::White}},
-    {'R', {PieceType::Rook, Color::White}},
-    {'Q', {PieceType::Queen, Color::White}},
-    {'K', {PieceType::King, Color::White}},
-    {'p', {PieceType::Pawn, Color::Black}},
-    {'n', {PieceType::Knight, Color::Black}},
-    {'b', {PieceType::Bishop, Color::Black}},
-    {'r', {PieceType::Rook, Color::Black}},
-    {'q', {PieceType::Queen, Color::Black}},
-    {'k', {PieceType::King, Color::Black}}};
+  {'P', {PieceType::Pawn, Color::White}},
+  {'N', {PieceType::Knight, Color::White}},
+  {'B', {PieceType::Bishop, Color::White}},
+  {'R', {PieceType::Rook, Color::White}},
+  {'Q', {PieceType::Queen, Color::White}},
+  {'K', {PieceType::King, Color::White}},
+  {'p', {PieceType::Pawn, Color::Black}},
+  {'n', {PieceType::Knight, Color::Black}},
+  {'b', {PieceType::Bishop, Color::Black}},
+  {'r', {PieceType::Rook, Color::Black}},
+  {'q', {PieceType::Queen, Color::Black}},
+  {'k', {PieceType::King, Color::Black}}
+};
 
 [[nodiscard]] inline PieceType piece_type(Piece piece) {
   return static_cast<PieceType>(static_cast<uint16_t>(piece) >> 1);
@@ -225,14 +222,17 @@ static const std::unordered_map<char, std::pair<PieceType, Color>> piece_map = {
   return static_cast<Square>(static_cast<int16_t>(square) ^ 56);
 }
 
-[[nodiscard]] inline Piece piece_type_with_color(PieceType piece_type,
-                                                 Color color) {
-  return static_cast<Piece>(2 * static_cast<uint16_t>(piece_type) +
-                            static_cast<uint16_t>(color));
+[[nodiscard]] inline Piece piece_type_with_color(
+  PieceType piece_type, Color color
+) {
+  return static_cast<Piece>(
+    2 * static_cast<uint16_t>(piece_type) + static_cast<uint16_t>(color)
+  );
 }
 
-[[nodiscard]] inline int16_t piecesquare(Piece piece, Square square,
-                                         bool flip_color) {
+[[nodiscard]] inline int16_t piecesquare(
+  Piece piece, Square square, bool flip_color
+) {
   if (piece == Piece::None) {
     return -1;
   };
@@ -296,4 +296,4 @@ static const std::unordered_map<char, std::pair<PieceType, Color>> piece_map = {
 [[nodiscard]] inline uint64_t shift_south(uint64_t bitboard) {
   return (bitboard & ~RANK_1) >> 8;
 }
-} // namespace episteme
+}  // namespace episteme

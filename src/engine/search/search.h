@@ -1,13 +1,5 @@
 #pragma once
 
-#include "../../utils/datagen.h"
-#include "../chess/movegen.h"
-#include "../eval/eval.h"
-#include "history.h"
-#include "stack.h"
-#include "time.h"
-#include "ttable.h"
-
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -15,6 +7,14 @@
 #include <functional>
 #include <memory>
 #include <optional>
+
+#include "../../utils/datagen.h"
+#include "../chess/movegen.h"
+#include "../eval/eval.h"
+#include "history.h"
+#include "stack.h"
+#include "time.h"
+#include "ttable.h"
 
 namespace episteme::search {
 using namespace std::chrono;
@@ -27,7 +27,7 @@ struct ScoredMove {
 };
 
 struct ScoredList : public MoveList {
-  inline void add(const ScoredMove &move) {
+  inline void add(const ScoredMove& move) {
     list[count] = move;
     count++;
   }
@@ -43,7 +43,7 @@ struct ScoredList : public MoveList {
   std::array<ScoredMove, 256> list;
 };
 
-void pick_move(ScoredList &scored_list, int start);
+void pick_move(ScoredList& scored_list, int start);
 
 // BEGIN SEARCH //
 
@@ -64,12 +64,12 @@ struct Line {
 
   inline void append(Move move) { moves[length++] = move; }
 
-  inline void append(const Line &line) {
+  inline void append(const Line& line) {
     std::copy(&line.moves[0], &line.moves[line.length], &moves[length]);
     length += line.length;
   }
 
-  inline void update_line(Move move, const Line &line) {
+  inline void update_line(Move move, const Line& line) {
     clear();
     append(move);
     append(line);
@@ -106,12 +106,15 @@ struct Config {
 };
 
 class Worker {
-public:
+ public:
   using LiveUpdateCallback =
-      std::function<void(uint64_t nodes, const Line &exploring)>;
+    std::function<void(uint64_t nodes, const Line& exploring)>;
 
-  Worker(tt::Table &ttable, time::Limiter &limiter)
-      : ttable(ttable), limiter(limiter), nodes(0), should_stop(false),
+  Worker(tt::Table& ttable, time::Limiter& limiter)
+      : ttable(ttable),
+        limiter(limiter),
+        nodes(0),
+        should_stop(false),
         live_update_callback(nullptr) {};
 
   inline void reset_accum() {
@@ -140,48 +143,68 @@ public:
 
   inline void clear_live_update_callback() { live_update_callback = nullptr; }
 
-  ScoredMove score_move(const Position &position, const Move &move,
-                        const tt::Entry &tt_entry, std::optional<int32_t> ply);
+  ScoredMove score_move(
+    const Position& position,
+    const Move& move,
+    const tt::Entry& tt_entry,
+    std::optional<int32_t> ply
+  );
 
   template <typename F>
-  ScoredList generate_scored_targets(const Position &position, F generator,
-                                     const tt::Entry &tt_entry,
-                                     std::optional<int32_t> ply = std::nullopt);
+  ScoredList generate_scored_targets(
+    const Position& position,
+    F generator,
+    const tt::Entry& tt_entry,
+    std::optional<int32_t> ply = std::nullopt
+  );
 
-  inline ScoredList generate_scored_moves(const Position &position,
-                                          const tt::Entry &tt_entry,
-                                          int32_t ply) {
+  inline ScoredList generate_scored_moves(
+    const Position& position, const tt::Entry& tt_entry, int32_t ply
+  ) {
     return generate_scored_targets(position, generate_all_moves, tt_entry, ply);
   }
 
-  inline ScoredList generate_scored_captures(const Position &position,
-                                             const tt::Entry &tt_entry) {
+  inline ScoredList generate_scored_captures(
+    const Position& position, const tt::Entry& tt_entry
+  ) {
     return generate_scored_targets(position, generate_all_captures, tt_entry);
   }
 
-  int32_t eval_correction(int16_t ply, Position &position);
+  int32_t eval_correction(int16_t ply, Position& position);
 
   template <bool PV_node>
-  int32_t search(Position &position, Line &PV, int16_t depth, int16_t ply,
-                 int32_t alpha, int32_t beta, bool cut_node);
+  int32_t search(
+    Position& position,
+    Line& PV,
+    int16_t depth,
+    int16_t ply,
+    int32_t alpha,
+    int32_t beta,
+    bool cut_node
+  );
 
   template <bool PV_node>
-  int32_t quiesce(Position &position, Line &PV, int16_t ply, int32_t alpha,
-                  int32_t beta);
+  int32_t quiesce(
+    Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta
+  );
 
-  Report run(int32_t last_score, const Parameters &params, Position &position,
-             bool is_absolute);
-  int32_t eval(Position &position);
+  Report run(
+    int32_t last_score,
+    const Parameters& params,
+    Position& position,
+    bool is_absolute
+  );
+  int32_t eval(Position& position);
   void bench(int depth);
 
-private:
+ private:
   eval::nn::Accumulator accumulator;
   std::vector<eval::nn::Accumulator> accum_history;
 
   Position position;
 
-  tt::Table &ttable;
-  time::Limiter &limiter;
+  tt::Table& ttable;
+  time::Limiter& limiter;
   hist::Table history;
   stack::Stack stack;
 
@@ -196,8 +219,8 @@ private:
 };
 
 class Engine {
-public:
-  Engine(const search::Config &search_cfg)
+ public:
+  Engine(const search::Config& search_cfg)
       : ttable(search_cfg.hash_size), params(search_cfg.params), limiter() {
     workers.reserve(search_cfg.num_threads);
     for (uint16_t i = 0; i < search_cfg.num_threads; ++i) {
@@ -205,26 +228,26 @@ public:
     }
   }
 
-  inline void set_hash(search::Config &cfg) { ttable.resize(cfg.hash_size); }
+  inline void set_hash(search::Config& cfg) { ttable.resize(cfg.hash_size); }
 
-  inline void update_params(search::Parameters &new_params) {
+  inline void update_params(search::Parameters& new_params) {
     this->params = new_params;
   }
 
   inline void reset_nodes() {
-    for (auto &worker : workers) {
+    for (auto& worker : workers) {
       worker->reset_nodes();
     }
   }
 
   inline void reset_seldepth() {
-    for (auto &worker : workers) {
+    for (auto& worker : workers) {
       worker->reset_seldepth();
     }
   }
 
   inline void reset_go() {
-    for (auto &worker : workers) {
+    for (auto& worker : workers) {
       worker->reset_stop();
       worker->reset_stack();
     }
@@ -232,7 +255,7 @@ public:
 
   inline void reset_game() {
     ttable.reset();
-    for (auto &worker : workers) {
+    for (auto& worker : workers) {
       worker->reset_history();
       worker->reset_accum();
       worker->reset_stop();
@@ -240,20 +263,20 @@ public:
     }
   }
 
-  void run(Position &position);
-  ScoredMove datagen_search(Position &position);
-  void eval(Position &position);
+  void run(Position& position);
+  ScoredMove datagen_search(Position& position);
+  void eval(Position& position);
   void bench(int depth);
 
-  inline Worker *get_worker(size_t idx = 0) {
+  inline Worker* get_worker(size_t idx = 0) {
     return (idx < workers.size()) ? workers[idx].get() : nullptr;
   }
 
-private:
+ private:
   tt::Table ttable;
   Parameters params;
   time::Limiter limiter;
 
   std::vector<std::unique_ptr<Worker>> workers;
 };
-} // namespace episteme::search
+}  // namespace episteme::search

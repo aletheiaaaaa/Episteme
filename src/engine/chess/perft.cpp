@@ -4,13 +4,13 @@
 #include <iostream>
 
 namespace episteme {
-Position fen_to_position(const std::string &FEN) {
+Position fen_to_position(const std::string& FEN) {
   Position position;
   position.from_FEN(FEN);
   return position;
 }
 
-uint64_t perft(Position &position, int32_t depth) {
+uint64_t perft(Position& position, int32_t depth) {
   if (depth == 0) {
     return 1;
   }
@@ -24,8 +24,9 @@ uint64_t perft(Position &position, int32_t depth) {
 
     uint64_t king_bb = position.piece_bb(PieceType::King, position.NTM());
 
-    if (!is_square_attacked(sq_from_idx(std::countr_zero(king_bb)), position,
-                            position.STM())) {
+    if (!is_square_attacked(
+          sq_from_idx(std::countr_zero(king_bb)), position, position.STM()
+        )) {
       move_count += perft(position, depth - 1);
     }
 
@@ -35,7 +36,7 @@ uint64_t perft(Position &position, int32_t depth) {
   return move_count;
 }
 
-void split_perft(Position &position, int32_t depth) {
+void split_perft(Position& position, int32_t depth) {
   MoveList move_list;
   generate_all_moves(move_list, position);
 
@@ -47,8 +48,9 @@ void split_perft(Position &position, int32_t depth) {
 
     uint64_t king_bb = position.piece_bb(PieceType::King, position.NTM());
 
-    bool illegal = is_square_attacked(sq_from_idx(std::countr_zero(king_bb)),
-                                      position, position.STM());
+    bool illegal = is_square_attacked(
+      sq_from_idx(std::countr_zero(king_bb)), position, position.STM()
+    );
 
     uint64_t nodes = 0;
     if (!illegal) {
@@ -63,7 +65,7 @@ void split_perft(Position &position, int32_t depth) {
   std::cout << "Total nodes: " << total << "\n";
 }
 
-void time_perft(Position &position, int32_t depth) {
+void time_perft(Position& position, int32_t depth) {
   using namespace std::chrono;
 
   for (int i = 1; i <= depth; i++) {
@@ -80,4 +82,4 @@ void time_perft(Position &position, int32_t depth) {
   }
 }
 
-} // namespace episteme
+}  // namespace episteme

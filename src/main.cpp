@@ -3,7 +3,7 @@
 
 using namespace episteme;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   hash::init();
   tunable::init_lmr_table();
 
@@ -14,8 +14,7 @@ int main(int argc, char *argv[]) {
     std::string cmd;
     for (int i = 1; i < argc; ++i) {
       cmd += argv[i];
-      if (i < argc - 1)
-        cmd += ' ';
+      if (i < argc - 1) cmd += ' ';
     }
     uci::parse(cmd, cfg, engine);
 

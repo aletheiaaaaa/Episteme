@@ -1,11 +1,11 @@
 #pragma once
 
+#include <array>
+#include <cstdint>
+
 #include "../../chess/core.h"
 #include "../../chess/move.h"
 #include "../../chess/position.h"
-
-#include <array>
-#include <cstdint>
 
 namespace episteme::eval::nn {
 constexpr int16_t QA = 255;
@@ -28,15 +28,16 @@ struct Accumulator {
 };
 
 class NNUE {
-public:
-  Accumulator update_accumulator(const Position &position, const Move &move,
-                                 Accumulator accum) const;
-  Accumulator reset_accumulator(const Position &position) const;
-  int32_t l1_forward(const Accumulator &accum, Color stm) const;
+ public:
+  Accumulator update_accumulator(
+    const Position& position, const Move& move, Accumulator accum
+  ) const;
+  Accumulator reset_accumulator(const Position& position) const;
+  int32_t l1_forward(const Accumulator& accum, Color stm) const;
 
   void init_random();
 
-private:
+ private:
   using L0Weights = std::array<std::array<int16_t, L1_WIDTH>, 768>;
   using L0Biases = std::array<int16_t, L1_WIDTH>;
   using L1Weights = std::array<int16_t, L1_WIDTH * 2>;
@@ -47,4 +48,4 @@ private:
   alignas(ALIGNMENT) L1Weights l1_weights;
   alignas(ALIGNMENT) L1Bias l1_bias;
 };
-} // namespace episteme::eval::nn
+}  // namespace episteme::eval::nn

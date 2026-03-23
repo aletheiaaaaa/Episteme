@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../engine/chess/movegen.h"
-#include "../engine/search/search.h"
-#include "format.h"
-
 #include <atomic>
 #include <cstdint>
 #include <string>
+
+#include "../engine/chess/movegen.h"
+#include "../engine/search/search.h"
+#include "format.h"
 
 namespace episteme::datagen {
 constexpr int32_t WIN_SCORE_MIN = 2500;
@@ -28,7 +28,7 @@ struct Parameters {
   std::string out_dir = "data";
 };
 
-void play_random(Position &position, int32_t num_moves);
-void game_loop(const Parameters &params, std::ostream &stream, uint32_t id);
-void run(Parameters &params);
-} // namespace episteme::datagen
+void play_random(Position& position, int32_t num_moves);
+void game_loop(const Parameters& params, std::ostream& stream, uint32_t id);
+void run(Parameters& params);
+}  // namespace episteme::datagen

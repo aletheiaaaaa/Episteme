@@ -1,16 +1,17 @@
 #include "search.h"
-#include "../../utils/bench.h"
-#include "../../utils/tunable.h"
-#include "../uci/display.h"
 
 #include <cassert>
 #include <iostream>
+
+#include "../../utils/bench.h"
+#include "../../utils/tunable.h"
+#include "../uci/display.h"
 
 namespace episteme::search {
 using namespace std::chrono;
 using namespace tunable;
 
-void pick_move(ScoredList &scored_list, int start) {
+void pick_move(ScoredList& scored_list, int start) {
   for (size_t i = start + 1; i < scored_list.count; i++) {
     if (scored_list[i].score > scored_list[start].score) {
       scored_list.swap(start, i);
@@ -19,10 +20,12 @@ void pick_move(ScoredList &scored_list, int start) {
 }
 
 template <typename F>
-ScoredList Worker::generate_scored_targets(const Position &position,
-                                           F generator,
-                                           const tt::Entry &tt_entry,
-                                           std::optional<int32_t> ply) {
+ScoredList Worker::generate_scored_targets(
+  const Position& position,
+  F generator,
+  const tt::Entry& tt_entry,
+  std::optional<int32_t> ply
+) {
   MoveList move_list;
   generator(move_list, position);
   ScoredList scored_list;
@@ -34,30 +37,36 @@ ScoredList Worker::generate_scored_targets(const Position &position,
   return scored_list;
 }
 
-int32_t Worker::eval_correction(int16_t ply, Position &position) {
+int32_t Worker::eval_correction(int16_t ply, Position& position) {
   int32_t correction = 0;
 
-  correction += pawn_corrhist_mult * history.get_pawn_corr_hist(
-                                         position.pawn_hash(), position.STM());
+  correction +=
+    pawn_corrhist_mult *
+    history.get_pawn_corr_hist(position.pawn_hash(), position.STM());
   // correction += 110 * history.get_major_corr_hist(position.major_hash(),
   // position.STM());
   correction +=
-      minor_corrhist_mult *
-      history.get_minor_corr_hist(position.minor_hash(), position.STM());
-  correction += nonpawn_stm_corrhist_mult *
-                history.get_non_pawn_stm_corr_hist(position.non_pawn_stm_hash(),
-                                                   position.STM());
-  correction += nonpawn_ntm_corrhist_mult *
-                history.get_non_pawn_ntm_corr_hist(position.non_pawn_ntm_hash(),
-                                                   position.STM());
+    minor_corrhist_mult *
+    history.get_minor_corr_hist(position.minor_hash(), position.STM());
+  correction +=
+    nonpawn_stm_corrhist_mult * history.get_non_pawn_stm_corr_hist(
+                                  position.non_pawn_stm_hash(), position.STM()
+                                );
+  correction +=
+    nonpawn_ntm_corrhist_mult * history.get_non_pawn_ntm_corr_hist(
+                                  position.non_pawn_ntm_hash(), position.STM()
+                                );
   correction += cont_corrhist_mult * history.get_cont_corr_hist(stack, ply);
 
   return correction / 2048;
 }
 
-ScoredMove Worker::score_move(const Position &position, const Move &move,
-                              const tt::Entry &tt_entry,
-                              std::optional<int32_t> ply) {
+ScoredMove Worker::score_move(
+  const Position& position,
+  const Move& move,
+  const tt::Entry& tt_entry,
+  std::optional<int32_t> ply
+) {
   ScoredMove scored_move{.move = move};
 
   if (tt_entry.move == move) {
@@ -69,33 +78,36 @@ ScoredMove Worker::score_move(const Position &position, const Move &move,
   Piece dst = position.mailbox(move.to_square());
 
   bool is_capture =
-      dst != Piece::None || move.move_type() == MoveType::EnPassant;
+    dst != Piece::None || move.move_type() == MoveType::EnPassant;
 
   if (is_capture) {
     int32_t src_val = piece_vals[piece_type_idx(src)];
     int32_t dst_val = move.move_type() == MoveType::EnPassant
-                          ? piece_vals[piece_type_idx(PieceType::Pawn)]
-                          : piece_vals[piece_type_idx(dst)];
+                        ? piece_vals[piece_type_idx(PieceType::Pawn)]
+                        : piece_vals[piece_type_idx(dst)];
 
     scored_move.score += dst_val * 10 - src_val;
 
     scored_move.score += mvv_lva_mult * (dst_val * 10 - src_val);
     scored_move.score +=
-        ply ? capt_hist_mult * history.get_capt_hist(
-                                   src, move,
-                                   move.move_type() == MoveType::EnPassant
-                                       ? piece_type_with_color(PieceType::Pawn,
-                                                               position.NTM())
-                                       : dst)
-            : qs_capt_hist_mult * history.get_qs_capt_hist(
-                                      src, move,
-                                      move.move_type() == MoveType::EnPassant
-                                          ? piece_type_with_color(
-                                                PieceType::Pawn, position.NTM())
-                                          : dst);
+      ply ? capt_hist_mult *
+              history.get_capt_hist(
+                src,
+                move,
+                move.move_type() == MoveType::EnPassant
+                  ? piece_type_with_color(PieceType::Pawn, position.NTM())
+                  : dst
+              )
+          : qs_capt_hist_mult *
+              history.get_qs_capt_hist(
+                src,
+                move,
+                move.move_type() == MoveType::EnPassant
+                  ? piece_type_with_color(PieceType::Pawn, position.NTM())
+                  : dst
+              );
 
-    if (eval::SEE(position, move, 0))
-      scored_move.score += 1000000;
+    if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
 
   } else {
     if (stack[ply.value()].killer == move) {
@@ -104,12 +116,12 @@ ScoredMove Worker::score_move(const Position &position, const Move &move,
     }
 
     scored_move.score +=
-        quiet_hist_mult * history.get_quiet_hist(position.STM(), move);
+      quiet_hist_mult * history.get_quiet_hist(position.STM(), move);
     scored_move.score +=
-        cont_hist_mult * history.get_cont_hist(stack, src, move, *ply);
+      cont_hist_mult * history.get_cont_hist(stack, src, move, *ply);
     scored_move.score +=
-        pawn_hist_mult *
-        history.get_pawn_hist(position.STM(), position.pawn_hash(), src, move);
+      pawn_hist_mult *
+      history.get_pawn_hist(position.STM(), position.pawn_hash(), src, move);
   }
 
   scored_move.score /= 128;
@@ -118,8 +130,15 @@ ScoredMove Worker::score_move(const Position &position, const Move &move,
 }
 
 template <bool PV_node>
-int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
-                       int32_t alpha, int32_t beta, bool cut_node) {
+int32_t Worker::search(
+  Position& position,
+  Line& PV,
+  int16_t depth,
+  int16_t ply,
+  int32_t alpha,
+  int32_t beta,
+  bool cut_node
+) {
   if (nodes % 1024 == 0) {
     if (limiter.time_exceeded()) {
       should_stop = true;
@@ -129,7 +148,7 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
     if (live_update_callback) {
       auto now = steady_clock::now();
       auto elapsed =
-          duration_cast<milliseconds>(now - last_update_time).count();
+        duration_cast<milliseconds>(now - last_update_time).count();
       if (elapsed >= 50) {
         live_update_callback(nodes.load(), exploring);
         last_update_time = now;
@@ -141,13 +160,12 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
 
   if (ply > 0) {
     if (position.half_move_clock() >= 100) {
-      if (!in_check(position, position.STM()))
-        return 0;
+      if (!in_check(position, position.STM())) return 0;
 
       bool has_legal = false;
       MoveList move_list;
       generate_all_moves(move_list, position);
-      for (auto &move : move_list.list) {
+      for (auto& move : move_list.list) {
         position.make_move(move);
         if (!in_check(position, position.NTM())) {
           position.unmake_move();
@@ -163,8 +181,7 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
         return 0;
     }
 
-    if (position.is_threefold())
-      return 0;
+    if (position.is_threefold()) return 0;
   }
 
   if (depth <= 0) {
@@ -174,12 +191,14 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
   tt::Entry tt_entry{};
   if (!stack[ply].excluded) {
     tt_entry = ttable.probe(position.full_hash());
-    if (ply > 0 && (tt_entry.depth >= depth &&
-                    ((tt_entry.node_type == tt::NodeType::PVNode) ||
-                     (tt_entry.node_type == tt::NodeType::AllNode &&
-                      tt_entry.score <= alpha) ||
-                     (tt_entry.node_type == tt::NodeType::CutNode &&
-                      tt_entry.score >= beta)))) {
+    if (
+      ply > 0 && (tt_entry.depth >= depth &&
+                  ((tt_entry.node_type == tt::NodeType::PVNode) ||
+                   (tt_entry.node_type == tt::NodeType::AllNode &&
+                    tt_entry.score <= alpha) ||
+                   (tt_entry.node_type == tt::NodeType::CutNode &&
+                    tt_entry.score >= beta)))
+    ) {
       return tt_entry.score;
     }
   }
@@ -205,27 +224,35 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
     }
   }
 
-  if (!stack[ply].excluded && !is_PV && !in_check(position, position.STM()) &&
-      stack[ply - 1].eval != -INF) {
-    if (depth > 1 && stack[ply - 1].reduction > 3 &&
-        static_eval + stack[ply - 1].eval < hindsight_ext_thresh)
+  if (
+    !stack[ply].excluded && !is_PV && !in_check(position, position.STM()) &&
+    stack[ply - 1].eval != -INF
+  ) {
+    if (
+      depth > 1 && stack[ply - 1].reduction > 3 &&
+      static_eval + stack[ply - 1].eval < hindsight_ext_thresh
+    )
       depth++;
-    else if (depth > 3 && stack[ply - 1].reduction > 1 &&
-             static_eval + stack[ply - 1].eval > hindsight_red_thresh)
+    else if (
+      depth > 3 && stack[ply - 1].reduction > 1 &&
+      static_eval + stack[ply - 1].eval > hindsight_red_thresh
+    )
       depth--;
   }
 
   if (!stack[ply].excluded && !in_check(position, position.STM())) {
-    if (!is_PV && depth <= 5 &&
-        static_eval >= beta + std::max(depth - improving, 0) * 100 +
-                           std::abs(correction) / 4)
+    if (
+      !is_PV && depth <= 5 &&
+      static_eval >=
+        beta + std::max(depth - improving, 0) * 100 + std::abs(correction) / 4
+    )
       return (static_eval + beta) / 2;
 
     if (!is_PV && depth >= 3) {
       const uint64_t no_pawns_or_kings =
-          position.color_bb(position.STM()) &
-          ~position.piece_bb(PieceType::King, position.STM()) &
-          ~position.piece_bb(PieceType::Pawn, position.STM());
+        position.color_bb(position.STM()) &
+        ~position.piece_bb(PieceType::King, position.STM()) &
+        ~position.piece_bb(PieceType::Pawn, position.STM());
 
       if (no_pawns_or_kings) {
         Line null{};
@@ -235,24 +262,31 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
         stack[ply].piece = Piece::None;
 
         position.make_null();
-        int32_t score = -search<false>(position, null, depth - reduction,
-                                       ply + 1, -beta, -beta + 1, !cut_node);
+        int32_t score = -search<false>(
+          position,
+          null,
+          depth - reduction,
+          ply + 1,
+          -beta,
+          -beta + 1,
+          !cut_node
+        );
         position.unmake_move();
 
-        if (should_stop)
-          return 0;
+        if (should_stop) return 0;
 
         if (score >= beta) {
-          if (std::abs(score) >= MATE - MAX_SEARCH_PLY)
-            return beta;
+          if (std::abs(score) >= MATE - MAX_SEARCH_PLY) return beta;
           return score;
         }
       }
     }
   }
 
-  if (!stack[ply].excluded.data() && cut_node && !tt_entry.move.data() &&
-      depth >= 6)
+  if (
+    !stack[ply].excluded.data() && cut_node && !tt_entry.move.data() &&
+    depth >= 6
+  )
     depth--;
 
   ScoredList move_list = generate_scored_moves(position, tt_entry, ply);
@@ -272,8 +306,8 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
 
     Piece from_pc = position.mailbox(move.from_square());
     Piece to_pc = move.move_type() == MoveType::EnPassant
-                      ? piece_type_with_color(PieceType::Pawn, position.NTM())
-                      : position.mailbox(move.to_square());
+                    ? piece_type_with_color(PieceType::Pawn, position.NTM())
+                    : position.mailbox(move.to_square());
 
     bool is_quiet = position.mailbox(move.to_square()) == Piece::None &&
                     move.move_type() != MoveType::EnPassant;
@@ -282,44 +316,47 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
 
     if (ply > 0 && best > -MATE + MAX_SEARCH_PLY) {
       const int32_t lmp_threshold = 3 + depth * depth;
-      if (is_quiet && num_legal >= lmp_threshold)
-        break;
+      if (is_quiet && num_legal >= lmp_threshold) break;
 
       const int32_t fp_margin = fp_base + depth * fp_mult;
-      if (!is_PV && is_quiet && !in_check(position, position.STM()) &&
-          static_eval + fp_margin <= alpha)
+      if (
+        !is_PV && is_quiet && !in_check(position, position.STM()) &&
+        static_eval + fp_margin <= alpha
+      )
         break;
 
       const int32_t see_threshold =
-          (is_quiet) ? quiet_see_base + quiet_see_mult * depth
-                     : noisy_see_base + noisy_see_mult * depth * depth;
-      if (!is_PV && !eval::SEE(position, move, see_threshold))
-        continue;
+        (is_quiet) ? quiet_see_base + quiet_see_mult * depth
+                   : noisy_see_base + noisy_see_mult * depth * depth;
+      if (!is_PV && !eval::SEE(position, move, see_threshold)) continue;
 
       const int32_t history_margin = hist_prune_base + hist_prune_mult * depth;
-      if (!is_PV && is_quiet &&
-          history.get_hist(stack, from_pc, to_pc, move, position.STM(), ply,
-                           position) <= history_margin)
+      if (
+        !is_PV && is_quiet &&
+        history.get_hist(
+          stack, from_pc, to_pc, move, position.STM(), ply, position
+        ) <= history_margin
+      )
         continue;
     }
 
-    if (move == stack[ply].excluded)
-      continue;
+    if (move == stack[ply].excluded) continue;
 
     int16_t extension = 0;
-    if (ply > 0 && depth >= 8 && move == tt_entry.move &&
-        !stack[ply].excluded && tt_entry.depth >= depth - 3 &&
-        tt_entry.node_type != tt::NodeType::AllNode) {
+    if (
+      ply > 0 && depth >= 8 && move == tt_entry.move && !stack[ply].excluded &&
+      tt_entry.depth >= depth - 3 && tt_entry.node_type != tt::NodeType::AllNode
+    ) {
       const int32_t new_beta = std::max(-INF + 1, tt_entry.score - depth * 2);
       const int16_t new_depth = (depth - 1) / 2;
 
       stack[ply].excluded = move;
-      int32_t score = search<false>(position, PV, new_depth, ply, new_beta - 1,
-                                    new_beta, cut_node);
+      int32_t score = search<false>(
+        position, PV, new_depth, ply, new_beta - 1, new_beta, cut_node
+      );
       stack[ply].excluded = Move();
 
-      if (should_stop)
-        return 0;
+      if (should_stop) return 0;
 
       if (score < new_beta)
         extension = (!is_PV && score < new_beta - double_ext_margin) ? 2 : 1;
@@ -384,33 +421,39 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
       reduction -= lmr_tt_PV_mult * tt_PV;
       reduction += lmr_cut_node_mult * cut_node;
       reduction -= lmr_hist_mult *
-                   history.get_hist(stack, from_pc, to_pc, move, position.STM(),
-                                    ply, position) /
+                   history.get_hist(
+                     stack, from_pc, to_pc, move, position.STM(), ply, position
+                   ) /
                    8192;
-      reduction -= lmr_corrplexity_mult *
-                   (std::abs(correction) > lmr_corrplexity_thresh);
+      reduction -=
+        lmr_corrplexity_mult * (std::abs(correction) > lmr_corrplexity_thresh);
 
       reduction /= 128;
 
       stack[ply].reduction = reduction;
-      int16_t reduced = std::min(std::max(new_depth - reduction, 1),
-                                 static_cast<int>(new_depth));
-      score = -search<false>(position, candidate, reduced, ply + 1, -alpha - 1,
-                             -alpha, true);
+      int16_t reduced = std::min(
+        std::max(new_depth - reduction, 1), static_cast<int>(new_depth)
+      );
+      score = -search<false>(
+        position, candidate, reduced, ply + 1, -alpha - 1, -alpha, true
+      );
       stack[ply].reduction = 0;
 
       if (score > alpha && reduced < depth - 1) {
-        score = -search<false>(position, candidate, new_depth, ply + 1,
-                               -alpha - 1, -alpha, !cut_node);
+        score = -search<false>(
+          position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node
+        );
       }
     } else if (!is_PV || num_legal > 1) {
-      score = -search<false>(position, candidate, new_depth, ply + 1,
-                             -alpha - 1, -alpha, !cut_node);
+      score = -search<false>(
+        position, candidate, new_depth, ply + 1, -alpha - 1, -alpha, !cut_node
+      );
     }
 
     if (is_PV && (num_legal == 1 || score > alpha)) {
-      score = -search<true>(position, candidate, new_depth, ply + 1, -beta,
-                            -alpha, false);
+      score = -search<true>(
+        position, candidate, new_depth, ply + 1, -beta, -alpha, false
+      );
     }
 
     position.unmake_move();
@@ -420,11 +463,9 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
     stack[ply].move = Move();
     stack[ply].piece = Piece::None;
 
-    if (should_stop)
-      return 0;
+    if (should_stop) return 0;
 
-    if (ply == 0)
-      limiter.update_node_count(move, nodes - prev_nodes);
+    if (ply == 0) limiter.update_node_count(move, nodes - prev_nodes);
 
     if (score > best) {
       best = score;
@@ -443,21 +484,27 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
 
           history.update_quiet_hist(position.STM(), move, bonus);
           history.update_cont_hist(stack, from_pc, move, bonus, ply);
-          history.update_pawn_hist(position.STM(), position.pawn_hash(),
-                                   from_pc, move, bonus);
+          history.update_pawn_hist(
+            position.STM(), position.pawn_hash(), from_pc, move, bonus
+          );
 
           for (size_t j = 0; j < explored_quiets.count; j++) {
             Move prev_move = explored_quiets[j];
-            if (prev_move == move)
-              continue;
+            if (prev_move == move) continue;
 
             Piece prev_from_pc = position.mailbox(prev_move.from_square());
 
             history.update_quiet_hist(position.STM(), prev_move, -bonus);
-            history.update_cont_hist(stack, prev_from_pc, prev_move, -bonus,
-                                     ply);
-            history.update_pawn_hist(position.STM(), position.pawn_hash(),
-                                     prev_from_pc, prev_move, -bonus);
+            history.update_cont_hist(
+              stack, prev_from_pc, prev_move, -bonus, ply
+            );
+            history.update_pawn_hist(
+              position.STM(),
+              position.pawn_hash(),
+              prev_from_pc,
+              prev_move,
+              -bonus
+            );
           }
         } else {
           history.update_capt_hist(from_pc, move, to_pc, bonus);
@@ -465,14 +512,13 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
 
         for (size_t j = 0; j < explored_noisies.count; j++) {
           Move prev_move = explored_noisies[j];
-          if (prev_move == move)
-            continue;
+          if (prev_move == move) continue;
 
           Piece prev_from_pc = position.mailbox(prev_move.from_square());
           Piece prev_to_pc =
-              prev_move.move_type() == MoveType::EnPassant
-                  ? piece_type_with_color(PieceType::Pawn, position.NTM())
-                  : position.mailbox(prev_move.to_square());
+            prev_move.move_type() == MoveType::EnPassant
+              ? piece_type_with_color(PieceType::Pawn, position.NTM())
+              : position.mailbox(prev_move.to_square());
 
           history.update_capt_hist(prev_from_pc, prev_move, prev_to_pc, -bonus);
         }
@@ -486,33 +532,40 @@ int32_t Worker::search(Position &position, Line &PV, int16_t depth, int16_t ply,
   if (num_legal == 0)
     return in_check(position, position.STM()) ? (-MATE + ply) : 0;
 
-  if (!in_check(position, position.STM()) &&
-      !(position.mailbox(PV.moves[0].to_square()) != Piece::None ||
-        PV.moves[0].move_type() == MoveType::EnPassant ||
-        PV.moves[0].move_type() == MoveType::Promotion) &&
-      !(node_type == tt::NodeType::CutNode && best <= static_eval) &&
-      !(node_type == tt::NodeType::AllNode && best >= static_eval)) {
-    int16_t correction =
-        std::clamp((best - static_eval) * depth / 8, -hist::MAX_CORR_HIST / 4,
-                   hist::MAX_CORR_HIST / 4);
+  if (
+    !in_check(position, position.STM()) &&
+    !(position.mailbox(PV.moves[0].to_square()) != Piece::None ||
+      PV.moves[0].move_type() == MoveType::EnPassant ||
+      PV.moves[0].move_type() == MoveType::Promotion) &&
+    !(node_type == tt::NodeType::CutNode && best <= static_eval) &&
+    !(node_type == tt::NodeType::AllNode && best >= static_eval)
+  ) {
+    int16_t correction = std::clamp(
+      (best - static_eval) * depth / 8,
+      -hist::MAX_CORR_HIST / 4,
+      hist::MAX_CORR_HIST / 4
+    );
     history.update_corr_hist(position, stack, position.STM(), ply, correction);
   }
 
   if (!stack[ply].excluded) {
-    ttable.add({.hash = position.full_hash(),
-                .move = PV.moves[0],
-                .tt_PV = is_PV || tt_entry.tt_PV,
-                .score = best,
-                .depth = static_cast<uint8_t>(depth),
-                .node_type = node_type});
+    ttable.add(
+      {.hash = position.full_hash(),
+       .move = PV.moves[0],
+       .tt_PV = is_PV || tt_entry.tt_PV,
+       .score = best,
+       .depth = static_cast<uint8_t>(depth),
+       .node_type = node_type}
+    );
   }
 
   return best;
 }
 
 template <bool PV_node>
-int32_t Worker::quiesce(Position &position, Line &PV, int16_t ply,
-                        int32_t alpha, int32_t beta) {
+int32_t Worker::quiesce(
+  Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta
+) {
   if (nodes % 1024 == 0 && limiter.time_exceeded()) {
     should_stop = true;
     return 0;
@@ -521,10 +574,11 @@ int32_t Worker::quiesce(Position &position, Line &PV, int16_t ply,
   seldepth = std::max(seldepth, ply);
 
   tt::Entry tt_entry = ttable.probe(position.full_hash());
-  if ((tt_entry.node_type == tt::NodeType::PVNode) ||
-      (tt_entry.node_type == tt::NodeType::AllNode &&
-       tt_entry.score <= alpha) ||
-      (tt_entry.node_type == tt::NodeType::CutNode && tt_entry.score >= beta)) {
+  if (
+    (tt_entry.node_type == tt::NodeType::PVNode) ||
+    (tt_entry.node_type == tt::NodeType::AllNode && tt_entry.score <= alpha) ||
+    (tt_entry.node_type == tt::NodeType::CutNode && tt_entry.score >= beta)
+  ) {
     return tt_entry.score;
   }
 
@@ -551,11 +605,10 @@ int32_t Worker::quiesce(Position &position, Line &PV, int16_t ply,
 
     Piece from_pc = position.mailbox(move.from_square());
     Piece to_pc = move.move_type() == MoveType::EnPassant
-                      ? piece_type_with_color(PieceType::Pawn, position.NTM())
-                      : position.mailbox(move.to_square());
+                    ? piece_type_with_color(PieceType::Pawn, position.NTM())
+                    : position.mailbox(move.to_square());
 
-    if (!eval::SEE(position, move, 0))
-      continue;
+    if (!eval::SEE(position, move, 0)) continue;
 
     accumulator = eval::update(position, move, accumulator);
     accum_history.emplace_back(accumulator);
@@ -580,14 +633,13 @@ int32_t Worker::quiesce(Position &position, Line &PV, int16_t ply,
 
     Line candidate = {};
     int32_t score =
-        -quiesce<PV_node>(position, candidate, ply + 1, -beta, -alpha);
+      -quiesce<PV_node>(position, candidate, ply + 1, -beta, -alpha);
 
     position.unmake_move();
     accum_history.pop_back();
     accumulator = accum_history.back();
 
-    if (should_stop)
-      return 0;
+    if (should_stop) return 0;
 
     if (score > best) {
       best = score;
@@ -605,17 +657,17 @@ int32_t Worker::quiesce(Position &position, Line &PV, int16_t ply,
 
         for (size_t j = 0; j < explored_noisies.count; j++) {
           Move prev_move = explored_noisies.list[j];
-          if (prev_move.data() == move.data())
-            continue;
+          if (prev_move.data() == move.data()) continue;
 
           Piece prev_from_pc = position.mailbox(prev_move.from_square());
           Piece prev_to_pc =
-              prev_move.move_type() == MoveType::EnPassant
-                  ? piece_type_with_color(PieceType::Pawn, position.NTM())
-                  : position.mailbox(prev_move.to_square());
+            prev_move.move_type() == MoveType::EnPassant
+              ? piece_type_with_color(PieceType::Pawn, position.NTM())
+              : position.mailbox(prev_move.to_square());
 
-          history.update_qs_capt_hist(prev_from_pc, prev_move, prev_to_pc,
-                                      -bonus);
+          history.update_qs_capt_hist(
+            prev_from_pc, prev_move, prev_to_pc, -bonus
+          );
         }
 
         node_type = tt::NodeType::CutNode;
@@ -624,18 +676,24 @@ int32_t Worker::quiesce(Position &position, Line &PV, int16_t ply,
     }
   }
 
-  ttable.add({.hash = position.full_hash(),
-              .move = PV.moves[0],
-              .tt_PV = is_PV || tt_entry.tt_PV,
-              .score = best,
-              .depth = 0,
-              .node_type = node_type});
+  ttable.add(
+    {.hash = position.full_hash(),
+     .move = PV.moves[0],
+     .tt_PV = is_PV || tt_entry.tt_PV,
+     .score = best,
+     .depth = 0,
+     .node_type = node_type}
+  );
 
   return best;
 }
 
-Report Worker::run(int32_t last_score, const Parameters &params,
-                   Position &position, bool is_absolute) {
+Report Worker::run(
+  int32_t last_score,
+  const Parameters& params,
+  Position& position,
+  bool is_absolute
+) {
   accumulator = eval::reset(position);
   accum_history.emplace_back(accumulator);
 
@@ -657,21 +715,23 @@ Report Worker::run(int32_t last_score, const Parameters &params,
   }
 
   int64_t elapsed =
-      duration_cast<milliseconds>(steady_clock::now() - start).count();
+    duration_cast<milliseconds>(steady_clock::now() - start).count();
 
   score = (is_absolute) ? score * (!color_idx(position.STM()) ? 1 : -1) : score;
 
-  Report report{.depth = params.depth,
-                .seldepth = seldepth,
-                .time = elapsed,
-                .nodes = nodes,
-                .score = score,
-                .line = PV};
+  Report report{
+    .depth = params.depth,
+    .seldepth = seldepth,
+    .time = elapsed,
+    .nodes = nodes,
+    .score = score,
+    .line = PV
+  };
 
   return report;
 }
 
-int32_t Worker::eval(Position &position) {
+int32_t Worker::eval(Position& position) {
   accumulator = eval::reset(position);
 
   return eval::evaluate(accumulator, position.STM());
@@ -702,12 +762,12 @@ void Worker::bench(int depth) {
   std::cout << total << " nodes " << nps << " nps\n";
 }
 
-void Engine::run(Position &position) {
+void Engine::run(Position& position) {
   time::Config cfg{
-      .nodes = params.nodes,
-      .move_time = params.move_time,
-      .time_left = params.time[color_idx(position.STM())],
-      .increment = params.inc[color_idx(position.STM())],
+    .nodes = params.nodes,
+    .move_time = params.move_time,
+    .time_left = params.time[color_idx(position.STM())],
+    .increment = params.inc[color_idx(position.STM())],
   };
 
   Report last_report;
@@ -728,8 +788,7 @@ void Engine::run(Position &position) {
     reset_seldepth();
 
     Report report = workers[0]->run(last_score, iter_params, position, false);
-    if (workers[0]->stopped())
-      break;
+    if (workers[0]->stopped()) break;
 
     last_report = report;
     last_score = report.score;
@@ -738,9 +797,12 @@ void Engine::run(Position &position) {
     report.hashfull = ttable.hashfull();
     uci::on_update(report);
 
-    if (limiter.time_approaching(report.line.moves[0],
-                                 workers[0]->node_count()) ||
-        limiter.time_exceeded())
+    if (
+      limiter.time_approaching(
+        report.line.moves[0], workers[0]->node_count()
+      ) ||
+      limiter.time_exceeded()
+    )
       break;
   }
 
@@ -750,10 +812,10 @@ void Engine::run(Position &position) {
   uci::on_completion(last_report, best);
 }
 
-ScoredMove Engine::datagen_search(Position &position) {
+ScoredMove Engine::datagen_search(Position& position) {
   time::Config cfg{
-      .nodes = params.nodes,
-      .soft_nodes = params.soft_nodes,
+    .nodes = params.nodes,
+    .soft_nodes = params.soft_nodes,
   };
 
   Report last_report;
@@ -769,26 +831,25 @@ ScoredMove Engine::datagen_search(Position &position) {
     iter_params.depth = depth;
 
     Report report = workers[0]->run(last_score, iter_params, position, true);
-    if (workers[0]->stopped())
-      break;
+    if (workers[0]->stopped()) break;
 
     last_report = report;
     last_score = report.score;
 
-    if (limiter.nodes_approaching(workers[0]->node_count()))
-      break;
+    if (limiter.nodes_approaching(workers[0]->node_count())) break;
   }
 
-  ScoredMove best{.move = last_report.line.moves[0],
-                  .score = last_report.score};
+  ScoredMove best{
+    .move = last_report.line.moves[0], .score = last_report.score
+  };
 
   return best;
 }
 
-void Engine::eval(Position &position) {
+void Engine::eval(Position& position) {
   int32_t eval_cp = workers[0]->eval(position);
   uci::show_position(position, eval_cp);
 }
 
 void Engine::bench(int depth) { workers[0]->bench(depth); }
-} // namespace episteme::search
+}  // namespace episteme::search

@@ -15,7 +15,7 @@ void init() {
   for (int i = 0; i < 12; i++) {
     for (int j = 0; j < 64; j++) {
       piecesquares[piecesquare(pc_from_idx(i), sq_from_idx(j), false)] =
-          dist(gen);
+        dist(gen);
     }
   }
 
@@ -30,23 +30,18 @@ void init() {
   castling_rights[BLACK_QUEENSIDE] = dist(gen);
 
   for (uint8_t i = 0; i < 16; i++) {
-    if (std::popcount(i) < 2)
-      continue;
+    if (std::popcount(i) < 2) continue;
 
     uint64_t delta = 0;
 
-    if (i & WHITE_KINGSIDE)
-      delta ^= castling_rights[WHITE_KINGSIDE];
-    if (i & WHITE_QUEENSIDE)
-      delta ^= castling_rights[WHITE_QUEENSIDE];
-    if (i & BLACK_KINGSIDE)
-      delta ^= castling_rights[BLACK_KINGSIDE];
-    if (i & BLACK_QUEENSIDE)
-      delta ^= castling_rights[BLACK_QUEENSIDE];
+    if (i & WHITE_KINGSIDE) delta ^= castling_rights[WHITE_KINGSIDE];
+    if (i & WHITE_QUEENSIDE) delta ^= castling_rights[WHITE_QUEENSIDE];
+    if (i & BLACK_KINGSIDE) delta ^= castling_rights[BLACK_KINGSIDE];
+    if (i & BLACK_QUEENSIDE) delta ^= castling_rights[BLACK_QUEENSIDE];
 
     castling_rights[i] = delta;
   }
 
   stm = dist(gen);
 }
-} // namespace episteme::hash
+}  // namespace episteme::hash

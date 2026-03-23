@@ -1,8 +1,9 @@
 #pragma once
 
-#include "core.h"
 #include <array>
 #include <string>
+
+#include "core.h"
 
 namespace episteme {
 enum class MoveType : uint16_t { Normal, EnPassant, Castling, Promotion, None };
@@ -10,12 +11,15 @@ enum class MoveType : uint16_t { Normal, EnPassant, Castling, Promotion, None };
 enum class PromoPiece : uint16_t { Knight, Bishop, Rook, Queen, None };
 
 class Move {
-public:
+ public:
   Move();
   Move(uint16_t data);
-  Move(Square from_square, Square to_square,
-       MoveType move_type = MoveType::Normal,
-       PromoPiece promo_piece = PromoPiece::None);
+  Move(
+    Square from_square,
+    Square to_square,
+    MoveType move_type = MoveType::Normal,
+    PromoPiece promo_piece = PromoPiece::None
+  );
 
   [[nodiscard]] inline uint16_t data() const { return move_data; }
 
@@ -57,20 +61,20 @@ public:
 
   [[nodiscard]] inline bool is_empty() const { return (move_data == 0x0000); }
 
-  [[nodiscard]] inline bool operator==(const Move &other) const {
+  [[nodiscard]] inline bool operator==(const Move& other) const {
     return move_data == other.move_data;
   }
 
-  [[nodiscard]] inline bool operator!=(const Move &other) const {
+  [[nodiscard]] inline bool operator!=(const Move& other) const {
     return move_data != other.move_data;
   }
 
   [[nodiscard]] inline bool operator!() const { return move_data == 0x0000; }
 
   std::string to_string() const;
-  std::string to_PGN(const class Position &position) const;
+  std::string to_PGN(const class Position& position) const;
 
-private:
+ private:
   uint16_t move_data;
 };
-} // namespace episteme
+}  // namespace episteme

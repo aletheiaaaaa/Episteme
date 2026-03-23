@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../chess/move.h"
-
 #include <cstdint>
 #include <vector>
+
+#include "../chess/move.h"
 
 namespace episteme::tt {
 enum class NodeType : uint8_t { PVNode, AllNode, CutNode, None };
@@ -18,7 +18,7 @@ struct Entry {
 };
 
 class Table {
-public:
+ public:
   Table(uint32_t size);
 
   inline void resize(uint32_t size) {
@@ -31,17 +31,17 @@ public:
 
   [[nodiscard]] inline uint64_t table_index(uint64_t hash) {
     return static_cast<uint64_t>(
-        (static_cast<unsigned __int128>(hash) *
-         static_cast<unsigned __int128>(ttable.size())) >>
-        64);
+      (static_cast<unsigned __int128>(hash) *
+       static_cast<unsigned __int128>(ttable.size())) >>
+      64
+    );
   }
 
   [[nodiscard]] inline Entry probe(uint64_t hash) {
     uint64_t index = table_index(hash);
     Entry entry;
 
-    if (ttable[index].hash == hash)
-      entry = ttable[index];
+    if (ttable[index].hash == hash) entry = ttable[index];
 
     return entry;
   }
@@ -56,14 +56,13 @@ public:
     size_t sample_size = std::min(size_t(1000), ttable.size());
 
     for (size_t i = 0; i < sample_size; ++i) {
-      if (ttable[i].hash != 0)
-        filled++;
+      if (ttable[i].hash != 0) filled++;
     }
 
     return (filled * 1000) / sample_size;
   }
 
-private:
+ private:
   std::vector<Entry> ttable;
 };
-} // namespace episteme::tt
+}  // namespace episteme::tt

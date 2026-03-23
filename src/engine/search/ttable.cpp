@@ -5,4 +5,4 @@ Table::Table(uint32_t size) {
   const size_t entries = (size * 1024 * 1024) / sizeof(Entry);
   ttable.resize(entries);
 }
-} // namespace episteme::tt
+}  // namespace episteme::tt

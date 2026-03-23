@@ -1,30 +1,34 @@
-#include "common.h"
-
 #include <immintrin.h>
 
+#include "common.h"
+
 namespace episteme::eval::nn {
-#if !(defined(USE_AVX512) && defined(USE_VNNI)) && !defined(USE_AVX2) &&       \
-    defined(USE_SSSE3)
-int32_t NNUE::l1_forward(const Accumulator &accum, Color stm) const {
-  const auto &accum_stm = (!color_idx(stm)) ? (accum.white) : (accum.black);
-  const auto &accum_ntm = (!color_idx(stm)) ? (accum.black) : (accum.white);
+#if !(defined(USE_AVX512) && defined(USE_VNNI)) && !defined(USE_AVX2) && \
+  defined(USE_SSSE3)
+int32_t NNUE::l1_forward(const Accumulator& accum, Color stm) const {
+  const auto& accum_stm = (!color_idx(stm)) ? (accum.white) : (accum.black);
+  const auto& accum_ntm = (!color_idx(stm)) ? (accum.black) : (accum.white);
 
   __m128i temp = _mm_setzero_si128();
 
   for (int i = 0; i < L1_WIDTH; i += 8) {
     __m128i stm_ =
-        _mm_load_si128(reinterpret_cast<const __m128i *>(&accum_stm[i]));
+      _mm_load_si128(reinterpret_cast<const __m128i*>(&accum_stm[i]));
     __m128i ntm_ =
-        _mm_load_si128(reinterpret_cast<const __m128i *>(&accum_ntm[i]));
+      _mm_load_si128(reinterpret_cast<const __m128i*>(&accum_ntm[i]));
     __m128i l1w0 = _mm_load_si128(
-        reinterpret_cast<const __m128i *>(&l1_weights[i + 0 * L1_WIDTH]));
+      reinterpret_cast<const __m128i*>(&l1_weights[i + 0 * L1_WIDTH])
+    );
     __m128i l1w1 = _mm_load_si128(
-        reinterpret_cast<const __m128i *>(&l1_weights[i + 1 * L1_WIDTH]));
+      reinterpret_cast<const __m128i*>(&l1_weights[i + 1 * L1_WIDTH])
+    );
 
-    stm_ = _mm_min_epi16(_mm_max_epi16(stm_, _mm_setzero_si128()),
-                         _mm_set1_epi16(QA));
-    ntm_ = _mm_min_epi16(_mm_max_epi16(ntm_, _mm_setzero_si128()),
-                         _mm_set1_epi16(QA));
+    stm_ = _mm_min_epi16(
+      _mm_max_epi16(stm_, _mm_setzero_si128()), _mm_set1_epi16(QA)
+    );
+    ntm_ = _mm_min_epi16(
+      _mm_max_epi16(ntm_, _mm_setzero_si128()), _mm_set1_epi16(QA)
+    );
 
     __m128i _stm = _mm_mullo_epi16(stm_, l1w0);
     __m128i _ntm = _mm_mullo_epi16(ntm_, l1w1);
@@ -50,4 +54,4 @@ int32_t NNUE::l1_forward(const Accumulator &accum, Color stm) const {
   return out;
 }
 #endif
-} // namespace episteme::eval::nn
+}  // namespace episteme::eval::nn

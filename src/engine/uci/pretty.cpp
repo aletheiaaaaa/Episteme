@@ -10,36 +10,38 @@ namespace episteme::pretty {
 DisplayState state;
 
 const std::vector<std::string> LOGO_GRADIENT = {
-    DIM + std::string("\033[38;5;63m"),
-    "\033[38;5;63m",
-    "\033[38;5;105m",
-    "\033[38;5;111m",
-    "\033[38;5;153m",
-    "\033[38;5;189m",
-    ALMOST_WHITE};
+  DIM + std::string("\033[38;5;63m"),
+  "\033[38;5;63m",
+  "\033[38;5;105m",
+  "\033[38;5;111m",
+  "\033[38;5;153m",
+  "\033[38;5;189m",
+  ALMOST_WHITE
+};
 
 const std::vector<std::string> INFO_GRADIENT = {
-    DIM + std::string("\033[38;5;63m"),
-    "\033[38;5;63m",
-    "\033[38;5;105m",
-    "\033[38;5;111m",
-    "\033[38;5;153m",
-    "\033[38;5;189m",
-    ALMOST_WHITE};
+  DIM + std::string("\033[38;5;63m"),
+  "\033[38;5;63m",
+  "\033[38;5;105m",
+  "\033[38;5;111m",
+  "\033[38;5;153m",
+  "\033[38;5;189m",
+  ALMOST_WHITE
+};
 
 void show_banner() {
   std::cout << CLEAR_SCREEN << HIDE_CURSOR;
 
   std::vector<std::string> possible_paths = {
-      "logo.txt",
-      "../logo.txt",
-      "../../logo.txt",
+    "logo.txt",
+    "../logo.txt",
+    "../../logo.txt",
   };
 
   std::vector<std::string> logo_lines;
   bool logo_loaded = false;
 
-  for (const auto &path : possible_paths) {
+  for (const auto& path : possible_paths) {
     std::ifstream logo_file(path);
     if (logo_file) {
       std::string line;
@@ -52,37 +54,38 @@ void show_banner() {
     }
   }
 
-  std::vector<std::string> info_lines = {"",
-                                         "",
-                                         "",
-                                         "",
-                                         BOLD + std::string("EPISTEME"),
-                                         "Chess Engine",
-                                         "",
-                                         "by aletheia • v1.0",
-                                         "",
-                                         "",
-                                         "Commands:",
-                                         "  position",
-                                         "  go",
-                                         "  eval",
-                                         "  bench",
-                                         "  perft",
-                                         "  uci",
-                                         "  pretty",
-                                         "  quit"};
+  std::vector<std::string> info_lines = {
+    "",
+    "",
+    "",
+    "",
+    BOLD + std::string("EPISTEME"),
+    "Chess Engine",
+    "",
+    "by aletheia • v1.0",
+    "",
+    "",
+    "Commands:",
+    "  position",
+    "  go",
+    "  eval",
+    "  bench",
+    "  perft",
+    "  uci",
+    "  pretty",
+    "  quit"
+  };
 
   size_t max_lines = std::max(logo_lines.size(), info_lines.size());
   for (size_t i = 0; i < max_lines; ++i) {
-
     size_t logo_color_idx =
-        (i * LOGO_GRADIENT.size()) / std::max(logo_lines.size(), size_t(1));
+      (i * LOGO_GRADIENT.size()) / std::max(logo_lines.size(), size_t(1));
     if (logo_color_idx >= LOGO_GRADIENT.size())
       logo_color_idx = LOGO_GRADIENT.size() - 1;
     std::string logo_color = LOGO_GRADIENT[logo_color_idx];
 
     size_t info_color_idx =
-        (i * INFO_GRADIENT.size()) / std::max(info_lines.size(), size_t(1));
+      (i * INFO_GRADIENT.size()) / std::max(info_lines.size(), size_t(1));
     if (info_color_idx >= INFO_GRADIENT.size())
       info_color_idx = INFO_GRADIENT.size() - 1;
     std::string info_color = INFO_GRADIENT[info_color_idx];
@@ -108,23 +111,28 @@ void show_banner() {
 }
 
 std::string get_piece_symbol(Piece piece) {
-  static const std::string symbols[] = {"P", "p", "N", "n", "B", "b",
-                                        "R", "r", "Q", "q", "K", "k"};
+  static const std::string symbols[] = {
+    "P", "p", "N", "n", "B", "b", "R", "r", "Q", "q", "K", "k"
+  };
 
-  if (piece == Piece::None)
-    return " ";
+  if (piece == Piece::None) return " ";
   return symbols[piece_idx(piece)];
 }
 
-std::string render_square_line(const Position &position, int rank, int file,
-                               int line_type, Square highlight_from,
-                               Square highlight_to) {
+std::string render_square_line(
+  const Position& position,
+  int rank,
+  int file,
+  int line_type,
+  Square highlight_from,
+  Square highlight_to
+) {
   std::ostringstream ss;
 
   ss << LIGHT_LAVENDER << "║" << RESET;
 
   int square = rank * 8 + file;
-  const char *bg = nullptr;
+  const char* bg = nullptr;
   if (static_cast<Square>(square) == highlight_from)
     bg = BG_FROM_SQUARE;
   else if (static_cast<Square>(square) == highlight_to)
@@ -139,61 +147,60 @@ std::string render_square_line(const Position &position, int rank, int file,
     Piece piece = position.mailbox(square);
     std::string piece_symbol = get_piece_symbol(piece);
 
-    if (bg)
-      ss << bg;
+    if (bg) ss << bg;
     ss << "   ";
 
     if (piece != Piece::None && episteme::color(piece) == Color::White) {
       ss << BOLD << ALMOST_WHITE << piece_symbol << RESET;
-      if (bg)
-        ss << bg;
+      if (bg) ss << bg;
     } else if (piece != Piece::None && episteme::color(piece) == Color::Black) {
       ss << BOLD << DEEP_INDIGO << piece_symbol << RESET;
-      if (bg)
-        ss << bg;
+      if (bg) ss << bg;
     } else {
       ss << " ";
     }
 
     ss << "   ";
-    if (bg)
-      ss << RESET;
+    if (bg) ss << RESET;
   }
 
   return ss.str();
 }
 
-std::string render_board(const Position &position, Square highlight_from,
-                         Square highlight_to) {
+std::string render_board(
+  const Position& position, Square highlight_from, Square highlight_to
+) {
   std::ostringstream ss;
 
   ss << "     ╔" << LIGHT_LAVENDER;
   for (int i = 0; i < 8; i++) {
     ss << "═══════";
-    if (i < 7)
-      ss << "╦";
+    if (i < 7) ss << "╦";
   }
   ss << "╗\n" << RESET;
 
   for (int rank = 7; rank >= 0; rank--) {
     ss << "     ";
     for (int file = 0; file < 8; file++) {
-      ss << render_square_line(position, rank, file, 0, highlight_from,
-                               highlight_to);
+      ss << render_square_line(
+        position, rank, file, 0, highlight_from, highlight_to
+      );
     }
     ss << LIGHT_LAVENDER << "║\n" << RESET;
 
     ss << "  " << LIGHT_LAVENDER << rank + 1 << "  " << RESET;
     for (int file = 0; file < 8; file++) {
-      ss << render_square_line(position, rank, file, 1, highlight_from,
-                               highlight_to);
+      ss << render_square_line(
+        position, rank, file, 1, highlight_from, highlight_to
+      );
     }
     ss << LIGHT_LAVENDER << "║\n" << RESET;
 
     ss << "     ";
     for (int file = 0; file < 8; file++) {
-      ss << render_square_line(position, rank, file, 2, highlight_from,
-                               highlight_to);
+      ss << render_square_line(
+        position, rank, file, 2, highlight_from, highlight_to
+      );
     }
     ss << LIGHT_LAVENDER << "║\n" << RESET;
 
@@ -201,8 +208,7 @@ std::string render_board(const Position &position, Square highlight_from,
       ss << "     ╠";
       for (int i = 0; i < 8; i++) {
         ss << LIGHT_LAVENDER << "═══════";
-        if (i < 7)
-          ss << "╬";
+        if (i < 7) ss << "╬";
       }
       ss << "╣\n" << RESET;
     }
@@ -211,8 +217,7 @@ std::string render_board(const Position &position, Square highlight_from,
   ss << "     ╚" << LIGHT_LAVENDER;
   for (int i = 0; i < 8; i++) {
     ss << "═══════";
-    if (i < 7)
-      ss << "╩";
+    if (i < 7) ss << "╩";
   }
   ss << "╝\n" << RESET;
 
@@ -245,8 +250,7 @@ std::string format_number(uint64_t num) {
 }
 
 std::string format_time(int64_t ms) {
-  if (ms < 1000)
-    return std::to_string(ms) + "ms";
+  if (ms < 1000) return std::to_string(ms) + "ms";
   if (ms < 60000)
     return std::to_string(ms / 1000) + "." + std::to_string((ms % 1000) / 100) +
            "s";
@@ -271,7 +275,7 @@ std::string format_score(int32_t score) {
   return ss.str();
 }
 
-std::string render_metadata(const Position &position) {
+std::string render_metadata(const Position& position) {
   std::ostringstream ss;
 
   ss << "\n";
@@ -282,18 +286,16 @@ std::string render_metadata(const Position &position) {
 
   AllowedCastles castles = position.all_rights();
   ss << LIGHT_LAVENDER << "    Castling:    " << RESET << MED_INDIGO;
-  if (castles.rooks[color_idx(Color::White)].is_kingside_set())
-    ss << "K";
-  if (castles.rooks[color_idx(Color::White)].is_queenside_set())
-    ss << "Q";
-  if (castles.rooks[color_idx(Color::Black)].is_kingside_set())
-    ss << "k";
-  if (castles.rooks[color_idx(Color::Black)].is_queenside_set())
-    ss << "q";
-  if (!castles.rooks[color_idx(Color::White)].is_kingside_set() &&
-      !castles.rooks[color_idx(Color::White)].is_queenside_set() &&
-      !castles.rooks[color_idx(Color::Black)].is_kingside_set() &&
-      !castles.rooks[color_idx(Color::Black)].is_queenside_set())
+  if (castles.rooks[color_idx(Color::White)].is_kingside_set()) ss << "K";
+  if (castles.rooks[color_idx(Color::White)].is_queenside_set()) ss << "Q";
+  if (castles.rooks[color_idx(Color::Black)].is_kingside_set()) ss << "k";
+  if (castles.rooks[color_idx(Color::Black)].is_queenside_set()) ss << "q";
+  if (
+    !castles.rooks[color_idx(Color::White)].is_kingside_set() &&
+    !castles.rooks[color_idx(Color::White)].is_queenside_set() &&
+    !castles.rooks[color_idx(Color::Black)].is_kingside_set() &&
+    !castles.rooks[color_idx(Color::Black)].is_queenside_set()
+  )
     ss << "-";
   ss << RESET << "\n";
 
@@ -313,7 +315,7 @@ std::string render_metadata(const Position &position) {
   return ss.str();
 }
 
-std::string format_move_sequence(const search::Line &line, size_t max_moves) {
+std::string format_move_sequence(const search::Line& line, size_t max_moves) {
   std::ostringstream ss;
   Position pos = state.current_position;
 
@@ -337,12 +339,11 @@ std::string format_move_sequence(const search::Line &line, size_t max_moves) {
       move_number++;
     }
   }
-  if (line.length > max_moves)
-    ss << "...";
+  if (line.length > max_moves) ss << "...";
   return ss.str();
 }
 
-std::string render_pv(const search::Line &line) {
+std::string render_pv(const search::Line& line) {
   std::ostringstream ss;
   ss << BOLD << LIGHT_LAVENDER << "Best Line: " << RESET << DEEP_INDIGO;
   ss << format_move_sequence(line, 8);
@@ -350,7 +351,7 @@ std::string render_pv(const search::Line &line) {
   return ss.str();
 }
 
-std::string render_stats(const search::Report &report, Move best_move) {
+std::string render_stats(const search::Report& report, Move best_move) {
   std::ostringstream ss;
 
   int64_t time_ms = report.time;
@@ -380,7 +381,7 @@ std::string render_stats(const search::Report &report, Move best_move) {
   ss << "\n";
 
   for (size_t i = 0; i < state.pv_history.size(); ++i) {
-    const auto &entry = state.pv_history[i];
+    const auto& entry = state.pv_history[i];
     ss << DIM << LIGHT_LAVENDER << "    Depth " << (entry.depth < 10 ? " " : "")
        << entry.depth << ":   " << RESET;
     ss << MED_INDIGO << format_score(entry.score) << " " << RESET;
@@ -409,12 +410,14 @@ std::string render_stats(const search::Report &report, Move best_move) {
   return ss.str();
 }
 
-void render_two_column_layout(const std::string &board_content,
-                              const std::string &right_panel_content,
-                              const std::string &header_suffix,
-                              const std::string &header_label,
-                              const std::string &header_value,
-                              bool show_cursor_after) {
+void render_two_column_layout(
+  const std::string& board_content,
+  const std::string& right_panel_content,
+  const std::string& header_suffix,
+  const std::string& header_label,
+  const std::string& header_value,
+  bool show_cursor_after
+) {
   std::cout << CLEAR_SCREEN << HIDE_CURSOR;
 
   std::istringstream board_stream(board_content);
@@ -424,10 +427,8 @@ void render_two_column_layout(const std::string &board_content,
   std::vector<std::string> panel_lines;
 
   std::string line;
-  while (std::getline(board_stream, line))
-    board_lines.push_back(line);
-  while (std::getline(panel_stream, line))
-    panel_lines.push_back(line);
+  while (std::getline(board_stream, line)) board_lines.push_back(line);
+  while (std::getline(panel_stream, line)) panel_lines.push_back(line);
 
   std::cout << "\n" << BOLD << LIGHT_LAVENDER << "  EPISTEME" << RESET;
   if (!header_suffix.empty()) {
@@ -443,7 +444,6 @@ void render_two_column_layout(const std::string &board_content,
   size_t max_lines = std::max(board_lines.size(), panel_lines.size());
 
   for (size_t i = 0; i < max_lines; ++i) {
-
     if (i < board_lines.size()) {
       std::cout << board_lines[i];
     } else {
@@ -464,16 +464,21 @@ void render_two_column_layout(const std::string &board_content,
   }
 }
 
-void show_position(const Position &position, int32_t eval_cp) {
+void show_position(const Position& position, int32_t eval_cp) {
   state.current_position = position;
   std::string board = render_board(position);
   std::string metadata = render_metadata(position);
-  render_two_column_layout(board, metadata, "Position",
-                           "Evaluation: ", format_score(eval_cp), true);
+  render_two_column_layout(
+    board, metadata, "Position", "Evaluation: ", format_score(eval_cp), true
+  );
 }
 
-void show_search_update(const search::Report &report, bool final,
-                        Move best_move, const search::Line &exploring) {
+void show_search_update(
+  const search::Report& report,
+  bool final,
+  Move best_move,
+  const search::Line& exploring
+) {
   if (report.depth < state.last_report.depth) {
     state.pv_history.clear();
   }
@@ -505,8 +510,14 @@ void show_search_update(const search::Report &report, bool final,
   std::string metadata = render_metadata(state.current_position);
   std::string stats = render_stats(report, best_move);
   std::string combined_panel = metadata + stats;
-  render_two_column_layout(board, combined_panel, "Searching...",
-                           "Score: ", format_score(report.score), final);
+  render_two_column_layout(
+    board,
+    combined_panel,
+    "Searching...",
+    "Score: ",
+    format_score(report.score),
+    final
+  );
 
   state.last_report = report;
   state.searching = !final;
@@ -517,4 +528,4 @@ void clear() {
   state.last_report = {};
   state.pv_history.clear();
 }
-} // namespace episteme::pretty
+}  // namespace episteme::pretty

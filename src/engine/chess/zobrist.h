@@ -1,9 +1,9 @@
 #pragma once
 
-#include "core.h"
-
 #include <array>
 #include <cstdint>
+
+#include "core.h"
 
 namespace episteme::hash {
 extern std::array<uint64_t, 768> piecesquares;
@@ -12,4 +12,4 @@ extern std::array<uint64_t, 8> ep_files;
 extern uint64_t stm;
 
 void init();
-} // namespace episteme::hash
+}  // namespace episteme::hash

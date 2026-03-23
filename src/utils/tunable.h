@@ -12,20 +12,24 @@
 #define ENABLE_TUNING 0
 #endif
 
-#define TUNABLE_INT(name, default_value, min_value, max_value, step_value,     \
-                    setter)                                                    \
-  inline Tunable<int> name{#name,     default_value, min_value,                \
-                           max_value, step_value,    setter};
+#define TUNABLE_INT(                                               \
+  name, default_value, min_value, max_value, step_value, setter    \
+)                                                                  \
+  inline Tunable<int> name{                                        \
+    #name, default_value, min_value, max_value, step_value, setter \
+  };
 
 namespace episteme::tunable {
 static std::array<std::array<std::string, 2>, 2> type_names = {
-    {{"string", "spin"}, {"float", "int"}}};
+  {{"string", "spin"}, {"float", "int"}}
+};
 
 extern std::array<std::array<int16_t, 64>, 64> lmr_table_noisy;
 extern std::array<std::array<int16_t, 64>, 64> lmr_table_quiet;
 void init_lmr_table();
 
-template <typename F, bool Enabled = ENABLE_TUNING> struct Tunable {
+template <typename F, bool Enabled = ENABLE_TUNING>
+struct Tunable {
   std::string name;
   F value;
   F min;
@@ -35,8 +39,14 @@ template <typename F, bool Enabled = ENABLE_TUNING> struct Tunable {
 
   static inline std::vector<Tunable<F>*> registry;
 
-  Tunable(std::string name, F default_value, F min_value, F max_value,
-          F step_value, std::function<void()> func)
+  Tunable(
+    std::string name,
+    F default_value,
+    F min_value,
+    F max_value,
+    F step_value,
+    std::function<void()> func
+  )
       : value(default_value) {
     if (default_value < min_value || default_value > max_value) {
       std::cerr << "out of range for tunable " << name << std::endl;
@@ -51,8 +61,7 @@ template <typename F, bool Enabled = ENABLE_TUNING> struct Tunable {
 
       registry.push_back(this);
 
-      if (callable)
-        callable();
+      if (callable) callable();
     }
   }
 
@@ -64,8 +73,7 @@ template <typename F, bool Enabled = ENABLE_TUNING> struct Tunable {
       }
 
       value = new_value;
-      if (callable)
-        callable();
+      if (callable) callable();
     }
   }
 
@@ -136,4 +144,4 @@ TUNABLE_INT(lmr_cut_node_mult, 256, 0, 1024, 16, nullptr)
 TUNABLE_INT(lmr_hist_mult, 128, 0, 1024, 8, nullptr)
 TUNABLE_INT(lmr_corrplexity_mult, 64, 0, 1024, 8, nullptr)
 TUNABLE_INT(lmr_corrplexity_thresh, 250, 0, 1024, 16, nullptr)
-} // namespace episteme::tunable
+}  // namespace episteme::tunable

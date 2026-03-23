@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../chess/move.h"
-
 #include <array>
 #include <chrono>
 #include <cstdint>
+
+#include "../chess/move.h"
 
 namespace episteme::time {
 using namespace std::chrono;
@@ -19,13 +19,13 @@ struct Config {
 };
 
 class Limiter {
-public:
-  inline void set_config(const Config &config) { this->config = config; }
+ public:
+  inline void set_config(const Config& config) { this->config = config; }
 
   inline bool time_exceeded() const {
     return (hard_limit != -1) &&
            duration_cast<milliseconds>(steady_clock::now() - start_time)
-                   .count() >= hard_limit;
+               .count() >= hard_limit;
   }
 
   inline bool nodes_approaching(uint64_t nodes) const {
@@ -43,7 +43,7 @@ public:
   bool time_approaching(Move move, uint64_t nodes);
   void start();
 
-private:
+ private:
   Config config{};
 
   steady_clock::time_point start_time;
@@ -55,4 +55,4 @@ private:
   Move prev_best{};
   int32_t move_stability = 0;
 };
-} // namespace episteme::time
+}  // namespace episteme::time

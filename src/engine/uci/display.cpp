@@ -1,11 +1,12 @@
 #include "display.h"
-#include "pretty.h"
 
 #include <atomic>
 #include <chrono>
 #include <iostream>
 #include <mutex>
 #include <thread>
+
+#include "pretty.h"
 
 namespace episteme::uci {
 using namespace std::chrono;
@@ -23,12 +24,12 @@ steady_clock::time_point search_start;
 search::Report current_report;
 search::Line current_exploring;
 std::mutex exploring_mutex;
-search::Engine *engine_ptr{nullptr};
+search::Engine* engine_ptr{nullptr};
 
 // Forward declarations
 void pretty_update_loop();
 void cleanup_pretty();
-} // namespace
+}  // namespace
 
 void set_pretty(bool enabled) {
   cleanup_pretty();
@@ -44,14 +45,14 @@ void set_pretty(bool enabled) {
 
 bool is_pretty() { return current_mode == DisplayMode::PRETTY; }
 
-void show_position(const Position &position, int32_t eval_cp) {
+void show_position(const Position& position, int32_t eval_cp) {
   if (current_mode == DisplayMode::PRETTY) {
     pretty::show_position(position, eval_cp);
   }
   // UCI mode doesn't show position
 }
 
-void on_start(const Position &position) {
+void on_start(const Position& position) {
   if (current_mode == DisplayMode::PRETTY) {
     searching = true;
     search_start = steady_clock::now();
@@ -59,14 +60,15 @@ void on_start(const Position &position) {
     current_exploring.clear();
 
     if (engine_ptr) {
-      auto *worker = engine_ptr->get_worker(0);
+      auto* worker = engine_ptr->get_worker(0);
       if (worker) {
         worker->set_live_update_callback(
-            [](uint64_t nodes, const search::Line &line) {
-              live_nodes.store(nodes);
-              std::lock_guard<std::mutex> lock(exploring_mutex);
-              current_exploring = line;
-            });
+          [](uint64_t nodes, const search::Line& line) {
+            live_nodes.store(nodes);
+            std::lock_guard<std::mutex> lock(exploring_mutex);
+            current_exploring = line;
+          }
+        );
       }
     }
 
@@ -75,7 +77,7 @@ void on_start(const Position &position) {
   // UCI mode doesn't need start handling
 }
 
-void on_update(const search::Report &report) {
+void on_update(const search::Report& report) {
   if (current_mode == DisplayMode::PRETTY) {
     current_report = report;
     live_nodes = report.nodes;
@@ -86,12 +88,12 @@ void on_update(const search::Report &report) {
 
     bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
     int32_t display_score =
-        is_mate ? (report.score > 0 ? (MATE - report.score + 1) / 2
-                                    : -(MATE + report.score) / 2)
-                : report.score;
+      is_mate ? (report.score > 0 ? (MATE - report.score + 1) / 2
+                                  : -(MATE + report.score) / 2)
+              : report.score;
 
     int32_t nps =
-        report.time > 0 ? (report.nodes * 1000) / report.time : report.nodes;
+      report.time > 0 ? (report.nodes * 1000) / report.time : report.nodes;
 
     std::string pv;
     for (size_t i = 0; i < report.line.length; ++i) {
@@ -106,10 +108,10 @@ void on_update(const search::Report &report) {
   }
 }
 
-void on_completion(const search::Report &report, Move best_move) {
+void on_completion(const search::Report& report, Move best_move) {
   if (current_mode == DisplayMode::PRETTY) {
     if (engine_ptr) {
-      auto *worker = engine_ptr->get_worker(0);
+      auto* worker = engine_ptr->get_worker(0);
       if (worker) {
         worker->clear_live_update_callback();
       }
@@ -132,7 +134,7 @@ void on_completion(const search::Report &report, Move best_move) {
   }
 }
 
-void update_exploring(const search::Line &line) {
+void update_exploring(const search::Line& line) {
   if (current_mode == DisplayMode::PRETTY) {
     std::lock_guard<std::mutex> lock(exploring_mutex);
     current_exploring = line;
@@ -140,7 +142,7 @@ void update_exploring(const search::Line &line) {
   // UCI mode doesn't track exploring
 }
 
-void set_engine(search::Engine *engine) { engine_ptr = engine; }
+void set_engine(search::Engine* engine) { engine_ptr = engine; }
 
 void clear() {
   if (current_mode == DisplayMode::PRETTY) {
@@ -178,11 +180,11 @@ void cleanup_pretty() {
   }
 
   if (engine_ptr) {
-    auto *worker = engine_ptr->get_worker(0);
+    auto* worker = engine_ptr->get_worker(0);
     if (worker) {
       worker->clear_live_update_callback();
     }
   }
 }
-} // namespace
-} // namespace episteme::uci
+}  // namespace
+}  // namespace episteme::uci

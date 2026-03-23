@@ -16,12 +16,12 @@ bool Limiter::time_approaching(Move move, uint64_t nodes) {
   }
 
   float move_scale =
-      std::max(1.15f - (static_cast<float>(move_stability) / 20.0f), 0.85f);
+    std::max(1.15f - (static_cast<float>(move_stability) / 20.0f), 0.85f);
 
   return (soft_limit != -1) &&
          duration_cast<milliseconds>(steady_clock::now() - start_time)
-                 .count() >=
-             static_cast<int32_t>(soft_limit * node_scale * move_scale);
+             .count() >=
+           static_cast<int32_t>(soft_limit * node_scale * move_scale);
 }
 
 void Limiter::start() {
@@ -40,4 +40,4 @@ void Limiter::start() {
     soft_limit = std::max(1, hard_limit * 5 / 8);
   }
 }
-} // namespace episteme::time
+}  // namespace episteme::time

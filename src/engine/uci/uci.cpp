@@ -1,9 +1,10 @@
 #include "uci.h"
-#include "../../utils/tunable.h"
 
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
+
+#include "../../utils/tunable.h"
 
 namespace episteme::uci {
 using namespace tunable;
@@ -22,8 +23,9 @@ auto uci() {
 
 auto pretty_cmd() { set_pretty(true); }
 
-auto setoption(const std::string &args, search::Config &cfg,
-               search::Engine &engine) {
+auto setoption(
+  const std::string& args, search::Config& cfg, search::Engine& engine
+) {
   std::istringstream iss(args);
   std::string name, option_name, value, option_value;
 
@@ -53,7 +55,7 @@ auto setoption(const std::string &args, search::Config &cfg,
 
 auto isready() { std::cout << "readyok" << std::endl; }
 
-auto position(const std::string &args, search::Config &cfg) {
+auto position(const std::string& args, search::Config& cfg) {
   Position position;
   std::istringstream iss(args);
   std::string token;
@@ -66,8 +68,7 @@ auto position(const std::string &args, search::Config &cfg) {
   } else if (token == "fen") {
     std::string fen;
     for (int i = 0; i < 6 && iss >> token; ++i) {
-      if (!fen.empty())
-        fen += " ";
+      if (!fen.empty()) fen += " ";
       fen += token;
     }
     position.from_FEN(fen);
@@ -87,7 +88,7 @@ auto position(const std::string &args, search::Config &cfg) {
   show_position(position, 0);
 }
 
-auto go(const std::string &args, search::Config &cfg, search::Engine &engine) {
+auto go(const std::string& args, search::Config& cfg, search::Engine& engine) {
   std::istringstream iss(args);
   std::string token;
 
@@ -120,7 +121,7 @@ auto go(const std::string &args, search::Config &cfg, search::Engine &engine) {
   engine.run(cfg.position);
 }
 
-auto ucinewgame(search::Config &cfg, search::Engine &engine) {
+auto ucinewgame(search::Config& cfg, search::Engine& engine) {
   cfg.params = {};
   cfg.position = {};
   engine.reset_game();
@@ -131,27 +132,26 @@ auto ucinewgame(search::Config &cfg, search::Engine &engine) {
   show_position(empty_position, 0);
 }
 
-auto eval(search::Config &cfg, search::Engine &engine) {
+auto eval(search::Config& cfg, search::Engine& engine) {
   engine.eval(cfg.position);
 }
 
-auto bench(const std::string &args, search::Config &cfg) {
+auto bench(const std::string& args, search::Config& cfg) {
   int depth = (args.empty()) ? 10 : std::stoi(args);
-  if (!cfg.hash_size)
-    cfg.hash_size = 32;
+  if (!cfg.hash_size) cfg.hash_size = 32;
 
   search::Engine engine(cfg);
   engine.bench(depth);
 }
 
-auto perft(const std::string &args, search::Config &cfg) {
+auto perft(const std::string& args, search::Config& cfg) {
   int depth = (args.empty()) ? 6 : std::stoi(args);
-  Position &position = cfg.position;
+  Position& position = cfg.position;
 
   time_perft(position, depth);
 }
 
-auto datagen(const std::string &args) {
+auto datagen(const std::string& args) {
   std::istringstream iss(args);
   std::string token;
 
@@ -184,11 +184,11 @@ auto print_tunables() {
   }
 }
 
-auto fen(search::Config &cfg) {
+auto fen(search::Config& cfg) {
   std::cout << cfg.position.to_FEN() << std::endl;
 }
 
-int parse(const std::string &cmd, search::Config &cfg, search::Engine &engine) {
+int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine) {
   std::string keyword = cmd.substr(0, cmd.find(' '));
 
   if (keyword == "uci")
@@ -236,4 +236,4 @@ int parse(const std::string &cmd, search::Config &cfg, search::Engine &engine) {
 
   return 0;
 }
-} // namespace episteme::uci
+}  // namespace episteme::uci

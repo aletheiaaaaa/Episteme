@@ -1,12 +1,12 @@
 #pragma once
 
-#include "move.h"
-#include "zobrist.h"
-
 #include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
+
+#include "move.h"
+#include "zobrist.h"
 
 namespace episteme {
 static constexpr std::array<Piece, 64> empty_mailbox() {
@@ -29,9 +29,10 @@ struct PositionState {
   std::array<uint64_t, 8> bitboards{};
   std::array<Piece, 64> mailbox = empty_mailbox();
 
-  AllowedCastles allowed_castles{
-      .rooks{{{.kingside = Square::None, .queenside = Square::None},
-              {.kingside = Square::None, .queenside = Square::None}}}};
+  AllowedCastles allowed_castles{.rooks{
+    {{.kingside = Square::None, .queenside = Square::None},
+     {.kingside = Square::None, .queenside = Square::None}}
+  }};
 
   bool stm = color_idx(Color::White);
   uint8_t half_move_clock = 0;
@@ -42,18 +43,23 @@ struct PositionState {
 };
 
 class Position {
-public:
+ public:
   Position();
 
   [[nodiscard]] inline uint64_t total_bb() const {
-    return (current.bitboards[color_idx(Color::White) + COLOR_OFFSET] |
-            current.bitboards[color_idx(Color::Black) + COLOR_OFFSET]);
+    return (
+      current.bitboards[color_idx(Color::White) + COLOR_OFFSET] |
+      current.bitboards[color_idx(Color::Black) + COLOR_OFFSET]
+    );
   }
 
-  [[nodiscard]] inline uint64_t piece_bb(PieceType piece_type,
-                                         Color color) const {
-    return (current.bitboards[piece_type_idx(piece_type)] &
-            current.bitboards[color_idx(color) + COLOR_OFFSET]);
+  [[nodiscard]] inline uint64_t piece_bb(
+    PieceType piece_type, Color color
+  ) const {
+    return (
+      current.bitboards[piece_type_idx(piece_type)] &
+      current.bitboards[color_idx(color) + COLOR_OFFSET]
+    );
   }
 
   [[nodiscard]] inline uint64_t piece_type_bb(PieceType piece_type) const {
@@ -94,8 +100,9 @@ public:
     return current.allowed_castles;
   }
 
-  [[nodiscard]] inline AllowedCastles::RookPair
-  castling_rights(Color stm) const {
+  [[nodiscard]] inline AllowedCastles::RookPair castling_rights(
+    Color stm
+  ) const {
     return current.allowed_castles.rooks[color_idx(stm)];
   }
 
@@ -137,10 +144,10 @@ public:
                           : current.hashes.non_pawn_white_hash;
   }
 
-  void from_FEN(const std::string &FEN);
+  void from_FEN(const std::string& FEN);
   void from_startpos();
 
-  void make_move(const Move &move);
+  void make_move(const Move& move);
   void make_null();
   void unmake_move();
 
@@ -151,13 +158,13 @@ public:
 
   Hashes explicit_hashes();
 
-public:
+ public:
   static const uint16_t COLOR_OFFSET = 6;
 
-private:
+ private:
   std::vector<PositionState> history;
   PositionState current;
 };
 
-Move from_UCI(const Position &position, const std::string &move);
-} // namespace episteme
+Move from_UCI(const Position& position, const std::string& move);
+}  // namespace episteme
