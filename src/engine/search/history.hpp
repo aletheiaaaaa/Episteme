@@ -4,9 +4,9 @@
 #include <array>
 #include <cstdint>
 
-#include "../../utils/tunable.h"
-#include "../chess/move.h"
-#include "stack.h"
+#include "../../utils/tunable.hpp"
+#include "../chess/move.hpp"
+#include "stack.hpp"
 
 namespace episteme::hist {
 using namespace tunable;
@@ -15,25 +15,19 @@ constexpr int MAX_HIST = 16384;
 constexpr int MAX_CORR_HIST = 1024;
 
 [[nodiscard]] inline int16_t bonus(int16_t depth) {
-  return static_cast<int16_t>(
-    std::clamp(depth * hist_bonus_mult.value, 0, hist_bonus_max.value)
-  );
+  return static_cast<int16_t>(std::clamp(depth * hist_bonus_mult.value, 0, hist_bonus_max.value));
 }
 
 struct Entry {
   int32_t value = 0;
 
-  inline void update(int16_t bonus, int32_t max) {
-    value += bonus - value * std::abs(bonus) / max;
-  }
+  inline void update(int16_t bonus, int32_t max) { value += bonus - value * std::abs(bonus) / max; }
 };
 
 class Table {
- public:
+  public:
   [[nodiscard]] inline int32_t get_quiet_hist(Color stm, Move move) {
-    return quiet_hist[color_idx(stm)][sq_idx(move.from_square())]
-                     [sq_idx(move.to_square())]
-                       .value;
+    return quiet_hist[color_idx(stm)][sq_idx(move.from_square())][sq_idx(move.to_square())].value;
   }
 
   [[nodiscard]] inline int32_t get_cont_hist(
@@ -48,10 +42,9 @@ class Table {
         Piece prev_piece = stack[ply - diff].piece;
 
         if (prev_piece != Piece::None)
-          ply_value +=
-            cont_hist[piece_idx(piece)][sq_idx(move.to_square())]
-                     [piece_idx(prev_piece)][sq_idx(prev_move.to_square())]
-                       .value;
+          ply_value += cont_hist[piece_idx(piece)][sq_idx(move.to_square())][piece_idx(prev_piece)]
+                                [sq_idx(prev_move.to_square())]
+                                  .value;
       }
       return ply_value;
     };
@@ -87,20 +80,13 @@ class Table {
     return value;
   }
 
-  [[nodiscard]] inline int32_t get_capt_hist(
-    Piece attacker, Move move, Piece victim
-  ) {
-    return capt_hist[piece_idx(attacker)][sq_idx(move.to_square())]
-                    [piece_type_idx(victim)]
-                      .value;
+  [[nodiscard]] inline int32_t get_capt_hist(Piece attacker, Move move, Piece victim) {
+    return capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].value;
   }
 
-  [[nodiscard]] inline int32_t get_qs_capt_hist(
-    Piece attacker, Move move, Piece victim
-  ) {
-    return qs_capt_hist[piece_idx(attacker)][sq_idx(move.to_square())]
-                       [piece_type_idx(victim)]
-                         .value;
+  [[nodiscard]] inline int32_t get_qs_capt_hist(Piece attacker, Move move, Piece victim) {
+    return qs_capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)]
+      .value;
   }
 
   [[nodiscard]] inline int32_t get_pawn_hist(
@@ -111,41 +97,27 @@ class Table {
                       .value;
   }
 
-  [[nodiscard]] inline int32_t get_pawn_corr_hist(
-    uint64_t pawn_hash, Color stm
-  ) {
+  [[nodiscard]] inline int32_t get_pawn_corr_hist(uint64_t pawn_hash, Color stm) {
     return pawn_corr_hist[color_idx(stm)][pawn_hash % 16384].value;
   }
 
-  [[nodiscard]] inline int32_t get_major_corr_hist(
-    uint64_t major_hash, Color stm
-  ) {
+  [[nodiscard]] inline int32_t get_major_corr_hist(uint64_t major_hash, Color stm) {
     return major_corr_hist[color_idx(stm)][major_hash % 16384].value;
   }
 
-  [[nodiscard]] inline int32_t get_minor_corr_hist(
-    uint64_t minor_hash, Color stm
-  ) {
+  [[nodiscard]] inline int32_t get_minor_corr_hist(uint64_t minor_hash, Color stm) {
     return minor_corr_hist[color_idx(stm)][minor_hash % 16384].value;
   }
 
-  [[nodiscard]] inline int32_t get_non_pawn_stm_corr_hist(
-    uint64_t non_pawn_stm_hash, Color stm
-  ) {
-    return non_pawn_stm_corr_hist[color_idx(stm)][non_pawn_stm_hash % 16384]
-      .value;
+  [[nodiscard]] inline int32_t get_non_pawn_stm_corr_hist(uint64_t non_pawn_stm_hash, Color stm) {
+    return non_pawn_stm_corr_hist[color_idx(stm)][non_pawn_stm_hash % 16384].value;
   }
 
-  [[nodiscard]] inline int32_t get_non_pawn_ntm_corr_hist(
-    uint64_t non_pawn_ntm_hash, Color stm
-  ) {
-    return non_pawn_ntm_corr_hist[color_idx(stm)][non_pawn_ntm_hash % 16384]
-      .value;
+  [[nodiscard]] inline int32_t get_non_pawn_ntm_corr_hist(uint64_t non_pawn_ntm_hash, Color stm) {
+    return non_pawn_ntm_corr_hist[color_idx(stm)][non_pawn_ntm_hash % 16384].value;
   }
 
-  [[nodiscard]] inline int32_t get_cont_corr_hist(
-    stack::Stack& stack, int16_t ply
-  ) {
+  [[nodiscard]] inline int32_t get_cont_corr_hist(stack::Stack& stack, int16_t ply) {
     int32_t value = 0;
 
     auto get_hist = [&](int16_t diff) {
@@ -158,10 +130,9 @@ class Table {
         Piece second_piece = stack[ply - diff - 1].piece;
 
         if (first_piece != Piece::None && second_piece != Piece::None) {
-          ply_value += cont_corr_hist[piece_idx(first_piece)][sq_idx(
-            first_move.to_square()
-          )][piece_idx(second_piece)][sq_idx(second_move.to_square())]
-                         .value;
+          ply_value += cont_corr_hist[piece_idx(first_piece)][sq_idx(first_move.to_square())]
+                                     [piece_idx(second_piece)][sq_idx(second_move.to_square())]
+                                       .value;
         }
       }
       return ply_value;
@@ -173,9 +144,9 @@ class Table {
   }
 
   inline void update_quiet_hist(Color stm, Move move, int16_t bonus) {
-    quiet_hist[color_idx(stm)][sq_idx(move.from_square())]
-              [sq_idx(move.to_square())]
-                .update(bonus, MAX_HIST);
+    quiet_hist[color_idx(stm)][sq_idx(move.from_square())][sq_idx(move.to_square())].update(
+      bonus, MAX_HIST
+    );
   }
 
   inline void update_cont_hist(
@@ -187,8 +158,8 @@ class Table {
         Piece prev_piece = stack[ply - diff].piece;
 
         if (prev_piece != Piece::None)
-          cont_hist[piece_idx(piece)][sq_idx(move.to_square())]
-                   [piece_idx(prev_piece)][sq_idx(prev_move.to_square())]
+          cont_hist[piece_idx(piece)][sq_idx(move.to_square())][piece_idx(prev_piece)]
+                   [sq_idx(prev_move.to_square())]
                      .update(bonus, MAX_HIST);
       }
     };
@@ -197,36 +168,27 @@ class Table {
     update_hist(2);
   }
 
-  inline void update_capt_hist(
-    Piece attacker, Move move, Piece victim, int16_t bonus
-  ) {
-    capt_hist[piece_idx(attacker)][sq_idx(move.to_square())]
-             [piece_type_idx(victim)]
-               .update(bonus, MAX_HIST);
+  inline void update_capt_hist(Piece attacker, Move move, Piece victim, int16_t bonus) {
+    capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].update(
+      bonus, MAX_HIST
+    );
   }
 
-  inline void update_qs_capt_hist(
-    Piece attacker, Move move, Piece victim, int16_t bonus
-  ) {
-    qs_capt_hist[piece_idx(attacker)][sq_idx(move.to_square())]
-                [piece_type_idx(victim)]
-                  .update(bonus, MAX_HIST);
+  inline void update_qs_capt_hist(Piece attacker, Move move, Piece victim, int16_t bonus) {
+    qs_capt_hist[piece_idx(attacker)][sq_idx(move.to_square())][piece_type_idx(victim)].update(
+      bonus, MAX_HIST
+    );
   }
 
   inline void update_pawn_hist(
     Color stm, uint64_t pawn_hash, Piece piece, Move move, int16_t bonus
   ) {
-    pawn_hist[color_idx(stm)][pawn_hash % 1024][piece_type_idx(piece)]
-             [sq_idx(move.to_square())]
-               .update(bonus, MAX_HIST);
+    pawn_hist[color_idx(stm)][pawn_hash % 1024][piece_type_idx(piece)][sq_idx(move.to_square())]
+      .update(bonus, MAX_HIST);
   }
 
   inline void update_corr_hist(
-    const Position& position,
-    stack::Stack& stack,
-    Color stm,
-    int16_t ply,
-    int16_t correction
+    const Position& position, stack::Stack& stack, Color stm, int16_t ply, int16_t correction
   ) {
     auto update_cont_corr_hist = [&](int16_t diff) {
       if (ply > diff) {
@@ -238,25 +200,24 @@ class Table {
 
         if (first_piece != Piece::None && second_piece != Piece::None) {
           cont_corr_hist[piece_idx(first_piece)][sq_idx(first_move.to_square())]
-                        [piece_idx(second_piece)]
-                        [sq_idx(second_move.to_square())]
+                        [piece_idx(second_piece)][sq_idx(second_move.to_square())]
                           .update(correction, MAX_CORR_HIST);
         }
       }
     };
 
-    pawn_corr_hist[color_idx(stm)][position.pawn_hash() % 16384].update(
-      correction, MAX_CORR_HIST
-    );
+    pawn_corr_hist[color_idx(stm)][position.pawn_hash() % 16384].update(correction, MAX_CORR_HIST);
     // major_corr_hist[color_idx(stm)][position.major_hash() %
     // 16384].update(diff, MAX_CORR_HIST);
     minor_corr_hist[color_idx(stm)][position.minor_hash() % 16384].update(
       correction, MAX_CORR_HIST
     );
-    non_pawn_stm_corr_hist[color_idx(stm)][position.non_pawn_stm_hash() % 16384]
-      .update(correction, MAX_CORR_HIST);
-    non_pawn_ntm_corr_hist[color_idx(stm)][position.non_pawn_ntm_hash() % 16384]
-      .update(correction, MAX_CORR_HIST);
+    non_pawn_stm_corr_hist[color_idx(stm)][position.non_pawn_stm_hash() % 16384].update(
+      correction, MAX_CORR_HIST
+    );
+    non_pawn_ntm_corr_hist[color_idx(stm)][position.non_pawn_ntm_hash() % 16384].update(
+      correction, MAX_CORR_HIST
+    );
 
     update_cont_corr_hist(1);
   }
@@ -277,21 +238,18 @@ class Table {
     qs_capt_hist = {};
   }
 
- private:
+  private:
   std::array<std::array<std::array<Entry, 64>, 64>, 2> quiet_hist{};
-  std::array<std::array<std::array<std::array<Entry, 64>, 12>, 64>, 12>
-    cont_hist{};
+  std::array<std::array<std::array<std::array<Entry, 64>, 12>, 64>, 12> cont_hist{};
   std::array<std::array<std::array<Entry, 6>, 64>, 12> capt_hist{};
-  std::array<std::array<std::array<std::array<Entry, 64>, 6>, 1024>, 2>
-    pawn_hist{};
+  std::array<std::array<std::array<std::array<Entry, 64>, 6>, 1024>, 2> pawn_hist{};
 
   std::array<std::array<Entry, 16384>, 2> pawn_corr_hist{};
   std::array<std::array<Entry, 16384>, 2> major_corr_hist{};
   std::array<std::array<Entry, 16384>, 2> minor_corr_hist{};
   std::array<std::array<Entry, 16384>, 2> non_pawn_stm_corr_hist{};
   std::array<std::array<Entry, 16384>, 2> non_pawn_ntm_corr_hist{};
-  std::array<std::array<std::array<std::array<Entry, 64>, 12>, 64>, 12>
-    cont_corr_hist{};
+  std::array<std::array<std::array<std::array<Entry, 64>, 12>, 64>, 12> cont_corr_hist{};
 
   std::array<std::array<std::array<Entry, 6>, 64>, 12> qs_capt_hist{};
 };

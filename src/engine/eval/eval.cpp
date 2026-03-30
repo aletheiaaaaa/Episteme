@@ -1,4 +1,4 @@
-#include "eval.h"
+#include "eval.hpp"
 
 #include <memory>
 
@@ -13,9 +13,7 @@ std::unique_ptr<const NNUE, decltype(nnue_deleter)> nnue(
   reinterpret_cast<const NNUE*>(gNNUEData), nnue_deleter
 );
 
-Accumulator update(
-  const Position& position, const Move& move, Accumulator accum
-) {
+Accumulator update(const Position& position, const Move& move, Accumulator accum) {
   accum = nnue->update_accumulator(position, move, accum);
   return accum;
 }
@@ -39,8 +37,7 @@ bool SEE(const Position& position, const Move& move, int32_t threshold) {
 
   if (move.move_type() == MoveType::EnPassant) return (threshold <= 0);
 
-  int32_t score =
-    piece_vals[piece_type_idx(position.mailbox(to_sq))] - threshold;
+  int32_t score = piece_vals[piece_type_idx(position.mailbox(to_sq))] - threshold;
   if (score < 0) return false;
 
   score = piece_vals[piece_type_idx(position.mailbox(from_sq))] - score;
@@ -57,22 +54,17 @@ bool SEE(const Position& position, const Move& move, int32_t threshold) {
   occupied_bb &= ~(from_bb | to_bb);
 
   uint64_t pawn_threats =
-    ((get_pawn_sq_attacks(to_sq, Color::White) &
-      position.piece_bb(PieceType::Pawn, Color::Black)) |
-     (get_pawn_sq_attacks(to_sq, Color::Black) &
-      position.piece_bb(PieceType::Pawn, Color::White)));
+    ((get_pawn_sq_attacks(to_sq, Color::White) & position.piece_bb(PieceType::Pawn, Color::Black)) |
+     (get_pawn_sq_attacks(to_sq, Color::Black) & position.piece_bb(PieceType::Pawn, Color::White)));
 
   uint64_t knight_threats = get_knight_attacks(to_sq) & knight_bb;
-  uint64_t bishop_threats =
-    get_bishop_attacks_direct(to_sq, occupied_bb) & bishop_bb;
+  uint64_t bishop_threats = get_bishop_attacks_direct(to_sq, occupied_bb) & bishop_bb;
   uint64_t rook_threats = get_rook_attacks_direct(to_sq, occupied_bb) & rook_bb;
-  uint64_t queen_threats =
-    get_queen_attacks_direct(to_sq, occupied_bb) & queen_bb;
+  uint64_t queen_threats = get_queen_attacks_direct(to_sq, occupied_bb) & queen_bb;
   uint64_t king_threats = get_king_attacks(to_sq) & king_bb;
 
   uint64_t all_threats =
-    (pawn_threats | knight_threats | bishop_threats | rook_threats |
-     queen_threats | king_threats);
+    (pawn_threats | knight_threats | bishop_threats | rook_threats | queen_threats | king_threats);
 
   all_threats &= occupied_bb;
 
@@ -94,32 +86,26 @@ bool SEE(const Position& position, const Move& move, int32_t threshold) {
     if ((next_threat = our_threats & pawn_bb)) {
       threat_val = SEE_pawn_val;
       occupied_bb &= ~((uint64_t)1 << std::countr_zero(next_threat));
-      all_threats |=
-        get_bishop_attacks_direct(to_sq, occupied_bb) & (bishop_bb | queen_bb);
+      all_threats |= get_bishop_attacks_direct(to_sq, occupied_bb) & (bishop_bb | queen_bb);
     } else if ((next_threat = our_threats & knight_bb)) {
       threat_val = SEE_knight_val;
       occupied_bb &= ~((uint64_t)1 << std::countr_zero(next_threat));
     } else if ((next_threat = our_threats & bishop_bb)) {
       threat_val = SEE_bishop_val;
       occupied_bb &= ~((uint64_t)1 << std::countr_zero(next_threat));
-      all_threats |=
-        get_bishop_attacks_direct(to_sq, occupied_bb) & (bishop_bb | queen_bb);
+      all_threats |= get_bishop_attacks_direct(to_sq, occupied_bb) & (bishop_bb | queen_bb);
     } else if ((next_threat = our_threats & rook_bb)) {
       threat_val = SEE_rook_val;
       occupied_bb &= ~((uint64_t)1 << std::countr_zero(next_threat));
-      all_threats |=
-        get_rook_attacks_direct(to_sq, occupied_bb) & (rook_bb | queen_bb);
+      all_threats |= get_rook_attacks_direct(to_sq, occupied_bb) & (rook_bb | queen_bb);
     } else if ((next_threat = our_threats & queen_bb)) {
       threat_val = SEE_queen_val;
       occupied_bb &= ~((uint64_t)1 << std::countr_zero(next_threat));
-      all_threats |=
-        (get_bishop_attacks_direct(to_sq, occupied_bb) &
-         (bishop_bb | queen_bb)) |
-        (get_rook_attacks_direct(to_sq, occupied_bb) & (rook_bb | queen_bb));
+      all_threats |= (get_bishop_attacks_direct(to_sq, occupied_bb) & (bishop_bb | queen_bb)) |
+                     (get_rook_attacks_direct(to_sq, occupied_bb) & (rook_bb | queen_bb));
     } else {
-      return (all_threats & position.color_bb(flip(stm)))
-               ? position.STM() != win
-               : position.STM() == win;
+      return (all_threats & position.color_bb(flip(stm))) ? position.STM() != win
+                                                          : position.STM() == win;
     }
 
     score = threat_val - score + 1;

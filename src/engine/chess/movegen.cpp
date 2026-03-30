@@ -1,4 +1,4 @@
-#include "movegen.h"
+#include "movegen.hpp"
 
 #include <iostream>
 
@@ -8,10 +8,10 @@ std::array<uint64_t, 64> fill_king_attacks() {
   king_attacks.fill(0);
   for (int i = 0; i < 64; i++) {
     uint64_t square = (uint64_t)1 << i;
-    uint64_t pattern = shift_north(square) | shift_north(shift_east(square)) |
-                       shift_east(square) | shift_south(shift_east(square)) |
-                       shift_south(square) | shift_south(shift_west(square)) |
-                       shift_west(square) | shift_north(shift_west(square));
+    uint64_t pattern = shift_north(square) | shift_north(shift_east(square)) | shift_east(square) |
+                       shift_south(shift_east(square)) | shift_south(square) |
+                       shift_south(shift_west(square)) | shift_west(square) |
+                       shift_north(shift_west(square));
     king_attacks[i] = pattern;
   }
   return king_attacks;
@@ -22,14 +22,11 @@ std::array<uint64_t, 64> fill_knight_attacks() {
   knight_attacks.fill(0);
   for (int i = 0; i < 64; i++) {
     uint64_t square = (uint64_t)1 << i;
-    uint64_t pattern = shift_west(shift_north(shift_north(square))) |
-                       shift_east(shift_north(shift_north(square))) |
-                       shift_north(shift_east(shift_east(square))) |
-                       shift_south(shift_east(shift_east(square))) |
-                       shift_east(shift_south(shift_south(square))) |
-                       shift_west(shift_south(shift_south(square))) |
-                       shift_south(shift_west(shift_west(square))) |
-                       shift_north(shift_west(shift_west(square)));
+    uint64_t pattern =
+      shift_west(shift_north(shift_north(square))) | shift_east(shift_north(shift_north(square))) |
+      shift_north(shift_east(shift_east(square))) | shift_south(shift_east(shift_east(square))) |
+      shift_east(shift_south(shift_south(square))) | shift_west(shift_south(shift_south(square))) |
+      shift_south(shift_west(shift_west(square))) | shift_north(shift_west(shift_west(square)));
     knight_attacks[i] = pattern;
   }
   return knight_attacks;
@@ -43,8 +40,7 @@ std::array<uint64_t, 64> fill_rook_masks() {
   rook_masks.fill(0);
   for (int i = 0; i < 64; i++) {
     uint64_t square = 0;
-    square |=
-      ((uint64_t)0x7E << 8 * (i / 8)) | ((uint64_t)0x1010101010100 << (i % 8));
+    square |= ((uint64_t)0x7E << 8 * (i / 8)) | ((uint64_t)0x1010101010100 << (i % 8));
     square &= ~((uint64_t)1 << i);
     rook_masks[i] = square;
   }
@@ -60,10 +56,9 @@ std::array<uint64_t, 64> fill_bishop_masks() {
     uint64_t square = 0;
     int shift = (i / 8) - (i % 8);
     int anti_shift = (i % 8) - (7 - (i / 8));
-    diagonal =
-      (shift > 0) ? (diagonal << (shift * 8)) : (diagonal >> -(shift * 8));
-    anti_diagonal = (anti_shift > 0) ? (anti_diagonal << (anti_shift * 8))
-                                     : (anti_diagonal >> -(anti_shift * 8));
+    diagonal = (shift > 0) ? (diagonal << (shift * 8)) : (diagonal >> -(shift * 8));
+    anti_diagonal =
+      (anti_shift > 0) ? (anti_diagonal << (anti_shift * 8)) : (anti_diagonal >> -(anti_shift * 8));
     square |= (diagonal | anti_diagonal);
     square &= ~((uint64_t)1 << i);
     bishop_masks[i] = square & ~(0xFF818181818181FF);
@@ -100,14 +95,13 @@ uint64_t slow_bishop_attacks(Square square, uint64_t blockers) {
   size_t sq = sq_idx(square);
   uint64_t sq_bb = (uint64_t)1 << sq;
 
-  auto generate_ray =
-    [sq_bb, &bishop_attacks, &blockers](auto shift_dir1, auto shift_dir2) {
-      uint64_t attack_bb = sq_bb;
-      do {
-        attack_bb = shift_dir2(shift_dir1(attack_bb));
-        bishop_attacks |= attack_bb;
-      } while (attack_bb && !(attack_bb & blockers));
-    };
+  auto generate_ray = [sq_bb, &bishop_attacks, &blockers](auto shift_dir1, auto shift_dir2) {
+    uint64_t attack_bb = sq_bb;
+    do {
+      attack_bb = shift_dir2(shift_dir1(attack_bb));
+      bishop_attacks |= attack_bb;
+    } while (attack_bb && !(attack_bb & blockers));
+  };
 
   generate_ray(shift_north, shift_east);
   generate_ray(shift_south, shift_east);
@@ -196,9 +190,7 @@ void print_magics() {
 
 template <size_t NUM_BITS, typename F>
 std::array<std::array<uint64_t, (1 << NUM_BITS)>, 64> fill_attacks(
-  const std::array<uint64_t, 64>& MAGICS,
-  const std::array<uint64_t, 64>& MASKS,
-  F slow_attacks
+  const std::array<uint64_t, 64>& MAGICS, const std::array<uint64_t, 64>& MASKS, F slow_attacks
 ) {
   constexpr size_t ARR_SIZE = 1 << NUM_BITS;
   std::array<std::array<uint64_t, ARR_SIZE>, 64> attack_tables{};
@@ -226,14 +218,10 @@ std::array<std::array<uint64_t, 512>, 64> fill_bishop_attacks() {
   return fill_attacks<9>(BISHOP_MAGICS, BISHOP_MASKS, slow_bishop_attacks);
 }
 
-const std::array<std::array<uint64_t, 4096>, 64> ROOK_ATTACKS =
-  fill_rook_attacks();
-const std::array<std::array<uint64_t, 512>, 64> BISHOP_ATTACKS =
-  fill_bishop_attacks();
+const std::array<std::array<uint64_t, 4096>, 64> ROOK_ATTACKS = fill_rook_attacks();
+const std::array<std::array<uint64_t, 512>, 64> BISHOP_ATTACKS = fill_bishop_attacks();
 
-PawnAttacks get_pawn_attacks_helper(
-  const Position& position, Color stm, bool is_pseudo
-) {
+PawnAttacks get_pawn_attacks_helper(const Position& position, Color stm, bool is_pseudo) {
   uint64_t us_bb = position.color_bb(stm);
   uint64_t them_bb = position.color_bb(flip(stm));
   uint64_t pawn_bb = position.piece_type_bb(PieceType::Pawn) & us_bb;
@@ -266,13 +254,10 @@ bool is_square_attacked(Square square, const Position& position, Color nstm) {
   uint64_t knight_attacks = get_knight_attacks(square) & knights & them_bb;
 
   uint64_t queens = position.piece_type_bb(PieceType::Queen);
-  uint64_t bishops_and_queens =
-    position.piece_type_bb(PieceType::Bishop) | queens;
-  uint64_t bishop_attacks =
-    get_bishop_attacks(square, position) & bishops_and_queens & them_bb;
+  uint64_t bishops_and_queens = position.piece_type_bb(PieceType::Bishop) | queens;
+  uint64_t bishop_attacks = get_bishop_attacks(square, position) & bishops_and_queens & them_bb;
   uint64_t rooks_and_queens = position.piece_type_bb(PieceType::Rook) | queens;
-  uint64_t rook_attacks =
-    get_rook_attacks(square, position) & rooks_and_queens & them_bb;
+  uint64_t rook_attacks = get_rook_attacks(square, position) & rooks_and_queens & them_bb;
 
   uint64_t kings = position.piece_type_bb(PieceType::King);
   uint64_t king_attacks = get_king_attacks(square) & kings & them_bb;
@@ -282,10 +267,7 @@ bool is_square_attacked(Square square, const Position& position, Color nstm) {
   }
 
   PawnAttacks pawn_attacks = get_pawn_pseudo_attacks(position, nstm);
-  if (
-    ((pawn_attacks.left_captures | pawn_attacks.right_captures) & square_bb) !=
-    0
-  ) {
+  if (((pawn_attacks.left_captures | pawn_attacks.right_captures) & square_bb) != 0) {
     return true;
   }
 
@@ -294,10 +276,7 @@ bool is_square_attacked(Square square, const Position& position, Color nstm) {
 
 template <PieceType PT, typename F>
 void generate_piece_targets(
-  MoveList& move_list,
-  const Position& position,
-  F get_attacks,
-  bool include_quiets
+  MoveList& move_list, const Position& position, F get_attacks, bool include_quiets
 ) {
   uint64_t us_bb = position.color_bb(position.STM());
   uint64_t them_bb = position.color_bb(position.NTM());
@@ -307,16 +286,14 @@ void generate_piece_targets(
     Square from_sq = sq_from_idx(std::countr_zero(piece_bb));
 
     uint64_t attacks_bb;
-    if constexpr (
-      std::is_invocable_r<uint64_t, F, Square, const Position&>::value
-    ) {
+    if constexpr (std::is_invocable_r<uint64_t, F, Square, const Position&>::value) {
       attacks_bb = get_attacks(from_sq, position);
     } else {
       attacks_bb = get_attacks(from_sq);
     }
 
-    uint64_t targets_bb = (include_quiets) ? (attacks_bb & ~us_bb)
-                                           : (attacks_bb & ~us_bb & them_bb);
+    uint64_t targets_bb =
+      (include_quiets) ? (attacks_bb & ~us_bb) : (attacks_bb & ~us_bb & them_bb);
 
     while (targets_bb != 0) {
       Square to_sq = sq_from_idx(std::countr_zero(targets_bb));
@@ -328,9 +305,7 @@ void generate_piece_targets(
   }
 }
 
-void generate_pawn_targets(
-  MoveList& move_list, const Position& position, bool include_quiets
-) {
+void generate_pawn_targets(MoveList& move_list, const Position& position, bool include_quiets) {
   Color stm = position.STM();
   PawnAttacks attacks = get_pawn_attacks(position, stm);
   uint64_t promo_rank = (stm == Color::White) ? (RANK_8) : (RANK_1);
@@ -350,10 +325,7 @@ void generate_pawn_targets(
   auto add_move = [promo_rank, &move_list](Square from_sq, Square to_sq) {
     if ((((uint64_t)1 << sq_idx(to_sq)) & promo_rank) != 0) {
       for (auto promo_piece :
-           {PromoPiece::Knight,
-            PromoPiece::Bishop,
-            PromoPiece::Rook,
-            PromoPiece::Queen}) {
+           {PromoPiece::Knight, PromoPiece::Bishop, PromoPiece::Rook, PromoPiece::Queen}) {
         move_list.add({from_sq, to_sq, MoveType::Promotion, promo_piece});
       }
     } else {
@@ -385,12 +357,10 @@ void generate_en_passant(MoveList& move_list, const Position& position) {
   uint64_t ep_bb = (uint64_t)1 << sq_idx(ep_sq);
   uint64_t pawn_bb = position.piece_bb(PieceType::Pawn, position.STM());
 
-  uint64_t left_attacks = (stm == Color::White)
-                            ? (((ep_bb & ~FILE_A) >> 9) & pawn_bb)
-                            : (((ep_bb & ~FILE_A) << 7) & pawn_bb);
-  uint64_t right_attacks = (stm == Color::White)
-                             ? (((ep_bb & ~FILE_H) >> 7) & pawn_bb)
-                             : (((ep_bb & ~FILE_H) << 9) & pawn_bb);
+  uint64_t left_attacks = (stm == Color::White) ? (((ep_bb & ~FILE_A) >> 9) & pawn_bb)
+                                                : (((ep_bb & ~FILE_A) << 7) & pawn_bb);
+  uint64_t right_attacks = (stm == Color::White) ? (((ep_bb & ~FILE_H) >> 7) & pawn_bb)
+                                                 : (((ep_bb & ~FILE_H) << 9) & pawn_bb);
 
   if (left_attacks != 0) {
     Square from_sq = sq_from_idx(std::countr_zero(left_attacks));
@@ -402,9 +372,7 @@ void generate_en_passant(MoveList& move_list, const Position& position) {
   }
 }
 
-void generate_castles(
-  MoveList& move_list, const Position& position, bool is_kingside
-) {
+void generate_castles(MoveList& move_list, const Position& position, bool is_kingside) {
   Color stm = position.STM();
   uint64_t king_bb = position.piece_bb(PieceType::King, stm);
   constexpr std::array<std::array<Square, 2>, 2> king_ends = {
@@ -414,8 +382,8 @@ void generate_castles(
   Square king_src = sq_from_idx(std::countr_zero(king_bb));
   Square king_dst = king_ends[color_idx(stm)][is_kingside];
 
-  Square rook_src = is_kingside ? position.castling_rights(stm).kingside
-                                : position.castling_rights(stm).queenside;
+  Square rook_src =
+    is_kingside ? position.castling_rights(stm).kingside : position.castling_rights(stm).queenside;
 
   if (is_square_attacked(king_src, position, position.NTM())) {
     return;
@@ -435,10 +403,7 @@ void generate_castles(
   }
 
   for (size_t sq = king_start; sq <= king_end; sq++) {
-    if (
-      (sq != sq_idx(king_src)) &&
-      is_square_attacked(sq_from_idx(sq), position, position.NTM())
-    ) {
+    if ((sq != sq_idx(king_src)) && is_square_attacked(sq_from_idx(sq), position, position.NTM())) {
       return;
     }
   }

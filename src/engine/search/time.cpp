@@ -1,11 +1,11 @@
-#include "time.h"
+#include "time.hpp"
 
 namespace episteme::time {
 using namespace std::chrono;
 
 bool Limiter::time_approaching(Move move, uint64_t nodes) {
-  float nodes_prop = static_cast<float>(node_counts[move.data() & 0x0FFF]) /
-                     static_cast<float>(nodes);
+  float nodes_prop =
+    static_cast<float>(node_counts[move.data() & 0x0FFF]) / static_cast<float>(nodes);
   float node_scale = 2.5f - nodes_prop * 1.5f;
 
   if (move != prev_best) {
@@ -15,12 +15,10 @@ bool Limiter::time_approaching(Move move, uint64_t nodes) {
     move_stability++;
   }
 
-  float move_scale =
-    std::max(1.15f - (static_cast<float>(move_stability) / 20.0f), 0.85f);
+  float move_scale = std::max(1.15f - (static_cast<float>(move_stability) / 20.0f), 0.85f);
 
   return (soft_limit != -1) &&
-         duration_cast<milliseconds>(steady_clock::now() - start_time)
-             .count() >=
+         duration_cast<milliseconds>(steady_clock::now() - start_time).count() >=
            static_cast<int32_t>(soft_limit * node_scale * move_scale);
 }
 

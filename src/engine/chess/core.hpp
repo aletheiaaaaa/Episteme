@@ -117,29 +117,11 @@ enum class Piece : uint16_t {
   None
 };
 
-enum class PieceType : uint16_t {
-  Pawn,
-  Knight,
-  Bishop,
-  Rook,
-  Queen,
-  King,
-  None
-};
+enum class PieceType : uint16_t { Pawn, Knight, Bishop, Rook, Queen, King, None };
 
 enum class Color : uint16_t { White, Black, None };
 
-enum class BBIndex : uint16_t {
-  Pawn,
-  Knight,
-  Bishop,
-  Rook,
-  Queen,
-  King,
-  White,
-  Black,
-  None
-};
+enum class BBIndex : uint16_t { Pawn, Knight, Bishop, Rook, Queen, King, White, Black, None };
 
 struct AllowedCastles {
   struct RookPair {
@@ -183,8 +165,8 @@ struct AllowedCastles {
 
   bool is_castling(Square square) {
     if (
-      rooks[0].kingside == square || rooks[0].queenside == square ||
-      rooks[1].kingside == square || rooks[1].queenside == square
+      rooks[0].kingside == square || rooks[0].queenside == square || rooks[1].kingside == square ||
+      rooks[1].queenside == square
     )
       return true;
     return false;
@@ -222,17 +204,11 @@ static const std::unordered_map<char, std::pair<PieceType, Color>> piece_map = {
   return static_cast<Square>(static_cast<int16_t>(square) ^ 56);
 }
 
-[[nodiscard]] inline Piece piece_type_with_color(
-  PieceType piece_type, Color color
-) {
-  return static_cast<Piece>(
-    2 * static_cast<uint16_t>(piece_type) + static_cast<uint16_t>(color)
-  );
+[[nodiscard]] inline Piece piece_type_with_color(PieceType piece_type, Color color) {
+  return static_cast<Piece>(2 * static_cast<uint16_t>(piece_type) + static_cast<uint16_t>(color));
 }
 
-[[nodiscard]] inline int16_t piecesquare(
-  Piece piece, Square square, bool flip_color
-) {
+[[nodiscard]] inline int16_t piecesquare(Piece piece, Square square, bool flip_color) {
   if (piece == Piece::None) {
     return -1;
   };
@@ -240,26 +216,17 @@ static const std::unordered_map<char, std::pair<PieceType, Color>> piece_map = {
   Color stm = flip_color ? flip(color(piece)) : color(piece);
   Square location = flip_color ? flip(square) : square;
 
-  return static_cast<int16_t>(stm) * 384 +
-         static_cast<int16_t>(piece_type(piece)) * 64 +
+  return static_cast<int16_t>(stm) * 384 + static_cast<int16_t>(piece_type(piece)) * 64 +
          static_cast<int16_t>(location);
 }
 
-[[nodiscard]] inline Piece pc_from_idx(uint16_t index) {
-  return static_cast<Piece>(index);
-}
+[[nodiscard]] inline Piece pc_from_idx(uint16_t index) { return static_cast<Piece>(index); }
 
-[[nodiscard]] inline Square sq_from_idx(uint16_t index) {
-  return static_cast<Square>(index);
-}
+[[nodiscard]] inline Square sq_from_idx(uint16_t index) { return static_cast<Square>(index); }
 
-[[nodiscard]] inline uint16_t sq_idx(Square square) {
-  return static_cast<uint16_t>(square);
-}
+[[nodiscard]] inline uint16_t sq_idx(Square square) { return static_cast<uint16_t>(square); }
 
-[[nodiscard]] inline uint16_t piece_idx(Piece piece) {
-  return static_cast<uint16_t>(piece);
-}
+[[nodiscard]] inline uint16_t piece_idx(Piece piece) { return static_cast<uint16_t>(piece); }
 
 [[nodiscard]] inline uint16_t piece_type_idx(PieceType piece_type) {
   return static_cast<uint16_t>(piece_type);
@@ -269,31 +236,19 @@ static const std::unordered_map<char, std::pair<PieceType, Color>> piece_map = {
   return static_cast<uint16_t>(piece) >> 1;
 }
 
-[[nodiscard]] inline uint16_t color_idx(Color color) {
-  return static_cast<uint16_t>(color);
-}
+[[nodiscard]] inline uint16_t color_idx(Color color) { return static_cast<uint16_t>(color); }
 
-[[nodiscard]] inline uint16_t color_idx(Piece piece) {
-  return static_cast<uint16_t>(piece) & 0b1;
-}
+[[nodiscard]] inline uint16_t color_idx(Piece piece) { return static_cast<uint16_t>(piece) & 0b1; }
 
 [[nodiscard]] inline uint16_t file(Square square) { return sq_idx(square) % 8; }
 
 [[nodiscard]] inline uint16_t rank(Square square) { return sq_idx(square) / 8; }
 
-[[nodiscard]] inline uint64_t shift_west(uint64_t bitboard) {
-  return (bitboard & ~FILE_A) >> 1;
-}
+[[nodiscard]] inline uint64_t shift_west(uint64_t bitboard) { return (bitboard & ~FILE_A) >> 1; }
 
-[[nodiscard]] inline uint64_t shift_east(uint64_t bitboard) {
-  return (bitboard & ~FILE_H) << 1;
-}
+[[nodiscard]] inline uint64_t shift_east(uint64_t bitboard) { return (bitboard & ~FILE_H) << 1; }
 
-[[nodiscard]] inline uint64_t shift_north(uint64_t bitboard) {
-  return (bitboard & ~RANK_8) << 8;
-}
+[[nodiscard]] inline uint64_t shift_north(uint64_t bitboard) { return (bitboard & ~RANK_8) << 8; }
 
-[[nodiscard]] inline uint64_t shift_south(uint64_t bitboard) {
-  return (bitboard & ~RANK_1) >> 8;
-}
+[[nodiscard]] inline uint64_t shift_south(uint64_t bitboard) { return (bitboard & ~RANK_1) >> 8; }
 }  // namespace episteme

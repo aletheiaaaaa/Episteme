@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "../chess/move.h"
+#include "../chess/move.hpp"
 
 namespace episteme::tt {
 enum class NodeType : uint8_t { PVNode, AllNode, CutNode, None };
@@ -18,7 +18,7 @@ struct Entry {
 };
 
 class Table {
- public:
+  public:
   Table(uint32_t size);
 
   inline void resize(uint32_t size) {
@@ -31,9 +31,7 @@ class Table {
 
   [[nodiscard]] inline uint64_t table_index(uint64_t hash) {
     return static_cast<uint64_t>(
-      (static_cast<unsigned __int128>(hash) *
-       static_cast<unsigned __int128>(ttable.size())) >>
-      64
+      (static_cast<unsigned __int128>(hash) * static_cast<unsigned __int128>(ttable.size())) >> 64
     );
   }
 
@@ -62,7 +60,7 @@ class Table {
     return (filled * 1000) / sample_size;
   }
 
- private:
+  private:
   std::vector<Entry> ttable;
 };
 }  // namespace episteme::tt

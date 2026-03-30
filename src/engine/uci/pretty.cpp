@@ -1,4 +1,4 @@
-#include "pretty.h"
+#include "pretty.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -78,16 +78,12 @@ void show_banner() {
 
   size_t max_lines = std::max(logo_lines.size(), info_lines.size());
   for (size_t i = 0; i < max_lines; ++i) {
-    size_t logo_color_idx =
-      (i * LOGO_GRADIENT.size()) / std::max(logo_lines.size(), size_t(1));
-    if (logo_color_idx >= LOGO_GRADIENT.size())
-      logo_color_idx = LOGO_GRADIENT.size() - 1;
+    size_t logo_color_idx = (i * LOGO_GRADIENT.size()) / std::max(logo_lines.size(), size_t(1));
+    if (logo_color_idx >= LOGO_GRADIENT.size()) logo_color_idx = LOGO_GRADIENT.size() - 1;
     std::string logo_color = LOGO_GRADIENT[logo_color_idx];
 
-    size_t info_color_idx =
-      (i * INFO_GRADIENT.size()) / std::max(info_lines.size(), size_t(1));
-    if (info_color_idx >= INFO_GRADIENT.size())
-      info_color_idx = INFO_GRADIENT.size() - 1;
+    size_t info_color_idx = (i * INFO_GRADIENT.size()) / std::max(info_lines.size(), size_t(1));
+    if (info_color_idx >= INFO_GRADIENT.size()) info_color_idx = INFO_GRADIENT.size() - 1;
     std::string info_color = INFO_GRADIENT[info_color_idx];
 
     if (i < logo_lines.size()) {
@@ -111,9 +107,7 @@ void show_banner() {
 }
 
 std::string get_piece_symbol(Piece piece) {
-  static const std::string symbols[] = {
-    "P", "p", "N", "n", "B", "b", "R", "r", "Q", "q", "K", "k"
-  };
+  static const std::string symbols[] = {"P", "p", "N", "n", "B", "b", "R", "r", "Q", "q", "K", "k"};
 
   if (piece == Piece::None) return " ";
   return symbols[piece_idx(piece)];
@@ -167,9 +161,7 @@ std::string render_square_line(
   return ss.str();
 }
 
-std::string render_board(
-  const Position& position, Square highlight_from, Square highlight_to
-) {
+std::string render_board(const Position& position, Square highlight_from, Square highlight_to) {
   std::ostringstream ss;
 
   ss << "     ╔" << LIGHT_LAVENDER;
@@ -182,25 +174,19 @@ std::string render_board(
   for (int rank = 7; rank >= 0; rank--) {
     ss << "     ";
     for (int file = 0; file < 8; file++) {
-      ss << render_square_line(
-        position, rank, file, 0, highlight_from, highlight_to
-      );
+      ss << render_square_line(position, rank, file, 0, highlight_from, highlight_to);
     }
     ss << LIGHT_LAVENDER << "║\n" << RESET;
 
     ss << "  " << LIGHT_LAVENDER << rank + 1 << "  " << RESET;
     for (int file = 0; file < 8; file++) {
-      ss << render_square_line(
-        position, rank, file, 1, highlight_from, highlight_to
-      );
+      ss << render_square_line(position, rank, file, 1, highlight_from, highlight_to);
     }
     ss << LIGHT_LAVENDER << "║\n" << RESET;
 
     ss << "     ";
     for (int file = 0; file < 8; file++) {
-      ss << render_square_line(
-        position, rank, file, 2, highlight_from, highlight_to
-      );
+      ss << render_square_line(position, rank, file, 2, highlight_from, highlight_to);
     }
     ss << LIGHT_LAVENDER << "║\n" << RESET;
 
@@ -251,9 +237,7 @@ std::string format_number(uint64_t num) {
 
 std::string format_time(int64_t ms) {
   if (ms < 1000) return std::to_string(ms) + "ms";
-  if (ms < 60000)
-    return std::to_string(ms / 1000) + "." + std::to_string((ms % 1000) / 100) +
-           "s";
+  if (ms < 60000) return std::to_string(ms / 1000) + "." + std::to_string((ms % 1000) / 100) + "s";
   int sec = ms / 1000;
   int min = sec / 60;
   sec = sec % 60;
@@ -279,10 +263,10 @@ std::string render_metadata(const Position& position) {
   std::ostringstream ss;
 
   ss << "\n";
-  ss << LIGHT_LAVENDER << "    FEN:         " << RESET << MED_INDIGO
-     << position.to_FEN() << RESET << "\n";
-  ss << LIGHT_LAVENDER << "    Zobrist:     " << RESET << MED_INDIGO << "0x"
-     << std::hex << position.full_hash() << std::dec << RESET << "\n";
+  ss << LIGHT_LAVENDER << "    FEN:         " << RESET << MED_INDIGO << position.to_FEN() << RESET
+     << "\n";
+  ss << LIGHT_LAVENDER << "    Zobrist:     " << RESET << MED_INDIGO << "0x" << std::hex
+     << position.full_hash() << std::dec << RESET << "\n";
 
   AllowedCastles castles = position.all_rights();
   ss << LIGHT_LAVENDER << "    Castling:    " << RESET << MED_INDIGO;
@@ -358,18 +342,18 @@ std::string render_stats(const search::Report& report, Move best_move) {
   uint64_t nps = time_ms > 0 ? (report.nodes * 1000) / time_ms : report.nodes;
 
   ss << "\n";
-  ss << LIGHT_LAVENDER << "    Depth:       " << RESET << MED_INDIGO
-     << report.depth << RESET << "\n";
-  ss << LIGHT_LAVENDER << "    Seldepth:    " << RESET << MED_INDIGO
-     << report.seldepth << RESET << "\n";
-  ss << LIGHT_LAVENDER << "    Nodes:       " << RESET << MED_INDIGO
-     << format_number(report.nodes) << RESET << "\n";
-  ss << LIGHT_LAVENDER << "    Time:        " << RESET << MED_INDIGO
-     << format_time(time_ms) << RESET << "\n";
-  ss << LIGHT_LAVENDER << "    NPS:         " << RESET << MED_INDIGO
-     << format_number(nps) << RESET << "\n";
-  ss << LIGHT_LAVENDER << "    Hashfull:    " << RESET << MED_INDIGO
-     << (report.hashfull / 10.0) << "%" << RESET << "\n";
+  ss << LIGHT_LAVENDER << "    Depth:       " << RESET << MED_INDIGO << report.depth << RESET
+     << "\n";
+  ss << LIGHT_LAVENDER << "    Seldepth:    " << RESET << MED_INDIGO << report.seldepth << RESET
+     << "\n";
+  ss << LIGHT_LAVENDER << "    Nodes:       " << RESET << MED_INDIGO << format_number(report.nodes)
+     << RESET << "\n";
+  ss << LIGHT_LAVENDER << "    Time:        " << RESET << MED_INDIGO << format_time(time_ms)
+     << RESET << "\n";
+  ss << LIGHT_LAVENDER << "    NPS:         " << RESET << MED_INDIGO << format_number(nps) << RESET
+     << "\n";
+  ss << LIGHT_LAVENDER << "    Hashfull:    " << RESET << MED_INDIGO << (report.hashfull / 10.0)
+     << "%" << RESET << "\n";
 
   if (state.exploring_line.length > 0 && state.searching) {
     ss << "\n";
@@ -382,8 +366,8 @@ std::string render_stats(const search::Report& report, Move best_move) {
 
   for (size_t i = 0; i < state.pv_history.size(); ++i) {
     const auto& entry = state.pv_history[i];
-    ss << DIM << LIGHT_LAVENDER << "    Depth " << (entry.depth < 10 ? " " : "")
-       << entry.depth << ":   " << RESET;
+    ss << DIM << LIGHT_LAVENDER << "    Depth " << (entry.depth < 10 ? " " : "") << entry.depth
+       << ":   " << RESET;
     ss << MED_INDIGO << format_score(entry.score) << " " << RESET;
     ss << DEEP_INDIGO << format_move_sequence(entry.line, 8) << RESET << "\n";
   }
@@ -438,8 +422,8 @@ void render_two_column_layout(
   size_t padding = header_suffix.empty() ? 61 : 61 - header_suffix.length();
   std::cout << std::string(padding, ' ');
 
-  std::cout << LIGHT_LAVENDER << header_label << BOLD << MED_INDIGO
-            << header_value << RESET << "\n\n";
+  std::cout << LIGHT_LAVENDER << header_label << BOLD << MED_INDIGO << header_value << RESET
+            << "\n\n";
 
   size_t max_lines = std::max(board_lines.size(), panel_lines.size());
 
@@ -474,10 +458,7 @@ void show_position(const Position& position, int32_t eval_cp) {
 }
 
 void show_search_update(
-  const search::Report& report,
-  bool final,
-  Move best_move,
-  const search::Line& exploring
+  const search::Report& report, bool final, Move best_move, const search::Line& exploring
 ) {
   if (report.depth < state.last_report.depth) {
     state.pv_history.clear();
@@ -511,12 +492,7 @@ void show_search_update(
   std::string stats = render_stats(report, best_move);
   std::string combined_panel = metadata + stats;
   render_two_column_layout(
-    board,
-    combined_panel,
-    "Searching...",
-    "Score: ",
-    format_score(report.score),
-    final
+    board, combined_panel, "Searching...", "Score: ", format_score(report.score), final
   );
 
   state.last_report = report;

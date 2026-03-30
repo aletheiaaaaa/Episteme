@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "../chess/move.h"
+#include "../chess/move.hpp"
 
 namespace episteme::stack {
 constexpr int32_t INF = 1048576;
@@ -18,12 +18,12 @@ struct Entry {
 };
 
 class Stack {
- public:
+  public:
   inline void reset() { stack.fill(Entry()); }
 
   [[nodiscard]] inline Entry& operator[](int idx) { return stack[idx]; }
 
- private:
+  private:
   std::array<Entry, 1024> stack{};
 };
 }  // namespace episteme::stack

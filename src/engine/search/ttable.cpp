@@ -1,4 +1,4 @@
-#include "ttable.h"
+#include "ttable.hpp"
 
 namespace episteme::tt {
 Table::Table(uint32_t size) {

@@ -1,4 +1,4 @@
-#include "display.h"
+#include "display.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -6,7 +6,7 @@
 #include <mutex>
 #include <thread>
 
-#include "pretty.h"
+#include "pretty.hpp"
 
 namespace episteme::uci {
 using namespace std::chrono;
@@ -62,13 +62,11 @@ void on_start(const Position& position) {
     if (engine_ptr) {
       auto* worker = engine_ptr->get_worker(0);
       if (worker) {
-        worker->set_live_update_callback(
-          [](uint64_t nodes, const search::Line& line) {
-            live_nodes.store(nodes);
-            std::lock_guard<std::mutex> lock(exploring_mutex);
-            current_exploring = line;
-          }
-        );
+        worker->set_live_update_callback([](uint64_t nodes, const search::Line& line) {
+          live_nodes.store(nodes);
+          std::lock_guard<std::mutex> lock(exploring_mutex);
+          current_exploring = line;
+        });
       }
     }
 
@@ -88,23 +86,20 @@ void on_update(const search::Report& report) {
 
     bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
     int32_t display_score =
-      is_mate ? (report.score > 0 ? (MATE - report.score + 1) / 2
-                                  : -(MATE + report.score) / 2)
+      is_mate ? (report.score > 0 ? (MATE - report.score + 1) / 2 : -(MATE + report.score) / 2)
               : report.score;
 
-    int32_t nps =
-      report.time > 0 ? (report.nodes * 1000) / report.time : report.nodes;
+    int32_t nps = report.time > 0 ? (report.nodes * 1000) / report.time : report.nodes;
 
     std::string pv;
     for (size_t i = 0; i < report.line.length; ++i) {
       pv += report.line.moves[i].to_string() + " ";
     }
 
-    std::cout << "info depth " << report.depth << " seldepth "
-              << report.seldepth << " time " << report.time << " nodes "
-              << report.nodes << " nps " << nps << " hashfull "
-              << report.hashfull << " score " << (is_mate ? "mate" : "cp")
-              << " " << display_score << " pv " << pv << "\n";
+    std::cout << "info depth " << report.depth << " seldepth " << report.seldepth << " time "
+              << report.time << " nodes " << report.nodes << " nps " << nps << " hashfull "
+              << report.hashfull << " score " << (is_mate ? "mate" : "cp") << " " << display_score
+              << " pv " << pv << "\n";
   }
 }
 

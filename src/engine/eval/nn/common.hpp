@@ -3,9 +3,9 @@
 #include <array>
 #include <cstdint>
 
-#include "../../chess/core.h"
-#include "../../chess/move.h"
-#include "../../chess/position.h"
+#include "../../chess/core.hpp"
+#include "../../chess/move.hpp"
+#include "../../chess/position.hpp"
 
 namespace episteme::eval::nn {
 constexpr int16_t QA = 255;
@@ -28,7 +28,7 @@ struct Accumulator {
 };
 
 class NNUE {
- public:
+  public:
   Accumulator update_accumulator(
     const Position& position, const Move& move, Accumulator accum
   ) const;
@@ -37,7 +37,7 @@ class NNUE {
 
   void init_random();
 
- private:
+  private:
   using L0Weights = std::array<std::array<int16_t, L1_WIDTH>, 768>;
   using L0Biases = std::array<int16_t, L1_WIDTH>;
   using L1Weights = std::array<int16_t, L1_WIDTH * 2>;

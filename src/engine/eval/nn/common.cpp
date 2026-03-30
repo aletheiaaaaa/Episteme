@@ -1,4 +1,4 @@
-#include "common.h"
+#include "common.hpp"
 
 #include <random>
 
@@ -58,8 +58,7 @@ Accumulator NNUE::update_accumulator(
 
   } else if (move.move_type() == MoveType::EnPassant) {
     Square sq_ep = position.ep_square();
-    int idx_ep = (position.STM() == Color::White) ? (sq_idx(sq_ep) - 8)
-                                                  : (sq_idx(sq_ep) + 8);
+    int idx_ep = (position.STM() == Color::White) ? (sq_idx(sq_ep) - 8) : (sq_idx(sq_ep) + 8);
     Piece pc_ep = mailbox[idx_ep];
 
     int w_capt = piecesquare(pc_ep, sq_from_idx(idx_ep), false);
@@ -72,16 +71,10 @@ Accumulator NNUE::update_accumulator(
   }
 
   if (move.move_type() == MoveType::Promotion) {
-    w_dst = piecesquare(
-      piece_type_with_color(move.promo_piece_type(), position.STM()),
-      sq_dst,
-      false
-    );
-    b_dst = piecesquare(
-      piece_type_with_color(move.promo_piece_type(), position.STM()),
-      sq_dst,
-      true
-    );
+    w_dst =
+      piecesquare(piece_type_with_color(move.promo_piece_type(), position.STM()), sq_dst, false);
+    b_dst =
+      piecesquare(piece_type_with_color(move.promo_piece_type(), position.STM()), sq_dst, true);
   }
 
   for (int i = 0; i < L1_WIDTH; i++) {

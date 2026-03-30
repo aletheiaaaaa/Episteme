@@ -1,4 +1,4 @@
-#include "datagen.h"
+#include "datagen.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -79,14 +79,10 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
       const search::ScoredMove scored_move = engine.datagen_search(position);
 
       if (!scored_move.move) {
-        wdl = in_check(position, position.STM())
-                ? (position.STM() == Color::Black ? 2 : 0)
-                : 1;
+        wdl = in_check(position, position.STM()) ? (position.STM() == Color::Black ? 2 : 0) : 1;
         break;
       } else {
-        if (
-          std::abs(scored_move.score) >= search::MATE - search::MAX_SEARCH_PLY
-        )
+        if (std::abs(scored_move.score) >= search::MATE - search::MAX_SEARCH_PLY)
           wdl = 2 * (scored_move.score > 0);
         else {
           if (scored_move.score >= WIN_SCORE_MIN)
@@ -94,8 +90,7 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
           else if (scored_move.score <= -WIN_SCORE_MIN)
             loss_plies++, win_plies = draw_plies = 0;
           else if (
-            std::abs(scored_move.score) <= DRAW_SCORE_MAX &&
-            position.half_move_clock() >= 100
+            std::abs(scored_move.score) <= DRAW_SCORE_MAX && position.half_move_clock() >= 100
           )
             draw_plies++, win_plies = loss_plies = 0;
 
@@ -130,8 +125,7 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
     if ((i + 1) % 16 == 0 || (i + 1) == workload) {
       time_point end = steady_clock::now();
       int32_t elapsed = duration_cast<milliseconds>(end - start).count() / 1000;
-      std::cout << "Thread " << id << ": " << games << "/" << workload
-                << " games completed at "
+      std::cout << "Thread " << id << ": " << games << "/" << workload << " games completed at "
                 << (positions / (elapsed > 0 ? elapsed : 1)) << " pos/sec\n";
 
       start = steady_clock::now();
@@ -149,8 +143,7 @@ void run(Parameters& params) {
     return;
   });
 
-  params.num_games =
-    params.num_threads * (params.num_games / params.num_threads);
+  params.num_games = params.num_threads * (params.num_games / params.num_threads);
 
   std::vector<std::thread> threads;
   std::vector<std::string> files;
@@ -166,8 +159,7 @@ void run(Parameters& params) {
     threads.emplace_back([&params, file = std::move(file), i]() {
       std::ofstream stream(file, std::ios::binary | std::ios::app);
       if (!stream) {
-        std::cout << "Failed to open " << file.string() << " on thread " << i
-                  << "\n";
+        std::cout << "Failed to open " << file.string() << " on thread " << i << "\n";
         return;
       }
 
@@ -181,8 +173,7 @@ void run(Parameters& params) {
 
   for (auto& thread : threads) thread.join();
 
-  std::cout << "Generated " << params.num_threads
-            << " data files. Concatenating.\n";
+  std::cout << "Generated " << params.num_threads << " data files. Concatenating.\n";
 
   std::ostringstream oss;
   oss << params.out_dir << "/data." << Format::EXTENSION;

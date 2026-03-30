@@ -1,4 +1,4 @@
-#include "position.h"
+#include "position.hpp"
 
 #include <sstream>
 
@@ -49,28 +49,23 @@ void Position::from_FEN(const std::string& FEN) {
     for (char c : tokens[2]) {
       switch (c) {
         case 'K':
-          current.allowed_castles.rooks[color_idx(Color::White)].kingside =
-            Square::H1;
+          current.allowed_castles.rooks[color_idx(Color::White)].kingside = Square::H1;
           break;
         case 'Q':
-          current.allowed_castles.rooks[color_idx(Color::White)].queenside =
-            Square::A1;
+          current.allowed_castles.rooks[color_idx(Color::White)].queenside = Square::A1;
           break;
         case 'k':
-          current.allowed_castles.rooks[color_idx(Color::Black)].kingside =
-            Square::H8;
+          current.allowed_castles.rooks[color_idx(Color::Black)].kingside = Square::H8;
           break;
         case 'q':
-          current.allowed_castles.rooks[color_idx(Color::Black)].queenside =
-            Square::A8;
+          current.allowed_castles.rooks[color_idx(Color::Black)].queenside = Square::A8;
           break;
       }
     }
   }
 
   if (tokens[3] != "-") {
-    current.ep_square =
-      static_cast<Square>((tokens[3][0] - 'a') + (tokens[3][1] - '1') * 8);
+    current.ep_square = static_cast<Square>((tokens[3][0] - 'a') + (tokens[3][1] - '1') * 8);
   }
 
   current.half_move_clock = std::stoi(tokens[4]);
@@ -92,10 +87,8 @@ void Position::from_startpos() {
   current.bitboards[piece_type_idx(PieceType::Queen)] = 0x0800000000000008;
   current.bitboards[piece_type_idx(PieceType::King)] = 0x1000000000000010;
 
-  current.bitboards[color_idx(Color::White) + COLOR_OFFSET] =
-    0x000000000000FFFF;
-  current.bitboards[color_idx(Color::Black) + COLOR_OFFSET] =
-    0xFFFF000000000000;
+  current.bitboards[color_idx(Color::White) + COLOR_OFFSET] = 0x000000000000FFFF;
+  current.bitboards[color_idx(Color::Black) + COLOR_OFFSET] = 0xFFFF000000000000;
 
   current.mailbox.fill(Piece::None);
 
@@ -170,13 +163,10 @@ void Position::make_move(const Move& move) {
     current.full_move_number++;
   }
 
-  uint64_t attacker_src_hash =
-    hash::piecesquares[piecesquare(src, sq_src, false)];
-  uint64_t attacker_dst_hash =
-    hash::piecesquares[piecesquare(src, sq_dst, false)];
+  uint64_t attacker_src_hash = hash::piecesquares[piecesquare(src, sq_src, false)];
+  uint64_t attacker_dst_hash = hash::piecesquares[piecesquare(src, sq_dst, false)];
   uint64_t victim_hash =
-    (dst == Piece::None) ? 0
-                         : hash::piecesquares[piecesquare(dst, sq_dst, false)];
+    (dst == Piece::None) ? 0 : hash::piecesquares[piecesquare(dst, sq_dst, false)];
 
   current.hashes.full_hash ^= attacker_src_hash;
 
@@ -188,42 +178,35 @@ void Position::make_move(const Move& move) {
         current.bitboards[them + COLOR_OFFSET] ^= bb_dst;
 
         if (piece_type(dst) == PieceType::Rook) {
-          current.hashes.full_hash ^=
-            hash::castling_rights[current.allowed_castles.as_mask()];
+          current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
           auto& rooks = current.allowed_castles.rooks[them];
           if (sq_dst == rooks.kingside)
             rooks.unset(true);
           else if (sq_dst == rooks.queenside)
             rooks.unset(false);
-          current.hashes.full_hash ^=
-            hash::castling_rights[current.allowed_castles.as_mask()];
+          current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
         }
       }
 
       if (piece_type(src) == PieceType::King) {
-        current.hashes.full_hash ^=
-          hash::castling_rights[current.allowed_castles.as_mask()];
+        current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
         current.allowed_castles.rooks[us].clear();
-        current.hashes.full_hash ^=
-          hash::castling_rights[current.allowed_castles.as_mask()];
+        current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
       } else if (piece_type(src) == PieceType::Rook) {
-        current.hashes.full_hash ^=
-          hash::castling_rights[current.allowed_castles.as_mask()];
+        current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
         auto& rooks = current.allowed_castles.rooks[us];
         if (sq_src == rooks.kingside)
           rooks.unset(true);
         else if (sq_src == rooks.queenside)
           rooks.unset(false);
-        current.hashes.full_hash ^=
-          hash::castling_rights[current.allowed_castles.as_mask()];
+        current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
       }
 
       if (
         piece_type(src) == PieceType::Pawn &&
         std::abs(sq_idx(sq_src) - sq_idx(sq_dst)) == DOUBLE_PUSH
       ) {
-        current.ep_square =
-          sq_from_idx(sq_idx(sq_dst) + ((side == Color::White) ? -8 : 8));
+        current.ep_square = sq_from_idx(sq_idx(sq_dst) + ((side == Color::White) ? -8 : 8));
         current.hashes.full_hash ^= hash::ep_files[file(sq_dst)];
       }
 
@@ -270,37 +253,30 @@ void Position::make_move(const Move& move) {
       bool king_side = bb_dst > bb_src;
       Square rook_src = king_side ? current.allowed_castles.rooks[us].kingside
                                   : current.allowed_castles.rooks[us].queenside;
-      Square rook_dst =
-        static_cast<Square>(sq_idx(sq_dst) + (king_side ? -1 : 1));
+      Square rook_dst = static_cast<Square>(sq_idx(sq_dst) + (king_side ? -1 : 1));
       uint64_t bb_rook_src = (uint64_t)1 << sq_idx(rook_src);
       uint64_t bb_rook_dst = (uint64_t)1 << sq_idx(rook_dst);
 
       Piece rook_piece = piece_type_with_color(PieceType::Rook, side);
 
-      current.hashes.full_hash ^=
-        hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-        hash::piecesquares[piecesquare(rook_piece, rook_dst, false)] ^
-        hash::piecesquares[piecesquare(src, sq_dst, false)];
+      current.hashes.full_hash ^= hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
+                                  hash::piecesquares[piecesquare(rook_piece, rook_dst, false)] ^
+                                  hash::piecesquares[piecesquare(src, sq_dst, false)];
 
-      current.bitboards[piece_type_idx(PieceType::Rook)] ^=
-        bb_rook_src ^ bb_rook_dst;
+      current.bitboards[piece_type_idx(PieceType::Rook)] ^= bb_rook_src ^ bb_rook_dst;
       current.bitboards[piece_type_idx(PieceType::King)] ^= bb_src ^ bb_dst;
-      current.bitboards[us + COLOR_OFFSET] ^=
-        bb_rook_src ^ bb_rook_dst ^ bb_src ^ bb_dst;
+      current.bitboards[us + COLOR_OFFSET] ^= bb_rook_src ^ bb_rook_dst ^ bb_src ^ bb_dst;
 
       current.mailbox[sq_idx(rook_src)] = Piece::None;
       current.mailbox[sq_idx(rook_dst)] = rook_piece;
 
-      current.hashes.full_hash ^=
-        hash::castling_rights[current.allowed_castles.as_mask()];
+      current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
       current.allowed_castles.rooks[us].clear();
-      current.hashes.full_hash ^=
-        hash::castling_rights[current.allowed_castles.as_mask()];
+      current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
 
-      current.hashes.major_hash ^=
-        attacker_src_hash ^ attacker_dst_hash ^
-        hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-        hash::piecesquares[piecesquare(rook_piece, rook_dst, false)];
+      current.hashes.major_hash ^= attacker_src_hash ^ attacker_dst_hash ^
+                                   hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
+                                   hash::piecesquares[piecesquare(rook_piece, rook_dst, false)];
       current.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash;
 
       if (current.stm)
@@ -324,18 +300,13 @@ void Position::make_move(const Move& move) {
       Piece captured_pawn = piece_type_with_color(PieceType::Pawn, flip(side));
 
       current.hashes.full_hash ^=
-        hash::piecesquares[piecesquare(
-          captured_pawn, sq_from_idx(capture_idx), false
-        )] ^
+        hash::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)] ^
         hash::piecesquares[piecesquare(src, sq_dst, false)];
       current.hashes.pawn_hash ^=
         attacker_src_hash ^ attacker_dst_hash ^
-        hash::piecesquares[piecesquare(
-          captured_pawn, sq_from_idx(capture_idx), false
-        )];
+        hash::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
 
-      current.bitboards[piece_type_idx(PieceType::Pawn)] ^=
-        bb_src ^ bb_dst ^ bb_cap;
+      current.bitboards[piece_type_idx(PieceType::Pawn)] ^= bb_src ^ bb_dst ^ bb_cap;
       current.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;
       current.bitboards[them + COLOR_OFFSET] ^= bb_cap;
       current.mailbox[capture_idx] = Piece::None;
@@ -351,15 +322,13 @@ void Position::make_move(const Move& move) {
         current.bitboards[them + COLOR_OFFSET] ^= bb_dst;
 
         if (piece_type(dst) == PieceType::Rook) {
-          current.hashes.full_hash ^=
-            hash::castling_rights[current.allowed_castles.as_mask()];
+          current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
           auto& rooks = current.allowed_castles.rooks[them];
           if (sq_dst == rooks.kingside)
             rooks.unset(true);
           else if (sq_dst == rooks.queenside)
             rooks.unset(false);
-          current.hashes.full_hash ^=
-            hash::castling_rights[current.allowed_castles.as_mask()];
+          current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
         }
 
         switch (piece_type(dst)) {
@@ -390,8 +359,7 @@ void Position::make_move(const Move& move) {
 
       PieceType promo_type = move.promo_piece_type();
       Piece promo_piece = piece_type_with_color(promo_type, side);
-      uint64_t promo_hash =
-        hash::piecesquares[piecesquare(promo_piece, sq_dst, false)];
+      uint64_t promo_hash = hash::piecesquares[piecesquare(promo_piece, sq_dst, false)];
 
       current.hashes.full_hash ^= promo_hash;
       current.hashes.pawn_hash ^= attacker_src_hash;
@@ -478,8 +446,7 @@ bool Position::is_insufficient() {
     current.bitboards[piece_type_idx(PieceType::Knight)]
   )
     return false;
-  if (std::popcount(current.bitboards[piece_type_idx(PieceType::Knight)]))
-    return false;
+  if (std::popcount(current.bitboards[piece_type_idx(PieceType::Knight)])) return false;
   return true;
 }
 
@@ -532,24 +499,18 @@ std::string Position::to_FEN() const {
   fen += (current.stm == static_cast<bool>(Color::White)) ? " w " : " b ";
 
   std::string castling;
-  if (current.allowed_castles.rooks[color_idx(Color::White)].is_kingside_set())
-    castling += 'K';
-  if (current.allowed_castles.rooks[color_idx(Color::White)].is_queenside_set())
-    castling += 'Q';
-  if (current.allowed_castles.rooks[color_idx(Color::Black)].is_kingside_set())
-    castling += 'k';
-  if (current.allowed_castles.rooks[color_idx(Color::Black)].is_queenside_set())
-    castling += 'q';
+  if (current.allowed_castles.rooks[color_idx(Color::White)].is_kingside_set()) castling += 'K';
+  if (current.allowed_castles.rooks[color_idx(Color::White)].is_queenside_set()) castling += 'Q';
+  if (current.allowed_castles.rooks[color_idx(Color::Black)].is_kingside_set()) castling += 'k';
+  if (current.allowed_castles.rooks[color_idx(Color::Black)].is_queenside_set()) castling += 'q';
   fen += (castling.empty() ? "-" : castling) + " ";
 
-  fen +=
-    (current.ep_square == Square::None
-       ? "-"
-       : Move(current.ep_square, current.ep_square).to_string().substr(2)) +
-    " ";
+  fen += (current.ep_square == Square::None
+            ? "-"
+            : Move(current.ep_square, current.ep_square).to_string().substr(2)) +
+         " ";
 
-  fen += std::to_string(current.half_move_clock) + " " +
-         std::to_string(current.full_move_number);
+  fen += std::to_string(current.half_move_clock) + " " + std::to_string(current.full_move_number);
 
   return fen;
 }
@@ -560,8 +521,7 @@ Hashes Position::explicit_hashes() {
   for (size_t i = 0; i < 64; i++) {
     Piece piece = current.mailbox[i];
     if (piece != Piece::None) {
-      uint64_t piece_hash =
-        hash::piecesquares[piecesquare(piece, sq_from_idx(i), false)];
+      uint64_t piece_hash = hash::piecesquares[piecesquare(piece, sq_from_idx(i), false)];
       PieceType type = piece_type(piece);
 
       hashes.full_hash ^= piece_hash;
@@ -575,16 +535,10 @@ Hashes Position::explicit_hashes() {
           hashes.non_pawn_white_hash ^= piece_hash;
       }
 
-      if (
-        type == PieceType::Rook || type == PieceType::Queen ||
-        type == PieceType::King
-      ) {
+      if (type == PieceType::Rook || type == PieceType::Queen || type == PieceType::King) {
         hashes.major_hash ^= piece_hash;
       }
-      if (
-        type == PieceType::Knight || type == PieceType::Bishop ||
-        type == PieceType::King
-      ) {
+      if (type == PieceType::Knight || type == PieceType::Bishop || type == PieceType::King) {
         hashes.minor_hash ^= piece_hash;
       }
     }
@@ -613,24 +567,20 @@ Move from_UCI(const Position& position, const std::string& move) {
 
   auto is_castling = [&]() {
     Color stm = position.STM();
-    if (piece_type(position.mailbox(sq_idx(src))) != PieceType::King)
-      return false;
+    if (piece_type(position.mailbox(sq_idx(src))) != PieceType::King) return false;
 
     Square kingside = (stm == Color::White) ? Square::G1 : Square::G8;
     Square queenside = (stm == Color::White) ? Square::C1 : Square::C8;
 
-    bool kingside_castle =
-      (dst == kingside) && position.castling_rights(stm).is_kingside_set();
-    bool queenside_castle =
-      (dst == queenside) && position.castling_rights(stm).is_queenside_set();
+    bool kingside_castle = (dst == kingside) && position.castling_rights(stm).is_kingside_set();
+    bool queenside_castle = (dst == queenside) && position.castling_rights(stm).is_queenside_set();
 
     return (kingside_castle || queenside_castle);
   };
 
   bool is_promo = (move.length() == 5);
   bool is_en_passant =
-    (piece_type(position.mailbox(sq_idx(src))) == PieceType::Pawn) &&
-    (dst == position.ep_square());
+    (piece_type(position.mailbox(sq_idx(src))) == PieceType::Pawn) && (dst == position.ep_square());
 
   auto char_2_piece = [&](char promo) {
     switch (promo) {

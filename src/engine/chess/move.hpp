@@ -3,7 +3,7 @@
 #include <array>
 #include <string>
 
-#include "core.h"
+#include "core.hpp"
 
 namespace episteme {
 enum class MoveType : uint16_t { Normal, EnPassant, Castling, Promotion, None };
@@ -11,7 +11,7 @@ enum class MoveType : uint16_t { Normal, EnPassant, Castling, Promotion, None };
 enum class PromoPiece : uint16_t { Knight, Bishop, Rook, Queen, None };
 
 class Move {
- public:
+  public:
   Move();
   Move(uint16_t data);
   Move(
@@ -43,21 +43,13 @@ class Move {
     return static_cast<PieceType>(((move_data >> 14) & 0b11) + 1);
   }
 
-  [[nodiscard]] inline uint16_t from_idx() const {
-    return move_data & 0b111111;
-  }
+  [[nodiscard]] inline uint16_t from_idx() const { return move_data & 0b111111; }
 
-  [[nodiscard]] inline uint16_t to_idx() const {
-    return (move_data >> 6) & 0b111111;
-  }
+  [[nodiscard]] inline uint16_t to_idx() const { return (move_data >> 6) & 0b111111; }
 
-  [[nodiscard]] inline uint16_t type_idx() const {
-    return (move_data >> 12) & 0b11;
-  }
+  [[nodiscard]] inline uint16_t type_idx() const { return (move_data >> 12) & 0b11; }
 
-  [[nodiscard]] inline uint16_t promo_idx() const {
-    return (move_data >> 14) & 0b11;
-  }
+  [[nodiscard]] inline uint16_t promo_idx() const { return (move_data >> 14) & 0b11; }
 
   [[nodiscard]] inline bool is_empty() const { return (move_data == 0x0000); }
 
@@ -74,7 +66,7 @@ class Move {
   std::string to_string() const;
   std::string to_PGN(const class Position& position) const;
 
- private:
+  private:
   uint16_t move_data;
 };
 }  // namespace episteme

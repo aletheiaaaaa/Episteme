@@ -1,5 +1,5 @@
-#include "engine/uci/display.h"
-#include "engine/uci/uci.h"
+#include "engine/uci/display.hpp"
+#include "engine/uci/uci.hpp"
 
 using namespace episteme;
 

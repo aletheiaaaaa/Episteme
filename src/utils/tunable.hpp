@@ -12,12 +12,8 @@
 #define ENABLE_TUNING 0
 #endif
 
-#define TUNABLE_INT(                                               \
-  name, default_value, min_value, max_value, step_value, setter    \
-)                                                                  \
-  inline Tunable<int> name{                                        \
-    #name, default_value, min_value, max_value, step_value, setter \
-  };
+#define TUNABLE_INT(name, default_value, min_value, max_value, step_value, setter) \
+  inline Tunable<int> name{#name, default_value, min_value, max_value, step_value, setter};
 
 namespace episteme::tunable {
 static std::array<std::array<std::string, 2>, 2> type_names = {
@@ -47,7 +43,7 @@ struct Tunable {
     F step_value,
     std::function<void()> func
   )
-      : value(default_value) {
+    : value(default_value) {
     if (default_value < min_value || default_value > max_value) {
       std::cerr << "out of range for tunable " << name << std::endl;
     }
@@ -80,9 +76,8 @@ struct Tunable {
   void print(bool use_type = false) const {
     if constexpr (Enabled) {
       constexpr bool is_int = std::is_same_v<F, int>;
-      std::cout << "option name " << name << " type "
-                << type_names[use_type][is_int] << " default " << value
-                << " min " << min << " max " << max << "\n";
+      std::cout << "option name " << name << " type " << type_names[use_type][is_int] << " default "
+                << value << " min " << min << " max " << max << "\n";
     }
   }
 

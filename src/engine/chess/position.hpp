@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "move.h"
-#include "zobrist.h"
+#include "move.hpp"
+#include "zobrist.hpp"
 
 namespace episteme {
 static constexpr std::array<Piece, 64> empty_mailbox() {
@@ -43,7 +43,7 @@ struct PositionState {
 };
 
 class Position {
- public:
+  public:
   Position();
 
   [[nodiscard]] inline uint64_t total_bb() const {
@@ -53,9 +53,7 @@ class Position {
     );
   }
 
-  [[nodiscard]] inline uint64_t piece_bb(
-    PieceType piece_type, Color color
-  ) const {
+  [[nodiscard]] inline uint64_t piece_bb(PieceType piece_type, Color color) const {
     return (
       current.bitboards[piece_type_idx(piece_type)] &
       current.bitboards[color_idx(color) + COLOR_OFFSET]
@@ -70,39 +68,23 @@ class Position {
     return current.bitboards[color_idx(color) + COLOR_OFFSET];
   }
 
-  [[nodiscard]] inline std::array<uint64_t, 8> bitboards_all() const {
-    return current.bitboards;
-  }
+  [[nodiscard]] inline std::array<uint64_t, 8> bitboards_all() const { return current.bitboards; }
 
-  [[nodiscard]] inline uint64_t bitboard(int index) const {
-    return current.bitboards[index];
-  }
+  [[nodiscard]] inline uint64_t bitboard(int index) const { return current.bitboards[index]; }
 
-  [[nodiscard]] inline Color STM() const {
-    return static_cast<Color>(current.stm);
-  }
+  [[nodiscard]] inline Color STM() const { return static_cast<Color>(current.stm); }
 
-  [[nodiscard]] inline Color NTM() const {
-    return static_cast<Color>(!current.stm);
-  }
+  [[nodiscard]] inline Color NTM() const { return static_cast<Color>(!current.stm); }
 
-  [[nodiscard]] inline uint8_t half_move_clock() const {
-    return current.half_move_clock;
-  }
+  [[nodiscard]] inline uint8_t half_move_clock() const { return current.half_move_clock; }
 
-  [[nodiscard]] inline uint32_t full_move_number() const {
-    return current.full_move_number;
-  }
+  [[nodiscard]] inline uint32_t full_move_number() const { return current.full_move_number; }
 
   [[nodiscard]] inline Square ep_square() const { return current.ep_square; }
 
-  [[nodiscard]] inline AllowedCastles all_rights() const {
-    return current.allowed_castles;
-  }
+  [[nodiscard]] inline AllowedCastles all_rights() const { return current.allowed_castles; }
 
-  [[nodiscard]] inline AllowedCastles::RookPair castling_rights(
-    Color stm
-  ) const {
+  [[nodiscard]] inline AllowedCastles::RookPair castling_rights(Color stm) const {
     return current.allowed_castles.rooks[color_idx(stm)];
   }
 
@@ -110,38 +92,24 @@ class Position {
     return current.mailbox[sq_idx(square)];
   }
 
-  [[nodiscard]] inline Piece mailbox(int index) const {
-    return current.mailbox[index];
-  }
+  [[nodiscard]] inline Piece mailbox(int index) const { return current.mailbox[index]; }
 
-  [[nodiscard]] inline std::array<Piece, 64> mailbox_all() const {
-    return current.mailbox;
-  }
+  [[nodiscard]] inline std::array<Piece, 64> mailbox_all() const { return current.mailbox; }
 
-  [[nodiscard]] inline uint64_t full_hash() const {
-    return current.hashes.full_hash;
-  }
+  [[nodiscard]] inline uint64_t full_hash() const { return current.hashes.full_hash; }
 
-  [[nodiscard]] inline uint64_t pawn_hash() const {
-    return current.hashes.pawn_hash;
-  }
+  [[nodiscard]] inline uint64_t pawn_hash() const { return current.hashes.pawn_hash; }
 
-  [[nodiscard]] inline uint64_t major_hash() const {
-    return current.hashes.major_hash;
-  }
+  [[nodiscard]] inline uint64_t major_hash() const { return current.hashes.major_hash; }
 
-  [[nodiscard]] inline uint64_t minor_hash() const {
-    return current.hashes.minor_hash;
-  }
+  [[nodiscard]] inline uint64_t minor_hash() const { return current.hashes.minor_hash; }
 
   [[nodiscard]] inline uint64_t non_pawn_stm_hash() const {
-    return (!current.stm) ? current.hashes.non_pawn_white_hash
-                          : current.hashes.non_pawn_black_hash;
+    return (!current.stm) ? current.hashes.non_pawn_white_hash : current.hashes.non_pawn_black_hash;
   }
 
   [[nodiscard]] inline uint64_t non_pawn_ntm_hash() const {
-    return (!current.stm) ? current.hashes.non_pawn_black_hash
-                          : current.hashes.non_pawn_white_hash;
+    return (!current.stm) ? current.hashes.non_pawn_black_hash : current.hashes.non_pawn_white_hash;
   }
 
   void from_FEN(const std::string& FEN);
@@ -158,10 +126,10 @@ class Position {
 
   Hashes explicit_hashes();
 
- public:
+  public:
   static const uint16_t COLOR_OFFSET = 6;
 
- private:
+  private:
   std::vector<PositionState> history;
   PositionState current;
 };

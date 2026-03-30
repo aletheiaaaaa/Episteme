@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <string>
 
-#include "../engine/chess/movegen.h"
-#include "../engine/search/search.h"
-#include "format.h"
+#include "../engine/chess/movegen.hpp"
+#include "../engine/search/search.hpp"
+#include "format.hpp"
 
 namespace episteme::datagen {
 constexpr int32_t WIN_SCORE_MIN = 2500;

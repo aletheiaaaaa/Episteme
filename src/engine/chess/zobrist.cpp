@@ -1,4 +1,4 @@
-#include "zobrist.h"
+#include "zobrist.hpp"
 
 #include <random>
 
@@ -14,8 +14,7 @@ void init() {
 
   for (int i = 0; i < 12; i++) {
     for (int j = 0; j < 64; j++) {
-      piecesquares[piecesquare(pc_from_idx(i), sq_from_idx(j), false)] =
-        dist(gen);
+      piecesquares[piecesquare(pc_from_idx(i), sq_from_idx(j), false)] = dist(gen);
     }
   }
 

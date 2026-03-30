@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "../chess/position.h"
-#include "../search/search.h"
+#include "../chess/position.hpp"
+#include "../search/search.hpp"
 
 namespace episteme::pretty {
 constexpr const char* DEEP_INDIGO = "\033[38;5;63m";
@@ -33,9 +33,7 @@ inline std::string move_cursor(int row, int col) {
 
 inline std::string move_up(int n) { return "\033[" + std::to_string(n) + "A"; }
 
-inline std::string move_down(int n) {
-  return "\033[" + std::to_string(n) + "B";
-}
+inline std::string move_down(int n) { return "\033[" + std::to_string(n) + "B"; }
 
 struct PVEntry {
   int depth;
@@ -64,9 +62,7 @@ void show_search_update(
 void clear();
 
 std::string render_board(
-  const Position& position,
-  Square highlight_from = Square::None,
-  Square highlight_to = Square::None
+  const Position& position, Square highlight_from = Square::None, Square highlight_to = Square::None
 );
 std::string render_metadata(const Position& position);
 std::string render_stats(const search::Report& report, Move best_move = Move());

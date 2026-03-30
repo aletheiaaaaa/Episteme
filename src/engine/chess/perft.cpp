@@ -1,4 +1,4 @@
-#include "perft.h"
+#include "perft.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -24,9 +24,7 @@ uint64_t perft(Position& position, int32_t depth) {
 
     uint64_t king_bb = position.piece_bb(PieceType::King, position.NTM());
 
-    if (!is_square_attacked(
-          sq_from_idx(std::countr_zero(king_bb)), position, position.STM()
-        )) {
+    if (!is_square_attacked(sq_from_idx(std::countr_zero(king_bb)), position, position.STM())) {
       move_count += perft(position, depth - 1);
     }
 
@@ -48,9 +46,8 @@ void split_perft(Position& position, int32_t depth) {
 
     uint64_t king_bb = position.piece_bb(PieceType::King, position.NTM());
 
-    bool illegal = is_square_attacked(
-      sq_from_idx(std::countr_zero(king_bb)), position, position.STM()
-    );
+    bool illegal =
+      is_square_attacked(sq_from_idx(std::countr_zero(king_bb)), position, position.STM());
 
     uint64_t nodes = 0;
     if (!illegal) {
@@ -77,8 +74,8 @@ void time_perft(Position& position, int32_t depth) {
     double seconds = duration.count() / 1000.0;
     double nps = nodes / (seconds > 0 ? seconds : 1.0);
 
-    std::cout << "info depth " << i << " nodes " << nodes << " nps "
-              << static_cast<uint64_t>(nps) << "\n";
+    std::cout << "info depth " << i << " nodes " << nodes << " nps " << static_cast<uint64_t>(nps)
+              << "\n";
   }
 }
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../chess/move.h"
-#include "../chess/position.h"
-#include "../search/search.h"
+#include "../chess/move.hpp"
+#include "../chess/position.hpp"
+#include "../search/search.hpp"
 
 namespace episteme::uci {
 void show_position(const Position& position, int32_t eval_cp);

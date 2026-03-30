@@ -1,24 +1,17 @@
-#include "move.h"
+#include "move.hpp"
 
-#include "position.h"
+#include "position.hpp"
 
 namespace episteme {
 Move::Move() : move_data(0x0000) {};
 
 Move::Move(uint16_t data) : move_data(data) {};
 
-Move::Move(
-  Square from_square,
-  Square to_square,
-  MoveType move_type,
-  PromoPiece promo_piece
-)
-    : move_data(
-        static_cast<uint16_t>(from_square) |
-        (static_cast<uint16_t>(to_square) << 6) |
-        (static_cast<uint16_t>(move_type) << 12) |
-        (static_cast<uint16_t>(promo_piece) << 14)
-      ) {};
+Move::Move(Square from_square, Square to_square, MoveType move_type, PromoPiece promo_piece)
+  : move_data(
+      static_cast<uint16_t>(from_square) | (static_cast<uint16_t>(to_square) << 6) |
+      (static_cast<uint16_t>(move_type) << 12) | (static_cast<uint16_t>(promo_piece) << 14)
+    ) {};
 
 std::string Move::to_string() const {
   auto square_to_string = [](Square sq) -> std::string {
@@ -29,8 +22,7 @@ std::string Move::to_string() const {
     return std::string() + file + rank;
   };
 
-  std::string move_str =
-    square_to_string(from_square()) + square_to_string(to_square());
+  std::string move_str = square_to_string(from_square()) + square_to_string(to_square());
 
   if (move_type() == MoveType::Promotion) {
     char promo_char = '\0';
@@ -100,8 +92,7 @@ std::string Move::to_PGN(const Position& position) const {
 
   // Check if destination square is occupied (capture)
   Piece target_piece = position.mailbox(to);
-  bool is_capture =
-    (target_piece != Piece::None) || (type == MoveType::EnPassant);
+  bool is_capture = (target_piece != Piece::None) || (type == MoveType::EnPassant);
 
   // For pawn captures, add the file letter
   if (piece_type_moved == PieceType::Pawn && is_capture) {

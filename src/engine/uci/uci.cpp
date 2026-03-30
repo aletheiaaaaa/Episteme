@@ -1,10 +1,10 @@
-#include "uci.h"
+#include "uci.hpp"
 
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
 
-#include "../../utils/tunable.h"
+#include "../../utils/tunable.hpp"
 
 namespace episteme::uci {
 using namespace tunable;
@@ -23,9 +23,7 @@ auto uci() {
 
 auto pretty_cmd() { set_pretty(true); }
 
-auto setoption(
-  const std::string& args, search::Config& cfg, search::Engine& engine
-) {
+auto setoption(const std::string& args, search::Config& cfg, search::Engine& engine) {
   std::istringstream iss(args);
   std::string name, option_name, value, option_value;
 
@@ -132,9 +130,7 @@ auto ucinewgame(search::Config& cfg, search::Engine& engine) {
   show_position(empty_position, 0);
 }
 
-auto eval(search::Config& cfg, search::Engine& engine) {
-  engine.eval(cfg.position);
-}
+auto eval(search::Config& cfg, search::Engine& engine) { engine.eval(cfg.position); }
 
 auto bench(const std::string& args, search::Config& cfg) {
   int depth = (args.empty()) ? 10 : std::stoi(args);
@@ -184,9 +180,7 @@ auto print_tunables() {
   }
 }
 
-auto fen(search::Config& cfg) {
-  std::cout << cfg.position.to_FEN() << std::endl;
-}
+auto fen(search::Config& cfg) { std::cout << cfg.position.to_FEN() << std::endl; }
 
 int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine) {
   std::string keyword = cmd.substr(0, cmd.find(' '));

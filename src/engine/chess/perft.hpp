@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "movegen.h"
+#include "movegen.hpp"
 
 namespace episteme {
 Position fen_to_position(const std::string& FEN);
