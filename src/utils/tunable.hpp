@@ -15,7 +15,7 @@
 #define TUNABLE_INT(name, default_value, min_value, max_value, step_value, setter) \
   inline Tunable<int> name{#name, default_value, min_value, max_value, step_value, setter};
 
-namespace episteme::tunable {
+namespace cadence::tunable {
 static std::array<std::array<std::string, 2>, 2> type_names = {
   {{"string", "spin"}, {"float", "int"}}
 };
@@ -139,4 +139,4 @@ TUNABLE_INT(lmr_cut_node_mult, 256, 0, 1024, 16, nullptr)
 TUNABLE_INT(lmr_hist_mult, 128, 0, 1024, 8, nullptr)
 TUNABLE_INT(lmr_corrplexity_mult, 64, 0, 1024, 8, nullptr)
 TUNABLE_INT(lmr_corrplexity_thresh, 250, 0, 1024, 16, nullptr)
-}  // namespace episteme::tunable
+}  // namespace cadence::tunable

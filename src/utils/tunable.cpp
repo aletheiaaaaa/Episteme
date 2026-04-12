@@ -1,6 +1,6 @@
 #include "tunable.hpp"
 
-namespace episteme::tunable {
+namespace cadence::tunable {
 std::array<std::array<int16_t, 64>, 64> lmr_table_noisy{};
 std::array<std::array<int16_t, 64>, 64> lmr_table_quiet{};
 
@@ -18,4 +18,4 @@ void init_lmr_table() {
     }
   }
 }
-}  // namespace episteme::tunable
+}  // namespace cadence::tunable

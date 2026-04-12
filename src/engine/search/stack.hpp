@@ -4,7 +4,7 @@
 
 #include "../chess/move.hpp"
 
-namespace episteme::stack {
+namespace cadence::stack {
 constexpr int32_t INF = 1048576;
 
 struct Entry {
@@ -26,4 +26,4 @@ class Stack {
   private:
   std::array<Entry, 1024> stack{};
 };
-}  // namespace episteme::stack
+}  // namespace cadence::stack

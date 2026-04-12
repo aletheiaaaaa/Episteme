@@ -6,13 +6,13 @@
 
 #include "../../utils/tunable.hpp"
 
-namespace episteme::uci {
+namespace cadence::uci {
 using namespace tunable;
 
 auto uci() {
   set_pretty(false);
 
-  std::cout << "id name Episteme \nid author aletheia\n";
+  std::cout << "id name cadence \nid author aletheia\n";
   std::cout << "option name Hash type spin default 32 min 1 max 128\n";
   std::cout << "option name Threads type spin default 1 min 1 max 1\n";
   for (int i = 0; i < Tunable<int>::registry.size(); i++) {
@@ -230,4 +230,4 @@ int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine) {
 
   return 0;
 }
-}  // namespace episteme::uci
+}  // namespace cadence::uci

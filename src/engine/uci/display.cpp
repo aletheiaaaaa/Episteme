@@ -8,7 +8,7 @@
 
 #include "pretty.hpp"
 
-namespace episteme::uci {
+namespace cadence::uci {
 using namespace std::chrono;
 
 namespace {
@@ -182,4 +182,4 @@ void cleanup_pretty() {
   }
 }
 }  // namespace
-}  // namespace episteme::uci
+}  // namespace cadence::uci

@@ -6,7 +6,7 @@
 
 #include "position.hpp"
 
-namespace episteme {
+namespace cadence {
 struct MoveList {
   std::array<Move, 256> list;
   size_t count = 0;
@@ -255,4 +255,4 @@ void generate_castles(MoveList& move_list, const Position& position, bool is_kin
 
 void generate_all_moves(MoveList& move_list, const Position& position);
 void generate_all_captures(MoveList& move_list, const Position& position);
-}  // namespace episteme
+}  // namespace cadence

@@ -16,7 +16,7 @@
 #include "time.hpp"
 #include "ttable.hpp"
 
-namespace episteme::search {
+namespace cadence::search {
 using namespace std::chrono;
 
 // BEGIN MOVEPICKING //
@@ -267,4 +267,4 @@ class Engine {
 
   std::vector<std::unique_ptr<Worker>> workers;
 };
-}  // namespace episteme::search
+}  // namespace cadence::search

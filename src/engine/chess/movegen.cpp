@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace episteme {
+namespace cadence {
 std::array<uint64_t, 64> fill_king_attacks() {
   std::array<uint64_t, 64> king_attacks;
   king_attacks.fill(0);
@@ -446,4 +446,4 @@ void generate_all_captures(MoveList& move_list, const Position& position) {
     generate_en_passant(move_list, position);
   }
 }
-}  // namespace episteme
+}  // namespace cadence

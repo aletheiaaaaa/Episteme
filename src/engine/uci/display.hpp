@@ -4,7 +4,7 @@
 #include "../chess/position.hpp"
 #include "../search/search.hpp"
 
-namespace episteme::uci {
+namespace cadence::uci {
 void show_position(const Position& position, int32_t eval_cp);
 
 void on_start(const Position& position);
@@ -16,4 +16,4 @@ void set_engine(search::Engine* engine);
 void clear();
 void set_pretty(bool enabled);
 bool is_pretty();
-}  // namespace episteme::uci
+}  // namespace cadence::uci

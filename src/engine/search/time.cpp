@@ -1,6 +1,6 @@
 #include "time.hpp"
 
-namespace episteme::time {
+namespace cadence::time {
 using namespace std::chrono;
 
 bool Limiter::time_approaching(Move move, uint64_t nodes) {
@@ -38,4 +38,4 @@ void Limiter::start() {
     soft_limit = std::max(1, hard_limit * 5 / 8);
   }
 }
-}  // namespace episteme::time
+}  // namespace cadence::time

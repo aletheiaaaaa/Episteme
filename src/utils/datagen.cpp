@@ -11,7 +11,7 @@
 #include <thread>
 #include <vector>
 
-namespace episteme::datagen {
+namespace cadence::datagen {
 using namespace std::chrono;
 
 void play_random(Position& position, int32_t num_moves) {
@@ -203,4 +203,4 @@ void run(Parameters& params) {
   std::cout << "Concatenated " << concats << " files\n";
   std::cout << "Datagen complete.\n";
 }
-}  // namespace episteme::datagen
+}  // namespace cadence::datagen

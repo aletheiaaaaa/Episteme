@@ -1,6 +1,6 @@
 #include "format.hpp"
 
-namespace episteme::datagen {
+namespace cadence::datagen {
 Format::Format() { moves.reserve(256); }
 
 void Format::init(const Position& position) {
@@ -35,4 +35,4 @@ size_t Format::write(std::ostream& stream, uint8_t wdl) {
 
   return moves.size() + 1;
 }
-}  // namespace episteme::datagen
+}  // namespace cadence::datagen

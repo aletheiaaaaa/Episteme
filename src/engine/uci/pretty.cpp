@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace episteme::pretty {
+namespace cadence::pretty {
 DisplayState state;
 
 const std::vector<std::string> LOGO_GRADIENT = {
@@ -59,8 +59,7 @@ void show_banner() {
     "",
     "",
     "",
-    BOLD + std::string("EPISTEME"),
-    "Chess Engine",
+    BOLD + std::string("Cadence"),
     "",
     "by aletheia • v1.0",
     "",
@@ -144,10 +143,10 @@ std::string render_square_line(
     if (bg) ss << bg;
     ss << "   ";
 
-    if (piece != Piece::None && episteme::color(piece) == Color::White) {
+    if (piece != Piece::None && cadence::color(piece) == Color::White) {
       ss << BOLD << ALMOST_WHITE << piece_symbol << RESET;
       if (bg) ss << bg;
-    } else if (piece != Piece::None && episteme::color(piece) == Color::Black) {
+    } else if (piece != Piece::None && cadence::color(piece) == Color::Black) {
       ss << BOLD << DEEP_INDIGO << piece_symbol << RESET;
       if (bg) ss << bg;
     } else {
@@ -414,7 +413,7 @@ void render_two_column_layout(
   while (std::getline(board_stream, line)) board_lines.push_back(line);
   while (std::getline(panel_stream, line)) panel_lines.push_back(line);
 
-  std::cout << "\n" << BOLD << LIGHT_LAVENDER << "  EPISTEME" << RESET;
+  std::cout << "\n" << BOLD << LIGHT_LAVENDER << "  cadence" << RESET;
   if (!header_suffix.empty()) {
     std::cout << LIGHT_LAVENDER << " - " << header_suffix << RESET;
   }
@@ -504,4 +503,4 @@ void clear() {
   state.last_report = {};
   state.pv_history.clear();
 }
-}  // namespace episteme::pretty
+}  // namespace cadence::pretty

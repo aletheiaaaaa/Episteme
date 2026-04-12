@@ -3,7 +3,7 @@
 #include <chrono>
 #include <iostream>
 
-namespace episteme {
+namespace cadence {
 Position fen_to_position(const std::string& FEN) {
   Position position;
   position.from_FEN(FEN);
@@ -79,4 +79,4 @@ void time_perft(Position& position, int32_t depth) {
   }
 }
 
-}  // namespace episteme
+}  // namespace cadence

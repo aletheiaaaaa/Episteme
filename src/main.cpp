@@ -1,7 +1,7 @@
 #include "engine/uci/display.hpp"
 #include "engine/uci/uci.hpp"
 
-using namespace episteme;
+using namespace cadence;
 
 int main(int argc, char* argv[]) {
   hash::init();

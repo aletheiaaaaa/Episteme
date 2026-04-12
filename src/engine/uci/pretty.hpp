@@ -6,7 +6,7 @@
 #include "../chess/position.hpp"
 #include "../search/search.hpp"
 
-namespace episteme::pretty {
+namespace cadence::pretty {
 constexpr const char* DEEP_INDIGO = "\033[38;5;63m";
 constexpr const char* MED_INDIGO = "\033[38;5;105m";
 constexpr const char* LIGHT_LAVENDER = "\033[38;5;189m";
@@ -72,4 +72,4 @@ std::string get_piece_symbol(Piece piece);
 std::string format_number(uint64_t num);
 std::string format_time(int64_t ms);
 std::string format_score(int32_t score);
-}  // namespace episteme::pretty
+}  // namespace cadence::pretty

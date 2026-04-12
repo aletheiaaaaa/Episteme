@@ -7,7 +7,7 @@
 #include "../../chess/move.hpp"
 #include "../../chess/position.hpp"
 
-namespace episteme::eval::nn {
+namespace cadence::eval::nn {
 constexpr int16_t QA = 255;
 constexpr int16_t QB = 64;
 constexpr int16_t EVAL_SCALE = 400;
@@ -48,4 +48,4 @@ class NNUE {
   alignas(ALIGNMENT) L1Weights l1_weights;
   alignas(ALIGNMENT) L1Bias l1_bias;
 };
-}  // namespace episteme::eval::nn
+}  // namespace cadence::eval::nn

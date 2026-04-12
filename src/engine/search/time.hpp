@@ -6,7 +6,7 @@
 
 #include "../chess/move.hpp"
 
-namespace episteme::time {
+namespace cadence::time {
 using namespace std::chrono;
 
 struct Config {
@@ -52,4 +52,4 @@ class Limiter {
   Move prev_best{};
   int32_t move_stability = 0;
 };
-}  // namespace episteme::time
+}  // namespace cadence::time

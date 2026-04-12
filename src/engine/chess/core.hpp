@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <unordered_map>
 
-namespace episteme {
+namespace cadence {
 constexpr std::array<int32_t, 7> piece_vals = {100, 300, 300, 500, 900, -1, 0};
 
 constexpr uint8_t WHITE_KINGSIDE = 1;
@@ -251,4 +251,4 @@ static const std::unordered_map<char, std::pair<PieceType, Color>> piece_map = {
 [[nodiscard]] inline uint64_t shift_north(uint64_t bitboard) { return (bitboard & ~RANK_8) << 8; }
 
 [[nodiscard]] inline uint64_t shift_south(uint64_t bitboard) { return (bitboard & ~RANK_1) >> 8; }
-}  // namespace episteme
+}  // namespace cadence

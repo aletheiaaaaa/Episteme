@@ -8,7 +8,7 @@
 #include "../chess/move.hpp"
 #include "stack.hpp"
 
-namespace episteme::hist {
+namespace cadence::hist {
 using namespace tunable;
 
 constexpr int MAX_HIST = 16384;
@@ -253,4 +253,4 @@ class Table {
 
   std::array<std::array<std::array<Entry, 6>, 64>, 12> qs_capt_hist{};
 };
-}  // namespace episteme::hist
+}  // namespace cadence::hist

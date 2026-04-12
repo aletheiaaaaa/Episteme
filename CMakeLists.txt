@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(episteme CXX)
+project(cadence CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,7 +11,7 @@ endif()
 
 set(DEFAULT_NET "512_v0_05.bin" CACHE STRING "Default network file")
 set(EVALFILE "${DEFAULT_NET}" CACHE STRING "Evaluation file to use")
-set(NETS_REPO "https://github.com/aletheiaaaaa/episteme-nets")
+set(NETS_REPO "https://github.com/aletheiaaaaa/cadence-nets")
 get_filename_component(NET_FILENAME "${DEFAULT_NET}" NAME)
 set(NET_URL "${NETS_REPO}/releases/latest/download/${NET_FILENAME}")
 
@@ -101,29 +101,29 @@ endif()
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
-add_executable(episteme ${SOURCES})
+add_executable(cadence ${SOURCES})
 
-target_compile_options(episteme PRIVATE ${ARCH_FLAGS})
+target_compile_options(cadence PRIVATE ${ARCH_FLAGS})
 
-target_compile_definitions(episteme PRIVATE
+target_compile_definitions(cadence PRIVATE
   ${ARCH_DEFS}
   EVALFILE="${CMAKE_SOURCE_DIR}/${EVALFILE}"
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  target_compile_options(episteme PRIVATE -g -O0)
+  target_compile_options(cadence PRIVATE -g -O0)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    target_compile_options(episteme PRIVATE -fsanitize=address,undefined)
-    target_link_options(episteme PRIVATE -fsanitize=address,undefined)
+    target_compile_options(cadence PRIVATE -fsanitize=address,undefined)
+    target_link_options(cadence PRIVATE -fsanitize=address,undefined)
   endif()
 else()
-  target_compile_options(episteme PRIVATE -O3)
+  target_compile_options(cadence PRIVATE -O3)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(episteme PRIVATE -flto=auto)
-    target_link_options(episteme PRIVATE -flto=auto)
+    target_compile_options(cadence PRIVATE -flto=auto)
+    target_link_options(cadence PRIVATE -flto=auto)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    target_compile_options(episteme PRIVATE -flto)
-    target_link_options(episteme PRIVATE -flto)
+    target_compile_options(cadence PRIVATE -flto)
+    target_link_options(cadence PRIVATE -flto)
   endif()
 endif()
 

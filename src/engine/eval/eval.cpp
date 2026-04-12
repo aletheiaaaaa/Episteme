@@ -4,7 +4,7 @@
 
 INCBIN(NNUE, EVALFILE);
 
-namespace episteme::eval {
+namespace cadence::eval {
 using namespace nn;
 using namespace tunable;
 
@@ -114,4 +114,4 @@ bool SEE(const Position& position, const Move& move, int32_t threshold) {
 
   return position.STM() == win;
 }
-}  // namespace episteme::eval
+}  // namespace cadence::eval
