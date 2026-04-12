@@ -9,7 +9,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(DEFAULT_NET "512_v0_05.bin" CACHE STRING "Default network file")
+set(DEFAULT_NET "anthracite_1024_16.bin" CACHE STRING "Default network file")
 set(EVALFILE "${DEFAULT_NET}" CACHE STRING "Evaluation file to use")
 set(NETS_REPO "https://github.com/aletheiaaaaa/episteme-nets")
 get_filename_component(NET_FILENAME "${DEFAULT_NET}" NAME)

@@ -19,7 +19,7 @@ auto setoption(const std::string& args, search::Config& cfg, search::Engine& eng
     std::cout << "invalid command" << std::endl;
   }
 
-  if (option_name == "Ha.hpp") {
+  if (option_name == "Hash") {
     cfg.hash_size = std::stoi(option_value);
   } else if (option_name == "Threads") {
     cfg.num_threads = std::stoi(option_value);
@@ -76,7 +76,7 @@ auto go(const std::string& args, search::Config& cfg, search::Engine& engine) {
       cfg.params.inc[0] = std::stoi(token);
     else if (token == "binc" && iss >> token)
       cfg.params.inc[1] = std::stoi(token);
-    else if (token == "dep.hpp" && iss >> token)
+    else if (token == "depth" && iss >> token)
       cfg.params.depth = std::stoi(token);
     else if (token == "nodes" && iss >> token)
       cfg.params.nodes = std::stoi(token);
@@ -129,7 +129,7 @@ auto datagen(const std::string& args) {
       params.num_games = std::stoi(token);
     else if (token == "threads" && iss >> token)
       params.num_threads = std::stoi(token);
-    else if (token == "ha.hpp" && iss >> token)
+    else if (token == "hash" && iss >> token)
       params.hash_size = std::stoi(token);
     else if (token == "dir" && iss >> token)
       params.out_dir = token;
