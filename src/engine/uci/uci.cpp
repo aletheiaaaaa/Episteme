@@ -159,7 +159,7 @@ int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine) {
   else if (keyword == "quit")
     std::exit(0);
 
-  else if (keyword == "ben.hpp") {
+  else if (keyword == "bench") {
     size_t space = cmd.find(' ');
     std::string arg = (space != std::string::npos) ? cmd.substr(space + 1) : "";
     bench(arg, cfg);
