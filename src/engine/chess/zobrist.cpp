@@ -2,7 +2,7 @@
 
 #include <random>
 
-namespace cadence::hash {
+namespace episteme::hash {
 std::array<uint64_t, 768> piecesquares;
 std::array<uint64_t, 16> castling_rights;
 std::array<uint64_t, 8> ep_files;
@@ -43,4 +43,4 @@ void init() {
 
   stm = dist(gen);
 }
-}  // namespace cadence::hash
+}  // namespace episteme::hash

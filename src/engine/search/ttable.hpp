@@ -5,7 +5,7 @@
 
 #include "../chess/move.hpp"
 
-namespace cadence::tt {
+namespace episteme::tt {
 enum class NodeType : uint8_t { PVNode, AllNode, CutNode, None };
 
 struct Entry {
@@ -63,4 +63,4 @@ class Table {
   private:
   std::vector<Entry> ttable;
 };
-}  // namespace cadence::tt
+}  // namespace episteme::tt

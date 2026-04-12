@@ -9,7 +9,7 @@
 #include "display.hpp"
 #include "pretty.hpp"
 
-namespace cadence::uci {
+namespace episteme::uci {
 int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine);
 
 auto uci();
@@ -25,4 +25,4 @@ auto perft(const std::string& args, search::Config& cfg);
 auto datagen(const std::string& args);
 auto print_tunables();
 auto fen(search::Config& cfg);
-}  // namespace cadence::uci
+}  // namespace episteme::uci

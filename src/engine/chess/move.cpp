@@ -2,7 +2,7 @@
 
 #include "position.hpp"
 
-namespace cadence {
+namespace episteme {
 Move::Move() : move_data(0x0000) {};
 
 Move::Move(uint16_t data) : move_data(data) {};
@@ -134,4 +134,4 @@ std::string Move::to_PGN(const Position& position) const {
 
   return pgn;
 }
-}  // namespace cadence
+}  // namespace episteme

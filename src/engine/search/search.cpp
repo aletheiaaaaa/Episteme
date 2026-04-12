@@ -7,7 +7,7 @@
 #include "../../utils/tunable.hpp"
 #include "../uci/display.hpp"
 
-namespace cadence::search {
+namespace episteme::search {
 using namespace std::chrono;
 using namespace tunable;
 
@@ -777,4 +777,4 @@ void Engine::eval(Position& position) {
 }
 
 void Engine::bench(int depth) { workers[0]->bench(depth); }
-}  // namespace cadence::search
+}  // namespace episteme::search

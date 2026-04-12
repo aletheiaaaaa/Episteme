@@ -7,7 +7,7 @@
 
 #include "../engine/chess/position.hpp"
 
-namespace cadence::datagen {
+namespace episteme::datagen {
 class U4 {
   public:
   U4(uint8_t& value, bool high) : value{value}, high{high} {};
@@ -101,4 +101,4 @@ class Format {
   PackedBoard initial{};
   std::vector<ScoredMove> moves;
 };
-}  // namespace cadence::datagen
+}  // namespace episteme::datagen

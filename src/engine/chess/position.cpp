@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-namespace cadence {
+namespace episteme {
 Position::Position() : history{}, current{} { history.reserve(1024); }
 
 void Position::from_FEN(const std::string& FEN) {
@@ -606,4 +606,4 @@ Move from_UCI(const Position& position, const std::string& move) {
   else
     return Move(src, dst);
 }
-}  // namespace cadence
+}  // namespace episteme

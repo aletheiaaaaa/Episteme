@@ -2,7 +2,7 @@
 
 #include <random>
 
-namespace cadence::eval::nn {
+namespace episteme::eval::nn {
 Accumulator NNUE::update_accumulator(
   const Position& position, const Move& move, Accumulator accum
 ) const {
@@ -130,4 +130,4 @@ void NNUE::init_random() {
 
   l1_bias = dist(gen);
 }
-}  // namespace cadence::eval::nn
+}  // namespace episteme::eval::nn

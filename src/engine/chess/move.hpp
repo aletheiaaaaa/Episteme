@@ -5,7 +5,7 @@
 
 #include "core.hpp"
 
-namespace cadence {
+namespace episteme {
 enum class MoveType : uint16_t { Normal, EnPassant, Castling, Promotion, None };
 
 enum class PromoPiece : uint16_t { Knight, Bishop, Rook, Queen, None };
@@ -69,4 +69,4 @@ class Move {
   private:
   uint16_t move_data;
 };
-}  // namespace cadence
+}  // namespace episteme

@@ -8,7 +8,7 @@
 #include "move.hpp"
 #include "zobrist.hpp"
 
-namespace cadence {
+namespace episteme {
 static constexpr std::array<Piece, 64> empty_mailbox() {
   std::array<Piece, 64> mailbox{};
   mailbox.fill(Piece::None);
@@ -135,4 +135,4 @@ class Position {
 };
 
 Move from_UCI(const Position& position, const std::string& move);
-}  // namespace cadence
+}  // namespace episteme

@@ -8,7 +8,7 @@
 #include "../engine/search/search.hpp"
 #include "format.hpp"
 
-namespace cadence::datagen {
+namespace episteme::datagen {
 constexpr int32_t WIN_SCORE_MIN = 2500;
 constexpr int32_t WIN_PLIES_MIN = 5;
 constexpr int32_t DRAW_SCORE_MAX = 2;
@@ -31,4 +31,4 @@ struct Parameters {
 void play_random(Position& position, int32_t num_moves);
 void game_loop(const Parameters& params, std::ostream& stream, uint32_t id);
 void run(Parameters& params);
-}  // namespace cadence::datagen
+}  // namespace episteme::datagen

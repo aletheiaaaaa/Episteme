@@ -2,7 +2,7 @@
 
 #include "common.hpp"
 
-namespace cadence::eval::nn {
+namespace episteme::eval::nn {
 #if !(defined(USE_AVX512) && defined(USE_VNNI)) && !defined(USE_AVX2) && !defined(USE_SSSE3)
 int32_t NNUE::l1_forward(const Accumulator& accum, Color stm) const {
   const auto& accum_stm = (!color_idx(stm)) ? (accum.white) : (accum.black);
@@ -26,4 +26,4 @@ int32_t NNUE::l1_forward(const Accumulator& accum, Color stm) const {
   return out;
 }
 #endif
-}  // namespace cadence::eval::nn
+}  // namespace episteme::eval::nn
