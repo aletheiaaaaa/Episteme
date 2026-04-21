@@ -10,8 +10,6 @@ namespace episteme::uci {
 using namespace tunable;
 
 auto uci() {
-  set_pretty(false);
-
   std::cout << "id name Episteme \nid author aletheia\n";
   std::cout << "option name Hash type spin default 32 min 1 max 128\n";
   std::cout << "option name Threads type spin default 1 min 1 max 1\n";
@@ -20,8 +18,6 @@ auto uci() {
   }
   std::cout << "uciok\n";
 }
-
-auto pretty_cmd() { set_pretty(true); }
 
 auto setoption(const std::string& args, search::Config& cfg, search::Engine& engine) {
   std::istringstream iss(args);
@@ -82,8 +78,6 @@ auto position(const std::string& args, search::Config& cfg) {
   }
 
   cfg.position = position;
-
-  show_position(position, 0);
 }
 
 auto go(const std::string& args, search::Config& cfg, search::Engine& engine) {
@@ -115,7 +109,6 @@ auto go(const std::string& args, search::Config& cfg, search::Engine& engine) {
 
   engine.reset_go();
   engine.update_params(cfg.params);
-  set_engine(&engine);
   engine.run(cfg.position);
 }
 
@@ -123,11 +116,6 @@ auto ucinewgame(search::Config& cfg, search::Engine& engine) {
   cfg.params = {};
   cfg.position = {};
   engine.reset_game();
-
-  clear();
-
-  Position empty_position;
-  show_position(empty_position, 0);
 }
 
 auto eval(search::Config& cfg, search::Engine& engine) { engine.eval(cfg.position); }
@@ -187,8 +175,6 @@ int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine) {
 
   if (keyword == "uci")
     uci();
-  else if (keyword == "pretty")
-    pretty_cmd();
   else if (keyword == "setoption")
     setoption(cmd.substr(cmd.find(" ") + 1), cfg, engine);
   else if (keyword == "isready")
@@ -200,9 +186,6 @@ int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine) {
   else if (keyword == "ucinewgame")
     ucinewgame(cfg, engine);
   else if (keyword == "quit") {
-    if (is_pretty()) {
-      std::cout << "\033[2J\033[3J\033[H" << "\033[?25h" << std::flush;
-    }
     std::exit(0);
   }
 

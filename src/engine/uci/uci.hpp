@@ -6,14 +6,11 @@
 #include "../chess/perft.hpp"
 #include "../chess/position.hpp"
 #include "../search/search.hpp"
-#include "display.hpp"
-#include "pretty.hpp"
 
 namespace episteme::uci {
 int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine);
 
 auto uci();
-auto pretty_cmd();
 auto setoption(const std::string& args, search::Config& cfg, search::Engine& engine);
 auto isready();
 auto position(const std::string& args, search::Config& cfg);

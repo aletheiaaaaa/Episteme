@@ -5,7 +5,6 @@
 
 #include "../../utils/bench.hpp"
 #include "../../utils/tunable.hpp"
-#include "../uci/display.hpp"
 
 namespace episteme::search {
 using namespace std::chrono;
@@ -125,15 +124,6 @@ int32_t Worker::search(
     if (limiter.time_exceeded()) {
       should_stop = true;
       return 0;
-    }
-
-    if (live_update_callback) {
-      auto now = steady_clock::now();
-      auto elapsed = duration_cast<milliseconds>(now - last_update_time).count();
-      if (elapsed >= 50) {
-        live_update_callback(nodes.load(), exploring);
-        last_update_time = now;
-      }
     }
   }
 
@@ -347,17 +337,6 @@ int32_t Worker::search(
       explored_quiets.add(move);
     else
       explored_noisies.add(move);
-
-    if (live_update_callback) {
-      if (ply == 0) {
-        exploring.clear();
-      }
-
-      if (ply < exploring.moves.size()) {
-        exploring.moves[ply] = move;
-        exploring.length = ply + 1;
-      }
-    }
 
     if (limiter.nodes_exceeded(nodes)) {
       should_stop = true;
@@ -708,8 +687,6 @@ void Engine::run(Position& position) {
   limiter.set_config(cfg);
   limiter.start();
 
-  uci::on_start(position);
-
   for (int depth = 1; depth <= params.depth; depth++) {
     Parameters iter_params = params;
     iter_params.depth = depth;
@@ -724,7 +701,6 @@ void Engine::run(Position& position) {
     total_time += report.time;
 
     report.hashfull = ttable.hashfull();
-    uci::on_update(report);
 
     if (
       limiter.time_approaching(report.line.moves[0], workers[0]->node_count()) ||
@@ -736,7 +712,6 @@ void Engine::run(Position& position) {
   Move best = last_report.line.moves[0];
 
   last_report.hashfull = ttable.hashfull();
-  uci::on_completion(last_report, best);
 }
 
 ScoredMove Engine::datagen_search(Position& position) {
@@ -773,7 +748,6 @@ ScoredMove Engine::datagen_search(Position& position) {
 
 void Engine::eval(Position& position) {
   int32_t eval_cp = workers[0]->eval(position);
-  uci::show_position(position, eval_cp);
 }
 
 void Engine::bench(int depth) { workers[0]->bench(depth); }

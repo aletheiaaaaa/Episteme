@@ -107,14 +107,12 @@ struct Config {
 
 class Worker {
   public:
-  using LiveUpdateCallback = std::function<void(uint64_t nodes, const Line& exploring)>;
 
   Worker(tt::Table& ttable, time::Limiter& limiter)
     : ttable(ttable),
       limiter(limiter),
       nodes(0),
-      should_stop(false),
-      live_update_callback(nullptr) {};
+      should_stop(false) {};
 
   inline void reset_accum() {
     accumulator = {};
@@ -135,12 +133,6 @@ class Worker {
   [[nodiscard]] inline bool stopped() { return should_stop; }
 
   [[nodiscard]] inline uint64_t node_count() { return nodes; }
-
-  inline void set_live_update_callback(LiveUpdateCallback callback) {
-    live_update_callback = std::move(callback);
-  }
-
-  inline void clear_live_update_callback() { live_update_callback = nullptr; }
 
   ScoredMove score_move(
     const Position& position,
@@ -201,8 +193,6 @@ class Worker {
   int16_t seldepth;
 
   Line exploring;
-  LiveUpdateCallback live_update_callback;
-  steady_clock::time_point last_update_time;
 
   std::atomic<uint64_t> nodes;
   std::atomic<bool> should_stop;
