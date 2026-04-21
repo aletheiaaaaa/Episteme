@@ -2,13 +2,10 @@
 
 #include <algorithm>
 #include <atomic>
-#include <chrono>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <optional>
 
-#include "../../utils/datagen.hpp"
 #include "../chess/movegen.hpp"
 #include "../eval/eval.hpp"
 #include "history.hpp"

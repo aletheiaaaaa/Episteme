@@ -3,14 +3,12 @@
 #include <cstdint>
 #include <vector>
 
-#include "../chess/move.hpp"
-
 namespace episteme::tt {
 enum class NodeType : uint8_t { PVNode, AllNode, CutNode, None };
 
 struct Entry {
   uint64_t hash = 0;
-  Move move = {};
+  uint16_t move_data = {};
   bool tt_PV = false;
   int32_t score = 0;
   uint8_t depth = 0;

@@ -1,10 +1,14 @@
 #include "search.hpp"
 
+#include <atomic>
 #include <cassert>
 #include <print>
+#include <chrono>
 
 #include "../../utils/bench.hpp"
 #include "../../utils/tunable.hpp"
+#include "../eval/eval.hpp"
+#include "ttable.hpp"
 
 namespace episteme::search {
 using namespace std::chrono;
@@ -56,7 +60,7 @@ ScoredMove Worker::score_move(
 ) {
   ScoredMove scored_move{.move = move};
 
-  if (tt_entry.move == move) {
+  if (tt_entry.move_data == move.data()) {
     scored_move.score = 10000000;
     return scored_move;
   }
@@ -243,7 +247,7 @@ int32_t Worker::search(
     }
   }
 
-  if (!stack[ply].excluded.data() && cut_node && !tt_entry.move.data() && depth >= 6) depth--;
+  if (!stack[ply].excluded.data() && cut_node && !tt_entry.move_data && depth >= 6) depth--;
 
   ScoredList move_list = generate_scored_moves(position, tt_entry, ply);
   int32_t best = -INF;
@@ -298,7 +302,7 @@ int32_t Worker::search(
 
     int16_t extension = 0;
     if (
-      ply > 0 && depth >= 8 && move == tt_entry.move && !stack[ply].excluded &&
+      ply > 0 && depth >= 8 && move == tt_entry.move_data && !stack[ply].excluded &&
       tt_entry.depth >= depth - 3 && tt_entry.node_type != tt::NodeType::AllNode
     ) {
       const int32_t new_beta = std::max(-INF + 1, tt_entry.score - depth * 2);
@@ -472,7 +476,7 @@ int32_t Worker::search(
   if (!stack[ply].excluded) {
     ttable.add(
       {.hash = position.full_hash(),
-       .move = PV.moves[0],
+       .move_data = PV.moves[0].data(),
        .tt_PV = is_PV || tt_entry.tt_PV,
        .score = best,
        .depth = static_cast<uint8_t>(depth),
@@ -593,7 +597,7 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
 
   ttable.add(
     {.hash = position.full_hash(),
-     .move = PV.moves[0],
+     .move_data = PV.moves[0].data(),
      .tt_PV = is_PV || tt_entry.tt_PV,
      .score = best,
      .depth = 0,
