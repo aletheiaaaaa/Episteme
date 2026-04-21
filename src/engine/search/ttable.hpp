@@ -28,7 +28,7 @@ struct Packed {
     move_data(entry.move.data()),
     score(entry.score),
     depth(entry.depth),
-    misc(static_cast<uint8_t>(entry.node_type) & (static_cast<uint8_t>(entry.tt_PV) << 2)) {}
+    misc(static_cast<uint8_t>(entry.node_type) & (static_cast<uint8_t>(entry.tt_PV) << 2) & 0b111) {}
 };
 
 class Table {
