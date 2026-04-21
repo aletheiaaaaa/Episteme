@@ -476,7 +476,7 @@ int32_t Worker::search(
 
   if (!stack[ply].excluded) {
     ttable.add(
-      {.hash = position.full_hash() >> 48,
+      {.hash = position.full_hash(),
        .move = PV.moves[0],
        .score = best,
        .depth = static_cast<uint8_t>(depth),
