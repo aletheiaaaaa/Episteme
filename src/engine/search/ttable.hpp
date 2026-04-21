@@ -34,14 +34,19 @@ struct Packed {
 class Table {
   public:
   Table(uint32_t size) {
-    const size_t entries = (size * 1024 * 1024) / sizeof(Entry);
-    ttable.resize(entries);
+    const size_t num_entries = (size * 1024 * 1024) / sizeof(Entry);
+    const size_t num_hashes = (size * 1024 * 1024) / sizeof(uint64_t);
+    ttable.resize(num_entries);
+    hashes.resize(num_hashes);
   }
 
   void resize(uint32_t size) {
     ttable.clear();
-    const size_t entries = (size * 1024 * 1024) / sizeof(Entry);
-    ttable.resize(entries);
+    hashes.clear();
+    const size_t num_entries = (size * 1024 * 1024) / sizeof(Entry);
+    const size_t num_hashes = (size * 1024 * 1024) / sizeof(uint64_t);
+    ttable.resize(num_entries);
+    hashes.resize(num_hashes);
   }
 
   void reset() { std::fill(ttable.begin(), ttable.end(), Entry()); }
