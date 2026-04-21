@@ -3,16 +3,34 @@
 #include <cstdint>
 #include <vector>
 
+#include "../chess/move.hpp"
+
 namespace episteme::tt {
 enum class NodeType : uint8_t { PVNode, AllNode, CutNode, None };
 
 struct Entry {
-  uint64_t hash = 0;
-  uint16_t move_data = {};
-  bool tt_PV = false;
-  int32_t score = 0;
+  uint16_t hash = 0;
+  Move move = {};
+  int16_t score = 0;
   uint8_t depth = 0;
-  NodeType node_type = NodeType::None;
+  NodeType node_type = NodeType::None; 
+  bool tt_PV = false;
+};
+
+struct Packed {
+  uint16_t hash;
+  uint16_t move_data;
+  int16_t score;
+  uint8_t depth;
+  uint8_t misc;
+
+  Packed() = default;
+  Packed(const Entry& entry) :
+    hash(entry.hash),
+    move_data(entry.move.data()),
+    score(entry.score),
+    depth(entry.depth),
+    misc(static_cast<uint8_t>(entry.node_type) & (static_cast<uint8_t>(entry.tt_PV) << 2)) {}
 };
 
 class Table {
@@ -33,11 +51,11 @@ class Table {
     );
   }
 
-  Entry probe(uint64_t hash) {
-    uint64_t index = table_index(hash);
+  Entry probe(uint16_t hash) {
+    uint16_t index = table_index(hash);
     Entry entry;
 
-    if (ttable[index].hash == hash) entry = ttable[index];
+    if (ttable[index].hash == hash) entry = (*this)[index];
 
     return entry;
   }
@@ -58,7 +76,18 @@ class Table {
     return (filled * 1000) / sample_size;
   }
 
+  Entry operator[](int idx) const {
+    return Entry{
+      .hash = ttable[idx].hash,
+      .move = Move(ttable[idx].move_data),
+      .score = ttable[idx].score,
+      .depth = ttable[idx].depth,
+      .node_type = NodeType(ttable[idx].misc & 0b11),
+      .tt_PV = static_cast<bool>((ttable[idx].misc >> 2) & 0b1)
+    };
+  }
+
   private:
-  std::vector<Entry> ttable;
+  std::vector<Packed> ttable;
 };
 }  // namespace episteme::tt
