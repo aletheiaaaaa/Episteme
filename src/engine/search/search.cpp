@@ -217,7 +217,7 @@ int32_t Worker::search(
     )
       return (static_eval + beta) / 2;
 
-    if (!is_PV && depth >= 3) {
+    if (cut_node && depth >= 3) {
       const uint64_t no_pawns_or_kings = position.color_bb(position.STM()) &
                                          ~position.piece_bb(PieceType::King, position.STM()) &
                                          ~position.piece_bb(PieceType::Pawn, position.STM());
@@ -225,8 +225,6 @@ int32_t Worker::search(
       if (no_pawns_or_kings) {
         Line null{};
         int16_t reduction = 3 + improving;
-
-        reduction += cut_node;
 
         stack[ply].move = Move();
         stack[ply].piece = Piece::None;
