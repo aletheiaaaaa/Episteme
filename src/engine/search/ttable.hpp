@@ -13,7 +13,7 @@ struct Entry {
   Move move = {};
   int32_t score = 0;
   uint8_t depth = 0;
-  NodeType node_type = NodeType::None; 
+  NodeType node_type = NodeType::None;
   bool tt_PV = false;
 };
 
@@ -24,32 +24,33 @@ struct Packed {
   uint8_t misc;
 
   Packed() = default;
-  Packed(const Entry& entry) :
-    move_data(entry.move.data()),
-    score(entry.score),
-    depth(entry.depth),
-    misc(static_cast<uint8_t>(entry.node_type) & (static_cast<uint8_t>(entry.tt_PV) << 2) & 0b111) {}
+  Packed(const Entry& entry)
+    : move_data(entry.move.data()),
+      score(entry.score),
+      depth(entry.depth),
+      misc(static_cast<uint8_t>(entry.node_type) | (static_cast<uint8_t>(entry.tt_PV) << 2)) {}
 };
 
 class Table {
   public:
   Table(uint32_t size) {
     const size_t num_entries = (size * 1024 * 1024) / sizeof(Entry);
-    const size_t num_hashes = (size * 1024 * 1024) / sizeof(uint64_t);
     ttable.resize(num_entries);
-    hashes.resize(num_hashes);
+    hashes.resize(num_entries);
   }
 
   void resize(uint32_t size) {
     ttable.clear();
     hashes.clear();
     const size_t num_entries = (size * 1024 * 1024) / sizeof(Entry);
-    const size_t num_hashes = (size * 1024 * 1024) / sizeof(uint64_t);
     ttable.resize(num_entries);
-    hashes.resize(num_hashes);
+    hashes.resize(num_entries);
   }
 
-  void reset() { std::fill(ttable.begin(), ttable.end(), Entry()); }
+  void reset() {
+    std::fill(ttable.begin(), ttable.end(), Packed{});
+    std::fill(hashes.begin(), hashes.end(), 0);
+  }
 
   uint64_t table_index(uint64_t hash) {
     return static_cast<uint64_t>(
@@ -58,7 +59,7 @@ class Table {
   }
 
   Entry probe(uint16_t hash) {
-    uint16_t index = table_index(hash);
+    uint64_t index = table_index(hash);
     Entry entry;
 
     if (hashes[index] == hash) entry = (*this)[index];
