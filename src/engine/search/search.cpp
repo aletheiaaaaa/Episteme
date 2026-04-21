@@ -701,12 +701,6 @@ void Engine::run(Position& position) {
 
     report.hashfull = ttable.hashfull();
 
-    if (
-      limiter.time_approaching(report.line.moves[0], workers[0]->node_count()) ||
-      limiter.time_exceeded()
-    )
-      break;
-
     bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
     int32_t display_score = is_mate ? (1 + MATE - std::abs(report.score)) / 2 : report.score;
     int64_t nps = report.time > 0 ? 1000 * report.nodes / report.time : 0;
@@ -726,6 +720,12 @@ void Engine::run(Position& position) {
       display_score,
       pv
     );
+
+    if (
+      limiter.time_approaching(report.line.moves[0], workers[0]->node_count()) ||
+      limiter.time_exceeded()
+    )
+      break;
   }
 
   Move best = last_report.line.moves[0];
