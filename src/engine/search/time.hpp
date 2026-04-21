@@ -20,20 +20,20 @@ struct Config {
 
 class Limiter {
   public:
-  inline void set_config(const Config& config) { this->config = config; }
+  void set_config(const Config& config) { this->config = config; }
 
-  inline bool time_exceeded() const {
+  bool time_exceeded() const {
     return (hard_limit != -1) &&
            duration_cast<milliseconds>(steady_clock::now() - start_time).count() >= hard_limit;
   }
 
-  inline bool nodes_approaching(uint64_t nodes) const {
+  bool nodes_approaching(uint64_t nodes) const {
     return config.soft_nodes && nodes >= config.soft_nodes;
   }
 
-  inline bool nodes_exceeded(uint64_t nodes) const { return config.nodes && nodes >= config.nodes; }
+  bool nodes_exceeded(uint64_t nodes) const { return config.nodes && nodes >= config.nodes; }
 
-  inline void update_node_count(Move move, uint64_t count) {
+  void update_node_count(Move move, uint64_t count) {
     node_counts[move.data() & 0x0FFF] += count;
   }
 

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <print>
 
 #include "../../utils/bench.hpp"
 #include "../../utils/tunable.hpp"
@@ -667,7 +668,7 @@ void Worker::bench(int depth) {
   }
 
   int64_t nps = elapsed.count() > 0 ? 1000 * total / elapsed.count() : 0;
-  std::cout << total << " nodes " << nps << " nps\n";
+  std::println("{} nodes {} nps", total, nps);
 }
 
 void Engine::run(Position& position) {
@@ -680,7 +681,6 @@ void Engine::run(Position& position) {
 
   Report last_report;
   int32_t last_score = 0;
-  int32_t total_time = 0;
 
   reset_nodes();
 
@@ -698,7 +698,6 @@ void Engine::run(Position& position) {
 
     last_report = report;
     last_score = report.score;
-    total_time += report.time;
 
     report.hashfull = ttable.hashfull();
 
@@ -707,11 +706,30 @@ void Engine::run(Position& position) {
       limiter.time_exceeded()
     )
       break;
+
+    bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
+    int32_t display_score = is_mate ? (1 + MATE - std::abs(report.score)) / 2 : report.score;
+    int64_t nps = report.nodes * 1000 / report.time;
+
+    std::string pv;
+    for (size_t i = 0; i < report.line.length; ++i) {
+      pv += report.line.moves[i].to_string() + ' ';
+    }
+    std::println(
+      "info depth {} time {} nodes {} nps {} hashfull {} score {} {} pv {}",
+      report.depth,
+      report.time,
+      report.nodes,
+      nps,
+      report.hashfull,
+      is_mate ? "mate" : "cp",
+      display_score,
+      pv
+    );
   }
 
   Move best = last_report.line.moves[0];
-
-  last_report.hashfull = ttable.hashfull();
+  std::println("bestmove {}", best.to_string());
 }
 
 ScoredMove Engine::datagen_search(Position& position) {
@@ -748,6 +766,7 @@ ScoredMove Engine::datagen_search(Position& position) {
 
 void Engine::eval(Position& position) {
   int32_t eval_cp = workers[0]->eval(position);
+  std::println("info score cp {}", eval_cp);
 }
 
 void Engine::bench(int depth) { workers[0]->bench(depth); }

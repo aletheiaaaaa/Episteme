@@ -4,7 +4,7 @@
 #include <cmath>
 #include <exception>
 #include <functional>
-#include <iostream>
+#include <print>
 #include <string>
 #include <vector>
 
@@ -32,7 +32,6 @@ struct Tunable {
   F max;
   F step;
   std::function<void()> callable;
-
   static inline std::vector<Tunable<F>*> registry;
 
   Tunable(
@@ -45,18 +44,15 @@ struct Tunable {
   )
     : value(default_value) {
     if (default_value < min_value || default_value > max_value) {
-      std::cerr << "out of range for tunable " << name << std::endl;
+      std::println(stderr, "out of range for tunable {}", name);
     }
-
     if constexpr (Enabled) {
       this->name = std::move(name);
       min = min_value;
       max = max_value;
       step = step_value;
       callable = func;
-
       registry.push_back(this);
-
       if (callable) callable();
     }
   }
@@ -64,10 +60,9 @@ struct Tunable {
   void set(F new_value) {
     if constexpr (Enabled) {
       if (new_value < min || new_value > max) {
-        std::cerr << "Value out of range for tunable " << name << std::endl;
+        std::println(stderr, "Value out of range for tunable {}", name);
         return;
       }
-
       value = new_value;
       if (callable) callable();
     }
@@ -76,8 +71,8 @@ struct Tunable {
   void print(bool use_type = false) const {
     if constexpr (Enabled) {
       constexpr bool is_int = std::is_same_v<F, int>;
-      std::cout << "option name " << name << " type " << type_names[use_type][is_int] << " default "
-                << value << " min " << min << " max " << max << "\n";
+      std::println("option name {} type {} default {} min {} max {}",
+        name, type_names[use_type][is_int], value, min, max);
     }
   }
 

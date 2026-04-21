@@ -19,9 +19,9 @@ struct Entry {
 
 class Stack {
   public:
-  inline void reset() { stack.fill(Entry()); }
+  void reset() { stack.fill(Entry()); }
 
-  [[nodiscard]] inline Entry& operator[](int idx) { return stack[idx]; }
+  Entry& operator[](int idx) { return stack[idx]; }
 
   private:
   std::array<Entry, 1024> stack{};

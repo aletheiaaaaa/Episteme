@@ -1,8 +1,8 @@
 #include "uci.hpp"
 
 #include <cstdlib>
-#include <iostream>
 #include <sstream>
+#include <print>
 
 #include "../../utils/tunable.hpp"
 
@@ -10,13 +10,13 @@ namespace episteme::uci {
 using namespace tunable;
 
 auto uci() {
-  std::cout << "id name Episteme \nid author aletheia\n";
-  std::cout << "option name Hash type spin default 32 min 1 max 128\n";
-  std::cout << "option name Threads type spin default 1 min 1 max 1\n";
+  std::println("id name Episteme \nid author aletheia");
+  std::println("option name Hash type spin default 32 min 1 max 128");
+  std::println("option name Threads type spin default 1 min 1 max 1");
   for (int i = 0; i < Tunable<int>::registry.size(); i++) {
     Tunable<int>::registry[i]->print();
   }
-  std::cout << "uciok\n";
+  std::println("uciok");
 }
 
 auto setoption(const std::string& args, search::Config& cfg, search::Engine& engine) {
@@ -26,7 +26,7 @@ auto setoption(const std::string& args, search::Config& cfg, search::Engine& eng
   iss >> name >> option_name >> value >> option_value;
 
   if (name != "name" || value != "value") {
-    std::cout << "invalid command" << std::endl;
+    std::println("invalid command");
   }
 
   if (option_name == "Hash") {
@@ -41,13 +41,13 @@ auto setoption(const std::string& args, search::Config& cfg, search::Engine& eng
       }
     }
   } else {
-    std::cout << "invalid option" << std::endl;
+    std::println("invalid option");
   }
 
   engine.set_hash(cfg);
 }
 
-auto isready() { std::cout << "readyok" << std::endl; }
+auto isready() { std::println("readyok"); }
 
 auto position(const std::string& args, search::Config& cfg) {
   Position position;
@@ -68,7 +68,7 @@ auto position(const std::string& args, search::Config& cfg) {
     position.from_FEN(fen);
 
   } else {
-    std::cout << "invalid command\n";
+    std::println("invalid command");
   }
 
   if (iss >> token && token == "moves") {
@@ -102,7 +102,7 @@ auto go(const std::string& args, search::Config& cfg, search::Engine& engine) {
     else if (token == "movetime" && iss >> token)
       cfg.params.move_time = std::stoi(token);
     else {
-      std::cout << "invalid command\n";
+      std::println("invalid command");
       break;
     }
   }
@@ -155,7 +155,7 @@ auto datagen(const std::string& args) {
     else if (token == "dir" && iss >> token)
       params.out_dir = token;
     else {
-      std::cout << "invalid command" << std::endl;
+      std::println("invalid command");
     }
   }
 
@@ -168,7 +168,7 @@ auto print_tunables() {
   }
 }
 
-auto fen(search::Config& cfg) { std::cout << cfg.position.to_FEN() << std::endl; }
+auto fen(search::Config& cfg) { std::println("{}", cfg.position.to_FEN()); }
 
 int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine) {
   std::string keyword = cmd.substr(0, cmd.find(' '));
@@ -209,7 +209,7 @@ int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine) {
     fen(cfg);
 
   else
-    std::cout << "invalid command\n";
+    std::println("invalid command");
 
   return 0;
 }

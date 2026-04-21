@@ -27,18 +27,18 @@ struct ScoredMove {
 };
 
 struct ScoredList : public MoveList {
-  inline void add(const ScoredMove& move) {
+  void add(const ScoredMove& move) {
     list[count] = move;
     count++;
   }
 
-  inline void clear() { count = 0; }
+  void clear() { count = 0; }
 
-  inline void swap(int src_idx, int dst_idx) {
+  void swap(int src_idx, int dst_idx) {
     std::iter_swap(list.begin() + src_idx, list.begin() + dst_idx);
   }
 
-  inline ScoredMove operator[](size_t idx) const { return list[idx]; }
+  ScoredMove operator[](size_t idx) const { return list[idx]; }
 
   std::array<ScoredMove, 256> list;
 };
@@ -60,16 +60,16 @@ struct Line {
   size_t length = 0;
   std::array<Move, MAX_SEARCH_PLY + 1> moves = {};
 
-  inline void clear() { length = 0; }
+  void clear() { length = 0; }
 
-  inline void append(Move move) { moves[length++] = move; }
+  void append(Move move) { moves[length++] = move; }
 
-  inline void append(const Line& line) {
+  void append(const Line& line) {
     std::copy(&line.moves[0], &line.moves[line.length], &moves[length]);
     length += line.length;
   }
 
-  inline void update_line(Move move, const Line& line) {
+  void update_line(Move move, const Line& line) {
     clear();
     append(move);
     append(line);
@@ -114,25 +114,25 @@ class Worker {
       nodes(0),
       should_stop(false) {};
 
-  inline void reset_accum() {
+  void reset_accum() {
     accumulator = {};
     accum_history.clear();
     accum_history.shrink_to_fit();
   }
 
-  inline void reset_history() { history.reset(); }
+  void reset_history() { history.reset(); }
 
-  inline void reset_nodes() { nodes = 0; }
+  void reset_nodes() { nodes = 0; }
 
-  inline void reset_seldepth() { seldepth = 0; }
+  void reset_seldepth() { seldepth = 0; }
 
-  inline void reset_stop() { should_stop = false; }
+  void reset_stop() { should_stop = false; }
 
-  inline void reset_stack() { stack.reset(); }
+  void reset_stack() { stack.reset(); }
 
-  [[nodiscard]] inline bool stopped() { return should_stop; }
+  bool stopped() { return should_stop; }
 
-  [[nodiscard]] inline uint64_t node_count() { return nodes; }
+  uint64_t node_count() { return nodes; }
 
   ScoredMove score_move(
     const Position& position,
@@ -149,13 +149,13 @@ class Worker {
     std::optional<int32_t> ply = std::nullopt
   );
 
-  inline ScoredList generate_scored_moves(
+  ScoredList generate_scored_moves(
     const Position& position, const tt::Entry& tt_entry, int32_t ply
   ) {
     return generate_scored_targets(position, generate_all_moves, tt_entry, ply);
   }
 
-  inline ScoredList generate_scored_captures(const Position& position, const tt::Entry& tt_entry) {
+  ScoredList generate_scored_captures(const Position& position, const tt::Entry& tt_entry) {
     return generate_scored_targets(position, generate_all_captures, tt_entry);
   }
 
@@ -208,30 +208,30 @@ class Engine {
     }
   }
 
-  inline void set_hash(search::Config& cfg) { ttable.resize(cfg.hash_size); }
+  void set_hash(search::Config& cfg) { ttable.resize(cfg.hash_size); }
 
-  inline void update_params(search::Parameters& new_params) { this->params = new_params; }
+  void update_params(search::Parameters& new_params) { this->params = new_params; }
 
-  inline void reset_nodes() {
+  void reset_nodes() {
     for (auto& worker : workers) {
       worker->reset_nodes();
     }
   }
 
-  inline void reset_seldepth() {
+  void reset_seldepth() {
     for (auto& worker : workers) {
       worker->reset_seldepth();
     }
   }
 
-  inline void reset_go() {
+  void reset_go() {
     for (auto& worker : workers) {
       worker->reset_stop();
       worker->reset_stack();
     }
   }
 
-  inline void reset_game() {
+  void reset_game() {
     ttable.reset();
     for (auto& worker : workers) {
       worker->reset_history();
@@ -246,7 +246,7 @@ class Engine {
   void eval(Position& position);
   void bench(int depth);
 
-  inline Worker* get_worker(size_t idx = 0) {
+  Worker* get_worker(size_t idx = 0) {
     return (idx < workers.size()) ? workers[idx].get() : nullptr;
   }
 

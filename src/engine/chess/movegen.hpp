@@ -66,17 +66,17 @@ const std::array<uint64_t, 64> BISHOP_MAGICS = {
   0x140000010020010, 0x880804204004140,  0x880602004450158,  0x3a00802502504e0,
 };
 
-[[nodiscard]] std::array<uint64_t, 64> fill_king_attacks();
-[[nodiscard]] std::array<uint64_t, 64> fill_knight_attacks();
-[[nodiscard]] std::array<uint64_t, 64> fill_bishop_masks();
-[[nodiscard]] std::array<uint64_t, 64> fill_rook_masks();
+std::array<uint64_t, 64> fill_king_attacks();
+std::array<uint64_t, 64> fill_knight_attacks();
+std::array<uint64_t, 64> fill_bishop_masks();
+std::array<uint64_t, 64> fill_rook_masks();
 
-[[nodiscard]] uint64_t slow_bishop_attacks(Square square, uint64_t blockers);
-[[nodiscard]] uint64_t slow_rook_attacks(Square square, uint64_t blockers);
+uint64_t slow_bishop_attacks(Square square, uint64_t blockers);
+uint64_t slow_rook_attacks(Square square, uint64_t blockers);
 
-[[nodiscard]] bool is_square_attacked(Square square, const Position& position, Color stm);
+bool is_square_attacked(Square square, const Position& position, Color stm);
 
-[[nodiscard]] inline bool in_check(const Position& position, Color color) {
+inline bool in_check(const Position& position, Color color) {
   uint64_t king_bb = position.piece_bb(PieceType::King, color);
   return is_square_attacked(sq_from_idx(std::countr_zero(king_bb)), position, flip(color));
 };
@@ -84,11 +84,11 @@ const std::array<uint64_t, 64> BISHOP_MAGICS = {
 extern const std::array<uint64_t, 64> KING_ATTACKS;
 extern const std::array<uint64_t, 64> KNIGHT_ATTACKS;
 
-[[nodiscard]] inline uint64_t get_king_attacks(Square square) {
+inline uint64_t get_king_attacks(Square square) {
   return KING_ATTACKS[sq_idx(square)];
 }
 
-[[nodiscard]] inline uint64_t get_knight_attacks(Square square) {
+inline uint64_t get_knight_attacks(Square square) {
   return KNIGHT_ATTACKS[sq_idx(square)];
 }
 
@@ -100,13 +100,13 @@ extern std::pair<uint64_t, std::array<uint64_t, 1 << NUM_BITS>> find_magics(
   Square square, std::array<uint64_t, 64> MASKS, F slow_attacks
 );
 
-[[nodiscard]] inline std::pair<uint64_t, std::array<uint64_t, 4096>> find_rook_magics(
+inline std::pair<uint64_t, std::array<uint64_t, 4096>> find_rook_magics(
   Square square
 ) {
   return find_magics<12>(square, ROOK_MASKS, slow_rook_attacks);
 }
 
-[[nodiscard]] inline std::pair<uint64_t, std::array<uint64_t, 512>> find_bishop_magics(
+inline std::pair<uint64_t, std::array<uint64_t, 512>> find_bishop_magics(
   Square square
 ) {
   return find_magics<9>(square, BISHOP_MASKS, slow_bishop_attacks);
@@ -118,7 +118,7 @@ extern const std::array<std::array<uint64_t, 4096>, 64> ROOK_ATTACKS;
 extern const std::array<std::array<uint64_t, 512>, 64> BISHOP_ATTACKS;
 
 template <size_t NUM_BITS>
-[[nodiscard]] inline uint64_t get_slider_attacks(
+inline uint64_t get_slider_attacks(
   Square square,
   const Position& position,
   const std::array<uint64_t, 64>& MASKS,
@@ -133,15 +133,15 @@ template <size_t NUM_BITS>
   return ATTACKS[sq][idx];
 }
 
-[[nodiscard]] inline uint64_t get_rook_attacks(Square square, const Position& position) {
+inline uint64_t get_rook_attacks(Square square, const Position& position) {
   return get_slider_attacks<12>(square, position, ROOK_MASKS, ROOK_MAGICS, ROOK_ATTACKS);
 }
 
-[[nodiscard]] inline uint64_t get_bishop_attacks(Square square, const Position& position) {
+inline uint64_t get_bishop_attacks(Square square, const Position& position) {
   return get_slider_attacks<9>(square, position, BISHOP_MASKS, BISHOP_MAGICS, BISHOP_ATTACKS);
 }
 
-[[nodiscard]] inline uint64_t get_queen_attacks(Square square, const Position& position) {
+inline uint64_t get_queen_attacks(Square square, const Position& position) {
   return (get_bishop_attacks(square, position) | get_rook_attacks(square, position));
 }
 
@@ -160,31 +160,31 @@ inline uint64_t get_slider_attacks_direct(
   return ATTACKS[sq][idx];
 }
 
-[[nodiscard]] inline uint64_t get_rook_attacks_direct(Square square, uint64_t blockers) {
+inline uint64_t get_rook_attacks_direct(Square square, uint64_t blockers) {
   return get_slider_attacks_direct<12>(square, blockers, ROOK_MASKS, ROOK_MAGICS, ROOK_ATTACKS);
 }
 
-[[nodiscard]] inline uint64_t get_bishop_attacks_direct(Square square, uint64_t blockers) {
+inline uint64_t get_bishop_attacks_direct(Square square, uint64_t blockers) {
   return get_slider_attacks_direct<9>(
     square, blockers, BISHOP_MASKS, BISHOP_MAGICS, BISHOP_ATTACKS
   );
 }
 
-[[nodiscard]] inline uint64_t get_queen_attacks_direct(Square square, uint64_t blockers) {
+inline uint64_t get_queen_attacks_direct(Square square, uint64_t blockers) {
   return (get_bishop_attacks_direct(square, blockers) | get_rook_attacks_direct(square, blockers));
 }
 
 extern PawnAttacks get_pawn_attacks_helper(const Position& position, Color stm, bool is_pseudo);
 
-[[nodiscard]] inline PawnAttacks get_pawn_attacks(const Position& position, Color stm) {
+inline PawnAttacks get_pawn_attacks(const Position& position, Color stm) {
   return get_pawn_attacks_helper(position, stm, false);
 }
 
-[[nodiscard]] inline PawnAttacks get_pawn_pseudo_attacks(const Position& position, Color stm) {
+inline PawnAttacks get_pawn_pseudo_attacks(const Position& position, Color stm) {
   return get_pawn_attacks_helper(position, stm, true);
 }
 
-[[nodiscard]] inline uint64_t get_pawn_sq_attacks(Square square, Color stm) {
+inline uint64_t get_pawn_sq_attacks(Square square, Color stm) {
   uint64_t sq_bb = (uint64_t)1 << sq_idx(square);
 
   if (stm == Color::White)
