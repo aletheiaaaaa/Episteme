@@ -11,7 +11,7 @@ enum class NodeType : uint8_t { PVNode, AllNode, CutNode, None };
 struct Entry {
   uint64_t hash = 0;
   Move move = {};
-  int16_t score = 0;
+  int32_t score = 0;
   uint8_t depth = 0;
   NodeType node_type = NodeType::None; 
   bool tt_PV = false;
@@ -19,7 +19,7 @@ struct Entry {
 
 struct Packed {
   uint16_t move_data;
-  int16_t score;
+  int32_t score;
   uint8_t depth;
   uint8_t misc;
 
