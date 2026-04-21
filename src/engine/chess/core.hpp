@@ -33,89 +33,29 @@ constexpr uint64_t RANK_8 = 0xFF00000000000000;
 
 constexpr size_t DOUBLE_PUSH = 16;
 
+// clang-format off
 enum class Square : uint16_t {
-  A1,
-  B1,
-  C1,
-  D1,
-  E1,
-  F1,
-  G1,
-  H1,
-  A2,
-  B2,
-  C2,
-  D2,
-  E2,
-  F2,
-  G2,
-  H2,
-  A3,
-  B3,
-  C3,
-  D3,
-  E3,
-  F3,
-  G3,
-  H3,
-  A4,
-  B4,
-  C4,
-  D4,
-  E4,
-  F4,
-  G4,
-  H4,
-  A5,
-  B5,
-  C5,
-  D5,
-  E5,
-  F5,
-  G5,
-  H5,
-  A6,
-  B6,
-  C6,
-  D6,
-  E6,
-  F6,
-  G6,
-  H6,
-  A7,
-  B7,
-  C7,
-  D7,
-  E7,
-  F7,
-  G7,
-  H7,
-  A8,
-  B8,
-  C8,
-  D8,
-  E8,
-  F8,
-  G8,
-  H8,
+  A1, B1, C1, D1, E1, F1, G1, H1,
+  A2, B2, C2, D2, E2, F2, G2, H2,
+  A3, B3, C3, D3, E3, F3, G3, H3,
+  A4, B4, C4, D4, E4, F4, G4, H4,
+  A5, B5, C5, D5, E5, F5, G5, H5,
+  A6, B6, C6, D6, E6, F6, G6, H6,
+  A7, B7, C7, D7, E7, F7, G7, H7,
+  A8, B8, C8, D8, E8, F8, G8, H8,
   None
 };
 
 enum class Piece : uint16_t {
-  WhitePawn,
-  BlackPawn,
-  WhiteKnight,
-  BlackKnight,
-  WhiteBishop,
-  BlackBishop,
-  WhiteRook,
-  BlackRook,
-  WhiteQueen,
-  BlackQueen,
-  WhiteKing,
-  BlackKing,
+  WhitePawn,   BlackPawn,
+  WhiteKnight, BlackKnight,
+  WhiteBishop, BlackBishop,
+  WhiteRook,   BlackRook,
+  WhiteQueen,  BlackQueen,
+  WhiteKing,   BlackKing,
   None
 };
+// clang-format on
 
 enum class PieceType : uint16_t { Pawn, Knight, Bishop, Rook, Queen, King, None };
 
@@ -192,17 +132,11 @@ inline PieceType piece_type(Piece piece) {
   return static_cast<PieceType>(static_cast<uint16_t>(piece) >> 1);
 };
 
-inline Color color(Piece piece) {
-  return static_cast<Color>(static_cast<uint16_t>(piece) & 0b1);
-};
+inline Color color(Piece piece) { return static_cast<Color>(static_cast<uint16_t>(piece) & 0b1); };
 
-inline Color flip(Color color) {
-  return static_cast<Color>(!static_cast<bool>(color));
-}
+inline Color flip(Color color) { return static_cast<Color>(!static_cast<bool>(color)); }
 
-inline Square flip(Square square) {
-  return static_cast<Square>(static_cast<int16_t>(square) ^ 56);
-}
+inline Square flip(Square square) { return static_cast<Square>(static_cast<int16_t>(square) ^ 56); }
 
 inline Piece piece_type_with_color(PieceType piece_type, Color color) {
   return static_cast<Piece>(2 * static_cast<uint16_t>(piece_type) + static_cast<uint16_t>(color));
@@ -228,13 +162,9 @@ inline uint16_t sq_idx(Square square) { return static_cast<uint16_t>(square); }
 
 inline uint16_t piece_idx(Piece piece) { return static_cast<uint16_t>(piece); }
 
-inline uint16_t piece_type_idx(PieceType piece_type) {
-  return static_cast<uint16_t>(piece_type);
-}
+inline uint16_t piece_type_idx(PieceType piece_type) { return static_cast<uint16_t>(piece_type); }
 
-inline uint16_t piece_type_idx(Piece piece) {
-  return static_cast<uint16_t>(piece) >> 1;
-}
+inline uint16_t piece_type_idx(Piece piece) { return static_cast<uint16_t>(piece) >> 1; }
 
 inline uint16_t color_idx(Color color) { return static_cast<uint16_t>(color); }
 

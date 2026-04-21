@@ -88,9 +88,7 @@ class Position {
     return current.allowed_castles.rooks[color_idx(stm)];
   }
 
-  Piece mailbox(Square square) const {
-    return current.mailbox[sq_idx(square)];
-  }
+  Piece mailbox(Square square) const { return current.mailbox[sq_idx(square)]; }
 
   Piece mailbox(int index) const { return current.mailbox[index]; }
 

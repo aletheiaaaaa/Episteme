@@ -26,7 +26,7 @@ struct ScoredMove {
   int32_t score = 0;
 };
 
-struct ScoredList : public MoveList {
+struct ScoredList {
   void add(const ScoredMove& move) {
     list[count] = move;
     count++;
@@ -41,6 +41,7 @@ struct ScoredList : public MoveList {
   ScoredMove operator[](size_t idx) const { return list[idx]; }
 
   std::array<ScoredMove, 256> list;
+  size_t count = 0;
 };
 
 void pick_move(ScoredList& scored_list, int start);
@@ -107,12 +108,8 @@ struct Config {
 
 class Worker {
   public:
-
   Worker(tt::Table& ttable, time::Limiter& limiter)
-    : ttable(ttable),
-      limiter(limiter),
-      nodes(0),
-      should_stop(false) {};
+    : ttable(ttable), limiter(limiter), nodes(0), should_stop(false) {};
 
   void reset_accum() {
     accumulator = {};

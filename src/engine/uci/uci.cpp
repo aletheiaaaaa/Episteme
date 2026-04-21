@@ -1,8 +1,8 @@
 #include "uci.hpp"
 
 #include <cstdlib>
-#include <sstream>
 #include <print>
+#include <sstream>
 
 #include "../../utils/tunable.hpp"
 

@@ -71,8 +71,14 @@ struct Tunable {
   void print(bool use_type = false) const {
     if constexpr (Enabled) {
       constexpr bool is_int = std::is_same_v<F, int>;
-      std::println("option name {} type {} default {} min {} max {}",
-        name, type_names[use_type][is_int], value, min, max);
+      std::println(
+        "option name {} type {} default {} min {} max {}",
+        name,
+        type_names[use_type][is_int],
+        value,
+        min,
+        max
+      );
     }
   }
 

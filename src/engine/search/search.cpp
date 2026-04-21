@@ -1,7 +1,6 @@
 #include "search.hpp"
 
 #include <cassert>
-#include <iostream>
 #include <print>
 
 #include "../../utils/bench.hpp"

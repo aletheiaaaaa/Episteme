@@ -4,9 +4,11 @@ namespace episteme::time {
 using namespace std::chrono;
 
 bool Limiter::time_approaching(Move move, uint64_t nodes) {
-  float nodes_prop = nodes > 0
-    ? static_cast<float>(node_counts[move.data() & 0x0FFF].load(std::memory_order_relaxed)) / static_cast<float>(nodes)
-    : 0.0f;
+  float nodes_prop =
+    nodes > 0
+      ? static_cast<float>(node_counts[move.data() & 0x0FFF].load(std::memory_order_relaxed)) /
+          static_cast<float>(nodes)
+      : 0.0f;
   float node_scale = 2.5f - nodes_prop * 1.5f;
 
   if (move != prev_best) {

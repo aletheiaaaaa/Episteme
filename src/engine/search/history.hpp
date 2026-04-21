@@ -30,9 +30,7 @@ class Table {
     return quiet_hist[color_idx(stm)][sq_idx(move.from_square())][sq_idx(move.to_square())].value;
   }
 
-  int32_t get_cont_hist(
-    stack::Stack& stack, Piece piece, Move move, int16_t ply
-  ) {
+  int32_t get_cont_hist(stack::Stack& stack, Piece piece, Move move, int16_t ply) {
     int32_t value = 0;
 
     auto get_hist = [&](int16_t diff) {
@@ -89,9 +87,7 @@ class Table {
       .value;
   }
 
-  int32_t get_pawn_hist(
-    Color stm, uint64_t pawn_hash, Piece piece, Move move
-  ) {
+  int32_t get_pawn_hist(Color stm, uint64_t pawn_hash, Piece piece, Move move) {
     return pawn_hist[color_idx(stm)][pawn_hash % 1024][piece_type_idx(piece)]
                     [sq_idx(move.to_square())]
                       .value;
@@ -149,9 +145,7 @@ class Table {
     );
   }
 
-  void update_cont_hist(
-    stack::Stack& stack, Piece piece, Move move, int16_t bonus, int16_t ply
-  ) {
+  void update_cont_hist(stack::Stack& stack, Piece piece, Move move, int16_t bonus, int16_t ply) {
     auto update_hist = [&](int16_t diff) {
       if (ply > diff - 1) {
         Move prev_move = stack[ply - diff].move;
@@ -180,9 +174,7 @@ class Table {
     );
   }
 
-  void update_pawn_hist(
-    Color stm, uint64_t pawn_hash, Piece piece, Move move, int16_t bonus
-  ) {
+  void update_pawn_hist(Color stm, uint64_t pawn_hash, Piece piece, Move move, int16_t bonus) {
     pawn_hist[color_idx(stm)][pawn_hash % 1024][piece_type_idx(piece)][sq_idx(move.to_square())]
       .update(bonus, MAX_HIST);
   }

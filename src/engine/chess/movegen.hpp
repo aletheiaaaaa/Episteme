@@ -11,20 +11,20 @@ struct MoveList {
   std::array<Move, 256> list;
   size_t count = 0;
 
-  inline void add(const Move& move) {
+  virtual void add(const Move& move) {
     list[count] = move;
     count++;
   }
 
-  inline void clear() { count = 0; }
+  void clear() { count = 0; }
 
-  inline void shuffle() {
+  void shuffle() {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::shuffle(list.begin(), list.begin() + count, gen);
   }
 
-  inline Move operator[](size_t idx) const { return list[idx]; }
+  Move operator[](size_t idx) const { return list[idx]; }
 };
 
 struct PawnAttacks {
@@ -84,13 +84,9 @@ inline bool in_check(const Position& position, Color color) {
 extern const std::array<uint64_t, 64> KING_ATTACKS;
 extern const std::array<uint64_t, 64> KNIGHT_ATTACKS;
 
-inline uint64_t get_king_attacks(Square square) {
-  return KING_ATTACKS[sq_idx(square)];
-}
+inline uint64_t get_king_attacks(Square square) { return KING_ATTACKS[sq_idx(square)]; }
 
-inline uint64_t get_knight_attacks(Square square) {
-  return KNIGHT_ATTACKS[sq_idx(square)];
-}
+inline uint64_t get_knight_attacks(Square square) { return KNIGHT_ATTACKS[sq_idx(square)]; }
 
 extern const std::array<uint64_t, 64> ROOK_MASKS;
 extern const std::array<uint64_t, 64> BISHOP_MASKS;
@@ -100,15 +96,11 @@ extern std::pair<uint64_t, std::array<uint64_t, 1 << NUM_BITS>> find_magics(
   Square square, std::array<uint64_t, 64> MASKS, F slow_attacks
 );
 
-inline std::pair<uint64_t, std::array<uint64_t, 4096>> find_rook_magics(
-  Square square
-) {
+inline std::pair<uint64_t, std::array<uint64_t, 4096>> find_rook_magics(Square square) {
   return find_magics<12>(square, ROOK_MASKS, slow_rook_attacks);
 }
 
-inline std::pair<uint64_t, std::array<uint64_t, 512>> find_bishop_magics(
-  Square square
-) {
+inline std::pair<uint64_t, std::array<uint64_t, 512>> find_bishop_magics(Square square) {
   return find_magics<9>(square, BISHOP_MASKS, slow_bishop_attacks);
 }
 

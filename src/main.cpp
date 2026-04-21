@@ -1,5 +1,6 @@
-#include "engine/uci/uci.hpp"
 #include <iostream>
+
+#include "engine/uci/uci.hpp"
 
 using namespace episteme;
 
