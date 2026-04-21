@@ -4,8 +4,9 @@ namespace episteme::time {
 using namespace std::chrono;
 
 bool Limiter::time_approaching(Move move, uint64_t nodes) {
-  float nodes_prop =
-    static_cast<float>(node_counts[move.data() & 0x0FFF]) / static_cast<float>(nodes);
+  float nodes_prop = nodes > 0
+    ? static_cast<float>(node_counts[move.data() & 0x0FFF].load(std::memory_order_relaxed)) / static_cast<float>(nodes)
+    : 0.0f;
   float node_scale = 2.5f - nodes_prop * 1.5f;
 
   if (move != prev_best) {
@@ -28,14 +29,15 @@ void Limiter::start() {
 
   start_time = steady_clock::now();
 
-  node_counts.fill(0);
+  for (auto& c : node_counts) c.store(0, std::memory_order_relaxed);
   prev_best = Move();
+  move_stability = 0;
 
   if (config.move_time) {
     hard_limit = config.move_time;
   } else if (config.time_left) {
     hard_limit = std::max(1, config.time_left / 20 + config.increment / 2);
-    soft_limit = std::max(1, hard_limit * 5 / 8);
+    soft_limit = std::max(1, hard_limit * 6 / 10);
   }
 }
 }  // namespace episteme::time

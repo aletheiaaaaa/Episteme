@@ -1,6 +1,6 @@
 #pragma once
 
-#include <array>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 
@@ -34,7 +34,7 @@ class Limiter {
   bool nodes_exceeded(uint64_t nodes) const { return config.nodes && nodes >= config.nodes; }
 
   void update_node_count(Move move, uint64_t count) {
-    node_counts[move.data() & 0x0FFF] += count;
+    node_counts[move.data() & 0x0FFF].fetch_add(count, std::memory_order_relaxed);
   }
 
   bool time_approaching(Move move, uint64_t nodes);
@@ -48,7 +48,7 @@ class Limiter {
   int32_t hard_limit = -1;
   int32_t soft_limit = -1;
 
-  std::array<uint64_t, 4096> node_counts{};
+  std::array<std::atomic<uint64_t>, 4096> node_counts{};
   Move prev_best{};
   int32_t move_stability = 0;
 };

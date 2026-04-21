@@ -88,9 +88,9 @@ auto go(const std::string& args, search::Config& cfg, search::Engine& engine) {
 
   while (iss >> token) {
     if (token == "wtime" && iss >> token)
-      cfg.params.time[0] = std::stoi(token);
+      cfg.params.time[0] = std::stoi(token) - 100;
     else if (token == "btime" && iss >> token)
-      cfg.params.time[1] = std::stoi(token);
+      cfg.params.time[1] = std::stoi(token) - 100;
     else if (token == "winc" && iss >> token)
       cfg.params.inc[0] = std::stoi(token);
     else if (token == "binc" && iss >> token)
