@@ -709,7 +709,7 @@ void Engine::run(Position& position) {
 
     bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
     int32_t display_score = is_mate ? (1 + MATE - std::abs(report.score)) / 2 : report.score;
-    int64_t nps = report.nodes * 1000 / report.time;
+    int64_t nps = report.time > 0 ? 1000 * report.nodes / report.time : 0;
 
     std::string pv;
     for (size_t i = 0; i < report.line.length; ++i) {
