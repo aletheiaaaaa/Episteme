@@ -18,10 +18,10 @@ struct Entry {
 };
 
 struct Packed {
-  uint16_t move_data;
-  int32_t score;
-  uint8_t depth;
-  uint8_t misc;
+  uint16_t move_data = 0;
+  int32_t score = 0;
+  uint8_t depth = 0;
+  uint8_t misc = 0;
 
   Packed() = default;
   Packed(const Entry& entry)
@@ -34,7 +34,7 @@ struct Packed {
 class Table {
   public:
   Table(uint32_t size) {
-    const size_t num_entries = (size * 1024 * 1024) / sizeof(Entry);
+    const size_t num_entries = (size * 1024 * 1024) / sizeof(Packed);
     ttable.resize(num_entries);
     hashes.resize(num_entries);
   }
@@ -42,7 +42,7 @@ class Table {
   void resize(uint32_t size) {
     ttable.clear();
     hashes.clear();
-    const size_t num_entries = (size * 1024 * 1024) / sizeof(Entry);
+    const size_t num_entries = (size * 1024 * 1024) / sizeof(Packed);
     ttable.resize(num_entries);
     hashes.resize(num_entries);
   }
@@ -58,7 +58,7 @@ class Table {
     );
   }
 
-  Entry probe(uint16_t hash) {
+  Entry probe(uint64_t hash) {
     uint64_t index = table_index(hash);
     Entry entry;
 
