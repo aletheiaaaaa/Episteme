@@ -226,6 +226,8 @@ int32_t Worker::search(
         Line null{};
         int16_t reduction = 3 + improving;
 
+        reduction += cut_node;
+
         stack[ply].move = Move();
         stack[ply].piece = Piece::None;
 
