@@ -62,7 +62,7 @@ class Table {
     uint64_t index = table_index(hash);
     Entry entry;
 
-    if (hashes[index] == hash) entry = (*this)[index];
+    if (hashes[index] == hash) entry = get_entry(index);
 
     return entry;
   }
@@ -84,7 +84,7 @@ class Table {
     return (filled * 1000) / sample_size;
   }
 
-  Entry operator[](int idx) const {
+  Entry get_entry(int idx) const {
     return Entry{
       .hash = hashes[idx],
       .move = Move(ttable[idx].move_data),
