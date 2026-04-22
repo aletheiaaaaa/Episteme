@@ -354,8 +354,11 @@ int32_t Worker::search(
     int16_t new_depth = depth - 1 + extension;
 
     if (num_legal >= 4 && depth >= 3) {
+      int16_t depth_idx = std::min(depth, static_cast<int16_t>(63));
+      int16_t legal_idx = std::min(num_legal, 63);
+
       reduction =
-        (is_quiet) ? lmr_table_quiet[depth][num_legal] : lmr_table_noisy[depth][num_legal];
+        (is_quiet) ? lmr_table_quiet[depth_idx][legal_idx] : lmr_table_noisy[depth_idx][legal_idx];
 
       reduction += lmr_improving_mult * !improving;
       reduction += lmr_is_PV_mult * !is_PV;
