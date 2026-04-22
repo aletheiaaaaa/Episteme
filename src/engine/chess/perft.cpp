@@ -62,7 +62,7 @@ void split_perft(Position& position, int32_t depth) {
   std::cout << "Total nodes: " << total << "\n";
 }
 
-void time_perft(Position& position, int32_t depth) {
+void perft_timed(Position& position, int32_t depth) {
   using namespace std::chrono;
 
   for (int i = 1; i <= depth; i++) {

@@ -1,4 +1,5 @@
 #include "datagen.hpp"
+#include "../engine/engine.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -54,7 +55,9 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
     .position = {}
   };
 
-  search::Engine engine(cfg);
+  Engine engine(cfg);
+  engine.init_workers(cfg);
+
   time_point start = steady_clock::now();
   size_t positions = 0;
   size_t games = 0;

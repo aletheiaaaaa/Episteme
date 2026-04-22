@@ -1,10 +1,14 @@
 #include "search.hpp"
 
 #include <cassert>
+#include <mutex>
 #include <print>
 
+#include "../../engine/eval/eval.hpp"
 #include "../../utils/bench.hpp"
 #include "../../utils/tunable.hpp"
+#include "time.hpp"
+#include "ttable.hpp"
 
 namespace episteme::search {
 using namespace std::chrono;
@@ -16,6 +20,39 @@ void pick_move(ScoredList& scored_list, int start) {
       scored_list.swap(start, i);
     }
   }
+}
+
+Worker::Worker(tt::Table& ttable, time::Limiter& limiter)
+  : ttable(ttable), limiter(limiter), nodes(0), should_stop(false), thread([this]() {
+      while (true) {
+        {
+          std::unique_lock<std::mutex> lock(mutex);
+          cond.wait(lock, [this] { return assigned || quit; });
+        }
+        if (quit) return;
+
+        run(last_score, params, position, false);
+        assigned = false;
+      }
+    }) {};
+
+Worker::~Worker() {
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    quit = true;
+  }
+  cond.notify_one();
+  thread.join();
+}
+
+void Worker::dispatch(Position& pos, Parameters& p) {
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    position = pos;
+    params = p;
+    assigned = true;
+  }
+  cond.notify_one();
 }
 
 template <typename F>
@@ -121,7 +158,7 @@ int32_t Worker::search(
   bool cut_node
 ) {
   if (nodes % 1024 == 0) {
-    if (limiter.time_exceeded()) {
+    if (limiter.time_exceeded() || limiter.abort()) {
       should_stop = true;
       return 0;
     }
@@ -338,7 +375,7 @@ int32_t Worker::search(
     else
       explored_noisies.add(move);
 
-    if (limiter.nodes_exceeded(nodes)) {
+    if (limiter.nodes_exceeded(nodes) || limiter.abort()) {
       should_stop = true;
       position.unmake_move();
 
@@ -482,7 +519,7 @@ int32_t Worker::search(
 
 template <bool PV_node>
 int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta) {
-  if (nodes % 1024 == 0 && limiter.time_exceeded()) {
+  if (nodes % 1024 == 0 && (limiter.time_exceeded() || limiter.abort())) {
     should_stop = true;
     return 0;
   };
@@ -541,7 +578,7 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
     nodes++;
     explored_noisies.add(move);
 
-    if (limiter.nodes_exceeded(nodes)) {
+    if (limiter.nodes_exceeded(nodes) || limiter.abort()) {
       should_stop = true;
       position.unmake_move();
       return 0;
@@ -669,104 +706,4 @@ void Worker::bench(int depth) {
   int64_t nps = elapsed.count() > 0 ? 1000 * total / elapsed.count() : 0;
   std::println("{} nodes {} nps", total, nps);
 }
-
-void Engine::run(Position& position) {
-  time::Config cfg{
-    .nodes = params.nodes,
-    .move_time = params.move_time,
-    .time_left = params.time[color_idx(position.STM())],
-    .increment = params.inc[color_idx(position.STM())],
-  };
-
-  Report last_report;
-  int32_t last_score = 0;
-
-  reset_nodes();
-
-  limiter.set_config(cfg);
-  limiter.start();
-
-  for (int depth = 1; depth <= params.depth; depth++) {
-    Parameters iter_params = params;
-    iter_params.depth = depth;
-
-    reset_seldepth();
-
-    Report report = workers[0]->run(last_score, iter_params, position, false);
-    if (workers[0]->stopped()) break;
-
-    last_report = report;
-    last_score = report.score;
-
-    report.hashfull = ttable.hashfull();
-
-    bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
-    int32_t display_score = is_mate ? (1 + MATE - std::abs(report.score)) / 2 : report.score;
-    int64_t nps = report.time > 0 ? 1000 * report.nodes / report.time : 0;
-
-    std::string pv;
-    for (size_t i = 0; i < report.line.length; ++i) {
-      pv += report.line.moves[i].to_string() + ' ';
-    }
-    std::println(
-      "info depth {} time {} nodes {} nps {} hashfull {} score {} {} pv {}",
-      report.depth,
-      report.time,
-      report.nodes,
-      nps,
-      report.hashfull,
-      is_mate ? "mate" : "cp",
-      display_score,
-      pv
-    );
-
-    if (
-      limiter.time_approaching(report.line.moves[0], workers[0]->node_count()) ||
-      limiter.time_exceeded()
-    )
-      break;
-  }
-
-  Move best = last_report.line.moves[0];
-  std::println("bestmove {}", best.to_string());
-}
-
-ScoredMove Engine::datagen_search(Position& position) {
-  time::Config cfg{
-    .nodes = params.nodes,
-    .soft_nodes = params.soft_nodes,
-  };
-
-  Report last_report;
-  int32_t last_score = 0;
-
-  reset_nodes();
-
-  limiter.set_config(cfg);
-  limiter.start();
-
-  for (int depth = 1; depth <= 10; depth++) {
-    Parameters iter_params = params;
-    iter_params.depth = depth;
-
-    Report report = workers[0]->run(last_score, iter_params, position, true);
-    if (workers[0]->stopped()) break;
-
-    last_report = report;
-    last_score = report.score;
-
-    if (limiter.nodes_approaching(workers[0]->node_count())) break;
-  }
-
-  ScoredMove best{.move = last_report.line.moves[0], .score = last_report.score};
-
-  return best;
-}
-
-void Engine::eval(Position& position) {
-  int32_t eval_cp = workers[0]->eval(position);
-  std::println("info score cp {}", eval_cp);
-}
-
-void Engine::bench(int depth) { workers[0]->bench(depth); }
 }  // namespace episteme::search

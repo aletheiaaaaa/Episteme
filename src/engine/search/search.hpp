@@ -2,15 +2,14 @@
 
 #include <algorithm>
 #include <atomic>
-#include <chrono>
+#include <condition_variable>
 #include <cstdint>
-#include <functional>
-#include <memory>
+#include <mutex>
 #include <optional>
+#include <thread>
 
-#include "../../utils/datagen.hpp"
 #include "../chess/movegen.hpp"
-#include "../eval/eval.hpp"
+#include "../eval/nn/common.hpp"
 #include "history.hpp"
 #include "stack.hpp"
 #include "time.hpp"
@@ -108,8 +107,10 @@ struct Config {
 
 class Worker {
   public:
-  Worker(tt::Table& ttable, time::Limiter& limiter)
-    : ttable(ttable), limiter(limiter), nodes(0), should_stop(false) {};
+  Worker(tt::Table& ttable, time::Limiter& limiter);
+  ~Worker();
+
+  void dispatch(Position& pos, Parameters& p);
 
   void reset_accum() {
     accumulator = {};
@@ -177,10 +178,18 @@ class Worker {
   void bench(int depth);
 
   private:
+  std::thread thread;
+  std::mutex mutex;
+  std::condition_variable cond;
+  bool assigned = false;
+  bool quit = false;
+
   eval::nn::Accumulator accumulator;
   std::vector<eval::nn::Accumulator> accum_history;
 
   Position position;
+  Parameters params;
+  int32_t last_score = 0;
 
   tt::Table& ttable;
   time::Limiter& limiter;
@@ -193,65 +202,5 @@ class Worker {
 
   std::atomic<uint64_t> nodes;
   std::atomic<bool> should_stop;
-};
-
-class Engine {
-  public:
-  Engine(const search::Config& search_cfg)
-    : ttable(search_cfg.hash_size), params(search_cfg.params), limiter() {
-    workers.reserve(search_cfg.num_threads);
-    for (uint16_t i = 0; i < search_cfg.num_threads; ++i) {
-      workers.emplace_back(std::make_unique<Worker>(ttable, limiter));
-    }
-  }
-
-  void set_hash(search::Config& cfg) { ttable.resize(cfg.hash_size); }
-
-  void update_params(search::Parameters& new_params) { this->params = new_params; }
-
-  void reset_nodes() {
-    for (auto& worker : workers) {
-      worker->reset_nodes();
-    }
-  }
-
-  void reset_seldepth() {
-    for (auto& worker : workers) {
-      worker->reset_seldepth();
-    }
-  }
-
-  void reset_go() {
-    for (auto& worker : workers) {
-      worker->reset_stop();
-      worker->reset_stack();
-    }
-  }
-
-  void reset_game() {
-    ttable.reset();
-    for (auto& worker : workers) {
-      worker->reset_history();
-      worker->reset_accum();
-      worker->reset_stop();
-      worker->reset_stack();
-    }
-  }
-
-  void run(Position& position);
-  ScoredMove datagen_search(Position& position);
-  void eval(Position& position);
-  void bench(int depth);
-
-  Worker* get_worker(size_t idx = 0) {
-    return (idx < workers.size()) ? workers[idx].get() : nullptr;
-  }
-
-  private:
-  tt::Table ttable;
-  Parameters params;
-  time::Limiter limiter;
-
-  std::vector<std::unique_ptr<Worker>> workers;
 };
 }  // namespace episteme::search

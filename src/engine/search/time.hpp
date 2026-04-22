@@ -16,11 +16,14 @@ struct Config {
   int32_t move_time = 0;
   int32_t time_left = 0;
   int32_t increment = 0;
+
+  bool stop = false;
 };
 
 class Limiter {
   public:
   void set_config(const Config& config) { this->config = config; }
+  void set_stop() { config.stop = true; }
 
   bool time_exceeded() const {
     return (hard_limit != -1) &&
@@ -38,6 +41,8 @@ class Limiter {
   }
 
   bool time_approaching(Move move, uint64_t nodes);
+  bool abort() { return config.stop; }
+
   void start();
 
   private:
