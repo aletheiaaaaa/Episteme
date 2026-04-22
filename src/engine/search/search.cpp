@@ -477,8 +477,8 @@ int32_t Worker::search(
   if (!stack[ply].excluded) {
     ttable.add(
       {.hash = position.full_hash(),
-       .move = PV.moves[0],
        .score = best,
+       .move = PV.moves[0],
        .depth = static_cast<uint8_t>(depth),
        .node_type = node_type,
        .tt_PV = is_PV || tt_entry.tt_PV}
@@ -598,8 +598,8 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
 
   ttable.add(
     {.hash = position.full_hash(),
-     .move = PV.moves[0],
      .score = best,
+     .move = PV.moves[0],
      .depth = 0,
      .node_type = node_type,
      .tt_PV = is_PV || tt_entry.tt_PV}

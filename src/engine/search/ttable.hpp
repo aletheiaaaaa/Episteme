@@ -10,22 +10,24 @@ enum class NodeType : uint8_t { PVNode, AllNode, CutNode, None };
 
 struct Entry {
   uint64_t hash = 0;
-  Move move = {};
   int32_t score = 0;
+  Move move = {};
   uint8_t depth = 0;
   NodeType node_type = NodeType::None;
   bool tt_PV = false;
 };
 
 struct Packed {
-  uint16_t move_data = 0;
+  uint64_t hash = 0;
   int32_t score = 0;
+  uint16_t move_data = 0;
   uint8_t depth = 0;
   uint8_t misc = 0;
 
   Packed() = default;
   Packed(const Entry& entry)
-    : move_data(entry.move.data()),
+    : hash(entry.hash),
+      move_data(entry.move.data()),
       score(entry.score),
       depth(entry.depth),
       misc(static_cast<uint8_t>(entry.node_type) | (static_cast<uint8_t>(entry.tt_PV) << 2)) {}
@@ -36,20 +38,16 @@ class Table {
   Table(uint32_t size) {
     const size_t num_entries = (size * 1024 * 1024) / sizeof(Packed);
     ttable.resize(num_entries);
-    hashes.resize(num_entries);
   }
 
   void resize(uint32_t size) {
     ttable.clear();
-    hashes.clear();
     const size_t num_entries = (size * 1024 * 1024) / sizeof(Packed);
     ttable.resize(num_entries);
-    hashes.resize(num_entries);
   }
 
   void reset() {
     std::fill(ttable.begin(), ttable.end(), Packed{});
-    std::fill(hashes.begin(), hashes.end(), 0);
   }
 
   uint64_t table_index(uint64_t hash) {
@@ -62,15 +60,14 @@ class Table {
     uint64_t index = table_index(hash);
     Entry entry;
 
-    if (hashes[index] == hash) entry = get_entry(index);
+    if (ttable[index].hash == hash) entry = get_entry(index);
 
     return entry;
   }
 
   void add(Entry tt_entry) {
     uint64_t index = table_index(tt_entry.hash);
-    ttable[index] = tt_entry;
-    hashes[index] = tt_entry.hash;
+    ttable[index] = Packed(tt_entry);
   }
 
   int32_t hashfull() const {
@@ -78,7 +75,7 @@ class Table {
     size_t sample_size = std::min(size_t(1000), ttable.size());
 
     for (size_t i = 0; i < sample_size; ++i) {
-      if (hashes[i] != 0) filled++;
+      if (ttable[i].hash != 0) filled++;
     }
 
     return (filled * 1000) / sample_size;
@@ -86,9 +83,9 @@ class Table {
 
   Entry get_entry(int idx) const {
     return Entry{
-      .hash = hashes[idx],
-      .move = Move(ttable[idx].move_data),
+      .hash = ttable[idx].hash,
       .score = ttable[idx].score,
+      .move = Move(ttable[idx].move_data),
       .depth = ttable[idx].depth,
       .node_type = NodeType(ttable[idx].misc & 0b11),
       .tt_PV = static_cast<bool>((ttable[idx].misc >> 2) & 0b1)
@@ -97,6 +94,5 @@ class Table {
 
   private:
   std::vector<Packed> ttable;
-  std::vector<uint64_t> hashes;
 };
 }  // namespace episteme::tt
