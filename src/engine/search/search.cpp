@@ -9,6 +9,7 @@
 #include "../../utils/bench.hpp"
 #include "../../utils/tunable.hpp"
 #include "../eval/eval.hpp"
+#include "latch.hpp"
 #include "time.hpp"
 #include "ttable.hpp"
 
@@ -24,8 +25,8 @@ void pick_move(ScoredList& scored_list, int start) {
   }
 }
 
-Worker::Worker(tt::Table& ttable, time::Limiter& limiter)
-  : ttable(ttable), limiter(limiter), nodes(0), should_stop(false), thread([this]() {
+Worker::Worker(tt::Table& ttable, time::Limiter& limiter, latch::Latch& l)
+  : ttable(ttable), limiter(limiter), latch(l), nodes(0), should_stop(false), thread([this]() {
       while (true) {
         {
           std::unique_lock<std::mutex> lock(mutex);
@@ -33,8 +34,9 @@ Worker::Worker(tt::Table& ttable, time::Limiter& limiter)
         }
         if (quit) return;
 
-        run(last_score, params, position, false);
         assigned = false;
+        run(params, position);
+        latch.done();
       }
     }) {};
 
@@ -47,7 +49,7 @@ Worker::~Worker() {
   thread.join();
 }
 
-void Worker::dispatch(Position& pos, Parameters& p) {
+void Worker::start(Position& pos, Parameters& p) {
   {
     std::lock_guard<std::mutex> lock(mutex);
     position = pos;
@@ -642,43 +644,126 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
   return best;
 }
 
-Report Worker::run(
-  int32_t last_score, const Parameters& params, Position& position, bool is_absolute
-) {
-  accumulator = eval::reset(position);
-  accum_history.emplace_back(accumulator);
+void Worker::run(const Parameters& params, Position& position) {
+  Report last_report;
+  int32_t last_score = 0;
 
-  Line PV{};
-  int16_t depth = params.depth;
-  int32_t delta = DELTA;
+  reset_nodes();
 
-  int32_t alpha = (depth == 1) ? -MATE : last_score - delta;
-  int32_t beta = (depth == 1) ? MATE : last_score + delta;
+  for (int depth = 1; depth <= params.depth; depth++) {
+    reset_seldepth();
 
-  auto start = steady_clock::now();
-  int32_t score = search<true>(position, PV, depth, 0, alpha, beta, false);
+    accumulator = eval::reset(position);
+    accum_history.emplace_back(accumulator);
 
-  while (score <= alpha || score >= beta) {
-    delta *= 2;
-    alpha = last_score - delta;
-    beta = last_score + delta;
-    score = search<true>(position, PV, depth, 0, alpha, beta, false);
+    Line PV{};
+    int32_t delta = DELTA;
+    int32_t alpha = (depth == 1) ? -MATE : last_score - delta;
+    int32_t beta = (depth == 1) ? MATE : last_score + delta;
+
+    auto start = steady_clock::now();
+    int32_t score = search<true>(position, PV, depth, 0, alpha, beta, false);
+
+    while (score <= alpha || score >= beta) {
+      delta *= 2;
+      alpha = last_score - delta;
+      beta = last_score + delta;
+      score = search<true>(position, PV, depth, 0, alpha, beta, false);
+    }
+
+    if (stopped()) break;
+
+    int64_t elapsed = duration_cast<milliseconds>(steady_clock::now() - start).count();
+
+    Report report{
+      .depth = static_cast<int16_t>(depth),
+      .seldepth = seldepth,
+      .time = elapsed,
+      .nodes = nodes,
+      .score = score,
+      .hashfull = ttable.hashfull(),
+      .line = PV,
+    };
+
+    last_report = report;
+    last_score = score;
+
+    bool is_mate = std::abs(score) >= MATE - MAX_SEARCH_PLY;
+    int32_t display_score = is_mate ? (1 + MATE - std::abs(score)) / 2 : score;
+    int64_t nps = elapsed > 0 ? 1000 * report.nodes / elapsed : 0;
+
+    std::string pv;
+    for (size_t i = 0; i < PV.length; ++i) {
+      pv += PV.moves[i].to_string() + ' ';
+    }
+    std::println(
+      "info depth {} seldepth {} time {} nodes {} nps {} hashfull {} score {} {} pv {}",
+      depth,
+      report.seldepth,
+      elapsed,
+      report.nodes,
+      nps,
+      report.hashfull,
+      is_mate ? "mate" : "cp",
+      display_score,
+      pv
+    );
+
+    if (
+      limiter.time_approaching(PV.moves[0], node_count()) || limiter.time_exceeded() ||
+      limiter.abort()
+    )
+      break;
   }
 
-  int64_t elapsed = duration_cast<milliseconds>(steady_clock::now() - start).count();
+  std::println("bestmove {}", last_report.line.moves[0].to_string());
+}
 
-  score = (is_absolute) ? score * (!color_idx(position.STM()) ? 1 : -1) : score;
-
-  Report report{
-    .depth = params.depth,
-    .seldepth = seldepth,
-    .time = elapsed,
-    .nodes = nodes,
-    .score = score,
-    .line = PV
+ScoredMove Worker::datagen_search(const Parameters& params, Position& position) {
+  time::Config cfg{
+    .nodes = params.nodes,
+    .soft_nodes = params.soft_nodes,
   };
 
-  return report;
+  Move last_move;
+  int32_t last_score = 0;
+
+  reset_nodes();
+  limiter.set_config(cfg);
+  limiter.start();
+
+  for (int depth = 1; depth <= 10; depth++) {
+    accumulator = eval::reset(position);
+    accum_history.emplace_back(accumulator);
+
+    Line PV{};
+    int32_t delta = DELTA;
+    int32_t alpha = (depth == 1) ? -MATE : last_score - delta;
+    int32_t beta = (depth == 1) ? MATE : last_score + delta;
+
+    auto start = steady_clock::now();
+    int32_t score = search<true>(position, PV, depth, 0, alpha, beta, false);
+
+    while (score <= alpha || score >= beta) {
+      delta *= 2;
+      alpha = last_score - delta;
+      beta = last_score + delta;
+      score = search<true>(position, PV, depth, 0, alpha, beta, false);
+    }
+
+    if (stopped()) break;
+
+    int64_t elapsed = duration_cast<milliseconds>(steady_clock::now() - start).count();
+
+    score = score * (!color_idx(position.STM()) ? 1 : -1);
+
+    last_move = PV.moves[0];
+    last_score = score;
+
+    if (limiter.nodes_approaching(node_count())) break;
+  }
+
+  return {.move = last_move, .score = last_score};
 }
 
 int32_t Worker::eval(Position& position) {

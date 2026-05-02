@@ -1,7 +1,6 @@
 #include "listener.hpp"
 
 #include <cstdlib>
-#include <mutex>
 #include <print>
 #include <sstream>
 #include <string>
@@ -17,30 +16,12 @@ using namespace tunable;
 void Listener::listen() {
   std::string line;
   while (std::getline(inputs, line)) {
-    parse(line);
-    if (line == "quit") return;
+    if (!parse(line)) return;
   }
-  quit();
+  engine.abort();
 }
 
-void Listener::add(const Command& cmd) {
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-    cmds.push(cmd);
-  }
-  cond.notify_one();
-}
-
-Command Listener::next() {
-  std::unique_lock<std::mutex> lock(mutex);
-  cond.wait(lock, [this] { return !cmds.empty(); });
-  Command cmd = cmds.front();
-  cmds.pop();
-
-  return cmd;
-}
-
-void Listener::parse(const std::string& cmd) {
+bool Listener::parse(const std::string& cmd) {
   size_t space = cmd.find(' ');
   std::string keyword = cmd.substr(0, space);
   std::string args = (space != std::string::npos) ? cmd.substr(space + 1) : "";
@@ -55,6 +36,8 @@ void Listener::parse(const std::string& cmd) {
     position(args);
   else if (keyword == "go")
     go(args);
+  else if (keyword == "stop")
+    stop();
   else if (keyword == "ucinewgame")
     ucinewgame();
   else if (keyword == "bench")
@@ -68,12 +51,14 @@ void Listener::parse(const std::string& cmd) {
   else if (keyword == "fen")
     fen();
   else if (keyword == "quit") {
-    quit();
-    return;
-  }
-  else
+    stop();
+    return false;
+  } else
     std::println("invalid command");
+
+  return true;
 }
+
 void Listener::uci() {
   std::println("id name Episteme \nid author aletheia");
   std::println("option name Hash type spin default 32 min 1 max 128");
@@ -109,12 +94,13 @@ void Listener::setoption(const std::string& args) {
     std::println("invalid option");
   }
 
-  add({.config = cfg, .flag = Flag::Init});
+  engine.set_hash(cfg);
+  engine.init_workers(cfg);
 }
 
 void Listener::isready() { std::println("readyok"); }
 
-void Listener::quit() { add({.config = cfg, .flag = Flag::Quit}); }
+void Listener::stop() { engine.abort(); }
 
 void Listener::position(const std::string& args) {
   Position position;
@@ -174,24 +160,26 @@ void Listener::go(const std::string& args) {
     }
   }
 
-  add({.config = cfg, .flag = Flag::Run});
+  engine.reset_go();
+  engine.update_params(cfg.params);
+  engine.run(cfg.position);
 }
 
 void Listener::ucinewgame() {
   cfg.params = {};
   cfg.position = {};
-  
-  add({.config = cfg, .flag = Flag::Reset});
+
+  engine.reset_game();
 }
 
-void Listener::eval() { add({.config = cfg, .flag = Flag::Eval}); }
+void Listener::eval() { engine.eval(cfg.position); }
 
 void Listener::bench(const std::string& args) {
   int depth = (args.empty()) ? 10 : std::stoi(args);
   if (!cfg.hash_size) cfg.hash_size = 32;
 
   cfg.params.depth = depth;
-  add({.config = cfg, .flag = Flag::Bench});
+  engine.bench(depth);
 }
 
 void Listener::perft(const std::string& args) {

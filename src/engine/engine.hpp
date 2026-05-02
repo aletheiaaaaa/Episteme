@@ -1,6 +1,9 @@
 #pragma once
 
-#include "../engine/search/search.hpp"
+#include <print>
+
+#include "search/search.hpp"
+#include "search/latch.hpp"
 
 namespace episteme {
 class Engine {
@@ -17,23 +20,11 @@ class Engine {
     workers.clear();
     workers.reserve(num);
     for (uint16_t i = 0; i < num; ++i) {
-      workers.emplace_back(std::make_unique<search::Worker>(ttable, limiter));
+      workers.emplace_back(std::make_unique<search::Worker>(ttable, limiter, latch));
     }
   }
 
   void abort() { limiter.set_stop(); }
-
-  void reset_nodes() {
-    for (auto& worker : workers) {
-      worker->reset_nodes();
-    }
-  }
-
-  void reset_seldepth() {
-    for (auto& worker : workers) {
-      worker->reset_seldepth();
-    }
-  }
 
   void reset_go() {
     for (auto& worker : workers) {
@@ -52,10 +43,35 @@ class Engine {
     }
   }
 
-  void run(Position& position);
-  search::ScoredMove datagen_search(Position& position);
-  void eval(Position& position);
-  void bench(int depth);
+  void run(Position& position) {
+    time::Config cfg{
+      .nodes = params.nodes,
+      .move_time = params.move_time,
+      .time_left = params.time[color_idx(position.STM())],
+      .increment = params.inc[color_idx(position.STM())],
+      .stop = false,
+    };
+
+    limiter.set_config(cfg);
+
+    latch.wait();
+    limiter.start();
+    latch.arm(workers.size());
+
+    for (auto& worker : workers) {
+      worker->start(position, params);
+    }
+  }
+
+  search::ScoredMove datagen_search(Position& position) {
+    return workers[0]->datagen_search(params, position);
+  }
+
+  void eval(Position& position) {
+    std::println("info score cp {}", workers[0]->eval(position));
+  }
+
+  void bench(int depth) { workers[0]->bench(depth); }
 
   search::Worker* get_worker(size_t idx = 0) {
     return (idx < workers.size()) ? workers[idx].get() : nullptr;
@@ -65,6 +81,7 @@ class Engine {
   tt::Table ttable;
   search::Parameters params;
   time::Limiter limiter;
+  latch::Latch latch;
 
   std::vector<std::unique_ptr<search::Worker>> workers;
 };

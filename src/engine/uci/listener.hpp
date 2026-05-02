@@ -1,44 +1,37 @@
 #pragma once
 
-#include <condition_variable>
-#include <mutex>
-#include <queue>
 #include <string>
+#include <thread>
 
+#include "../engine.hpp"
 #include "../search/search.hpp"
 
 namespace episteme::uci {
 
-enum class Flag : uint8_t {
-  Init, Reset, Update, Run, Stop, Quit, Eval, Bench, None 
-};
-
-struct Command {
-  search::Config config{};
-  Flag flag = Flag::None;
-};
-
 class Listener {
   public:
-  Listener(std::istream& stream) : inputs(stream) {}
+  Listener(std::istream& stream, Engine& engine) : inputs(stream), engine(engine) {}
 
-  void listen();
-  Command next();
-  void add(const Command& cmd);
+  void start() { thread = std::thread(&Listener::listen, this); }
+  void join() {
+    if (thread.joinable()) thread.join();
+  }
+  ~Listener() { join(); }
 
   private:
-  std::queue<Command> cmds;
+  std::thread thread;
   std::istream& inputs;
+  Engine& engine;
   search::Config cfg;
-  std::mutex mutex;
-  std::condition_variable cond;
 
-  void parse(const std::string& cmd);
+  void listen();
+
+  bool parse(const std::string& cmd);
 
   void uci();
   void setoption(const std::string& args);
   void isready();
-  void quit();
+  void stop();
   void position(const std::string& args);
   void go(const std::string& args);
   void ucinewgame();
@@ -48,6 +41,5 @@ class Listener {
   void print_tunables();
   void fen();
 };
-
 void datagen(const std::string& args);
 }  // namespace episteme::uci

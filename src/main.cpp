@@ -1,17 +1,13 @@
 #include <iostream>
 #include <sstream>
-#include <thread>
 
 #include "engine/engine.hpp"
-#include "engine/manager.hpp"
 #include "engine/search/search.hpp"
 #include "engine/uci/listener.hpp"
 
 using namespace episteme;
 
 int main(int argc, char* argv[]) {
-  std::println("{}", sizeof(tt::Packed));
-
   hash::init();
   tunable::init_lmr_table();
 
@@ -26,16 +22,14 @@ int main(int argc, char* argv[]) {
   }
 
   std::istream& input = (argc > 1) ? static_cast<std::istream&>(stream) : std::cin;
-  uci::Listener listener(input);
 
   search::Config cfg;
   Engine engine(cfg);
   engine.init_workers(cfg);
 
-  Manager Manager(listener, engine);
-  std::thread thread([&]() { listener.listen(); });
-  Manager.run();
-  thread.join();
+  uci::Listener listener(input, engine);
+  listener.start();
+  listener.join();
 
   return 0;
 }
