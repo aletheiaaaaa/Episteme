@@ -1,6 +1,7 @@
 #pragma once
 
 #include <condition_variable>
+#include <cstddef>
 #include <mutex>
 
 namespace episteme::latch {
@@ -16,7 +17,7 @@ class Latch {
     bool last;
     {
       std::lock_guard lock(mutex);
-      last = (--count = 0);
+      last = (--count == 0);
     }
     if (last) cond.notify_all();
   }
@@ -29,6 +30,6 @@ class Latch {
   private:
   std::mutex mutex;
   std::condition_variable cond;
-  int count = 0;
+  size_t count = 0;
 };
 }  // namespace episteme::latch
