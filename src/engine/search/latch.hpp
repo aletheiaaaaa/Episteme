@@ -9,7 +9,7 @@ namespace episteme::latch {
 class Latch {
   public:
   void arm(int num) {
-    std::lock_guard lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     count = num;
   }
 
@@ -17,8 +17,8 @@ class Latch {
     {
       std::lock_guard<std::mutex> lock(mutex);
       --count;
+      cond.notify_all();
     }
-    cond.notify_all();
   }
 
   void wait() {

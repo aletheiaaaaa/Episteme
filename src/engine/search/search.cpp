@@ -63,8 +63,8 @@ Worker::~Worker() {
   {
     std::lock_guard<std::mutex> lock(mutex);
     quit = true;
+    cond.notify_one();
   }
-  cond.notify_one();
   thread.join();
 }
 
@@ -74,8 +74,8 @@ void Worker::start(Position& pos, Parameters& p) {
     position = pos;
     params = p;
     assigned = true;
+    cond.notify_one();
   }
-  cond.notify_one();
 }
 
 template <typename F>
