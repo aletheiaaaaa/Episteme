@@ -14,17 +14,21 @@ class Latch {
   }
 
   void done() {
-    bool last;
     {
-      std::lock_guard lock(mutex);
-      last = (--count == 0);
+      std::lock_guard<std::mutex> lock(mutex);
+      --count;
     }
-    if (last) cond.notify_all();
+    cond.notify_all();
   }
 
   void wait() {
-    std::unique_lock lock(mutex);
+    std::unique_lock<std::mutex> lock(mutex);
     cond.wait(lock, [this] { return count == 0; });
+  }
+
+  void wait_for(int target) {
+    std::unique_lock<std::mutex> lock(mutex);
+    cond.wait(lock, [this, target] { return count <= target; });
   }
 
   private:

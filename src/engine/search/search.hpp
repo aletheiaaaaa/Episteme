@@ -110,7 +110,7 @@ struct Config {
 class Worker {
   public:
   Worker(
-    size_t id,
+    size_t idx,
     tt::Table& ttable,
     time::Limiter& limiter,
     latch::Latch& l,
@@ -120,7 +120,7 @@ class Worker {
 
   void start(Position& pos, Parameters& p);
 
-  void run(const Parameters& params, Position& position);
+  ScoredMove run(const Parameters& params, Position& position);
   ScoredMove datagen_search(const Parameters& params, Position& position);
 
   void reset_accum() {

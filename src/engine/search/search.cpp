@@ -26,7 +26,7 @@ void pick_move(ScoredList& scored_list, int start) {
 }
 
 Worker::Worker(
-  size_t id,
+  size_t idx,
   tt::Table& ttable,
   time::Limiter& limiter,
   latch::Latch& l,
@@ -36,7 +36,7 @@ Worker::Worker(
     limiter(limiter),
     latch(l),
     reports(reports),
-    id(id),
+    id(idx),
     nodes(0),
     should_stop(false),
     thread([this]() {
@@ -48,7 +48,13 @@ Worker::Worker(
         if (quit) return;
 
         assigned = false;
-        run(params, position);
+        ScoredMove best = run(params, position);
+
+        if (id == 0) {
+          latch.wait_for(1);
+          std::println("bestmove {}", best.move.to_string());
+        }
+
         latch.done();
       }
     }) {};
@@ -657,7 +663,7 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
   return best;
 }
 
-void Worker::run(const Parameters& params, Position& position) {
+ScoredMove Worker::run(const Parameters& params, Position& position) {
   Move last_move = 0;
   int32_t last_score = 0;
 
@@ -722,7 +728,7 @@ void Worker::run(const Parameters& params, Position& position) {
         depth,
         report.seldepth,
         elapsed,
-        report.nodes,
+        nodes,
         nps,
         report.hashfull,
         is_mate ? "mate" : "cp",
@@ -738,7 +744,7 @@ void Worker::run(const Parameters& params, Position& position) {
       break;
   }
 
-  if (id == 0) std::println("bestmove {}", last_move.to_string());
+  return ScoredMove{.move = last_move, .score = last_score};
 }
 
 ScoredMove Worker::datagen_search(const Parameters& params, Position& position) {
