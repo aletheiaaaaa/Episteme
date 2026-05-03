@@ -31,4 +31,4 @@ class Latch {
   std::condition_variable cond;
   int count = 0;
 };
-}
+}  // namespace episteme::latch

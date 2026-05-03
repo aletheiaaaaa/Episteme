@@ -47,9 +47,7 @@ class Table {
     ttable.resize(num_entries);
   }
 
-  void reset() {
-    std::fill(ttable.begin(), ttable.end(), Packed{});
-  }
+  void reset() { std::fill(ttable.begin(), ttable.end(), Packed{}); }
 
   uint64_t table_index(uint64_t hash) {
     return static_cast<uint64_t>(

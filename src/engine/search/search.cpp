@@ -25,8 +25,21 @@ void pick_move(ScoredList& scored_list, int start) {
   }
 }
 
-Worker::Worker(tt::Table& ttable, time::Limiter& limiter, latch::Latch& l)
-  : ttable(ttable), limiter(limiter), latch(l), nodes(0), should_stop(false), thread([this]() {
+Worker::Worker(
+  size_t id,
+  tt::Table& ttable,
+  time::Limiter& limiter,
+  latch::Latch& l,
+  std::vector<Report>& reports
+)
+  : ttable(ttable),
+    limiter(limiter),
+    latch(l),
+    reports(reports),
+    id(id),
+    nodes(0),
+    should_stop(false),
+    thread([this]() {
       while (true) {
         {
           std::unique_lock<std::mutex> lock(mutex);
@@ -645,7 +658,7 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
 }
 
 void Worker::run(const Parameters& params, Position& position) {
-  Report last_report;
+  Move last_move = 0;
   int32_t last_score = 0;
 
   reset_nodes();
@@ -685,29 +698,38 @@ void Worker::run(const Parameters& params, Position& position) {
       .line = PV,
     };
 
-    last_report = report;
+    reports[id] = report;
     last_score = score;
+    last_move = PV.moves[0];
 
-    bool is_mate = std::abs(score) >= MATE - MAX_SEARCH_PLY;
-    int32_t display_score = is_mate ? (1 + MATE - std::abs(score)) / 2 : score;
-    int64_t nps = elapsed > 0 ? 1000 * report.nodes / elapsed : 0;
+    if (id == 0) {
+      bool is_mate = std::abs(score) >= MATE - MAX_SEARCH_PLY;
+      int32_t display_score = is_mate ? (1 + MATE - std::abs(score)) / 2 : score;
 
-    std::string pv;
-    for (size_t i = 0; i < PV.length; ++i) {
-      pv += PV.moves[i].to_string() + ' ';
+      int64_t nodes = 0;
+      for (auto& rep : reports) {
+        nodes += rep.nodes;
+      }
+
+      int64_t nps = elapsed > 0 ? 1000 * nodes / elapsed : 0;
+
+      std::string pv;
+      for (size_t i = 0; i < PV.length; ++i) {
+        pv += PV.moves[i].to_string() + ' ';
+      }
+      std::println(
+        "info depth {} seldepth {} time {} nodes {} nps {} hashfull {} score {} {} pv {}",
+        depth,
+        report.seldepth,
+        elapsed,
+        report.nodes,
+        nps,
+        report.hashfull,
+        is_mate ? "mate" : "cp",
+        display_score,
+        pv
+      );
     }
-    std::println(
-      "info depth {} seldepth {} time {} nodes {} nps {} hashfull {} score {} {} pv {}",
-      depth,
-      report.seldepth,
-      elapsed,
-      report.nodes,
-      nps,
-      report.hashfull,
-      is_mate ? "mate" : "cp",
-      display_score,
-      pv
-    );
 
     if (
       limiter.time_approaching(PV.moves[0], node_count()) || limiter.time_exceeded() ||
@@ -716,7 +738,7 @@ void Worker::run(const Parameters& params, Position& position) {
       break;
   }
 
-  std::println("bestmove {}", last_report.line.moves[0].to_string());
+  if (id == 0) std::println("bestmove {}", last_move.to_string());
 }
 
 ScoredMove Worker::datagen_search(const Parameters& params, Position& position) {

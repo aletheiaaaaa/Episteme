@@ -7,6 +7,7 @@
 #include <mutex>
 #include <optional>
 #include <thread>
+#include <vector>
 
 #include "../chess/movegen.hpp"
 #include "../eval/nn/common.hpp"
@@ -108,7 +109,13 @@ struct Config {
 
 class Worker {
   public:
-  Worker(tt::Table& ttable, time::Limiter& limiter, latch::Latch& latch);
+  Worker(
+    size_t id,
+    tt::Table& ttable,
+    time::Limiter& limiter,
+    latch::Latch& l,
+    std::vector<Report>& reports
+  );
   ~Worker();
 
   void start(Position& pos, Parameters& p);
@@ -186,6 +193,7 @@ class Worker {
   std::condition_variable cond;
   bool assigned = false;
   bool quit = false;
+  size_t id = 0;
 
   latch::Latch& latch;
 
@@ -195,6 +203,7 @@ class Worker {
   Position position;
   Parameters params;
 
+  std::vector<Report>& reports;
   tt::Table& ttable;
   time::Limiter& limiter;
   hist::Table history;

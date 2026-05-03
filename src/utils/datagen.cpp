@@ -1,5 +1,4 @@
 #include "datagen.hpp"
-#include "../engine/engine.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -11,6 +10,8 @@
 #include <sstream>
 #include <thread>
 #include <vector>
+
+#include "../engine/engine.hpp"
 
 namespace episteme::datagen {
 using namespace std::chrono;

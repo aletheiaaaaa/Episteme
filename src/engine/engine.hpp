@@ -1,9 +1,10 @@
 #pragma once
 
 #include <print>
+#include <vector>
 
-#include "search/search.hpp"
 #include "search/latch.hpp"
+#include "search/search.hpp"
 
 namespace episteme {
 class Engine {
@@ -19,8 +20,10 @@ class Engine {
 
     workers.clear();
     workers.reserve(num);
+    reports.clear();
+    reports.resize(num);
     for (uint16_t i = 0; i < num; ++i) {
-      workers.emplace_back(std::make_unique<search::Worker>(ttable, limiter, latch));
+      workers.emplace_back(std::make_unique<search::Worker>(i, ttable, limiter, latch, reports));
     }
   }
 
@@ -67,9 +70,7 @@ class Engine {
     return workers[0]->datagen_search(params, position);
   }
 
-  void eval(Position& position) {
-    std::println("info score cp {}", workers[0]->eval(position));
-  }
+  void eval(Position& position) { std::println("info score cp {}", workers[0]->eval(position)); }
 
   void bench(int depth) { workers[0]->bench(depth); }
 
@@ -78,10 +79,11 @@ class Engine {
   }
 
   private:
-  tt::Table ttable;
   search::Parameters params;
+  tt::Table ttable;
   time::Limiter limiter;
   latch::Latch latch;
+  std::vector<search::Report> reports;
 
   std::vector<std::unique_ptr<search::Worker>> workers;
 };
