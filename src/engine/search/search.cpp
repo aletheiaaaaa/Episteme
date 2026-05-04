@@ -701,7 +701,7 @@ ScoredMove Worker::run(const Parameters& params, Position& position) {
       .time = elapsed,
       .nodes = nodes,
       .score = score,
-      .hashfull = ttable.hashfull(),
+      .hashfull = (id == 0) ? ttable.hashfull() : 0,
       .line = PV,
     };
 
