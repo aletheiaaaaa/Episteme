@@ -8,7 +8,7 @@
 using namespace episteme;
 
 int main(int argc, char* argv[]) {
-  std::setvbuf(stdout, nullptr, _IOLBF, BUFSIZ);
+  std::setvbuf(stdout, nullptr, _IONBF, 0);
 
   hash::init();
   tunable::init_lmr_table();
