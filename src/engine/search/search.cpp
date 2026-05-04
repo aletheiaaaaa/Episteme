@@ -47,7 +47,7 @@ Worker::Worker(
         ScoredMove best = run(params, position);
 
         if (id == 0) {
-          limiter.abort();
+          limiter.set_stop();
           latch.wait_for(1);
           std::println("bestmove {}", best.move.to_string());
         }
@@ -177,7 +177,8 @@ int32_t Worker::search(
   int32_t beta,
   bool cut_node
 ) {
-  if (id == 0 && nodes % 1024 == 0 && limiter.time_exceeded() || limiter.abort()) {
+  if ((id == 0 && nodes % 1024 == 0 && limiter.time_exceeded()) || limiter.abort()) {
+    limiter.set_stop();
     should_stop = true;
     return 0;
   }
