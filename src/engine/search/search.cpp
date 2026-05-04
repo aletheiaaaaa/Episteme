@@ -28,12 +28,12 @@ void pick_move(ScoredList& scored_list, int start) {
 Worker::Worker(
   size_t idx,
   tt::Table& ttable,
-  time::Limiter& limiter,
+  time::Limiter& lim,
   latch::Latch& l,
   std::vector<Report>& reports
 )
   : ttable(ttable),
-    limiter(limiter),
+    limiter(lim),
     latch(l),
     reports(reports),
     id(idx),
@@ -51,6 +51,7 @@ Worker::Worker(
         ScoredMove best = run(params, position);
 
         if (id == 0) {
+          limiter.abort();
           latch.wait_for(1);
           std::println("bestmove {}", best.move.to_string());
         }
