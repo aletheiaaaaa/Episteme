@@ -8,6 +8,8 @@
 using namespace episteme;
 
 int main(int argc, char* argv[]) {
+  std::setvbuf(stdout, nullptr, _IOLBF, BUFSIZ);
+
   hash::init();
   tunable::init_lmr_table();
 
