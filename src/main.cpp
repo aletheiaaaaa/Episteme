@@ -1,14 +1,10 @@
 #include <iostream>
-#include <print>
 
-#include "engine/search/ttable.hpp"
 #include "engine/uci/uci.hpp"
 
 using namespace episteme;
 
 int main(int argc, char* argv[]) {
-  std::println("{}", sizeof(tt::Packed));
-
   hash::init();
   tunable::init_lmr_table();
 
