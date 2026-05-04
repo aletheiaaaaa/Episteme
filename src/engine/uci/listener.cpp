@@ -1,25 +1,75 @@
-#include "uci.hpp"
+#include "listener.hpp"
 
 #include <cstdlib>
 #include <print>
 #include <sstream>
+#include <string>
 
+#include "../../utils/datagen.hpp"
 #include "../../utils/tunable.hpp"
+#include "../chess/perft.hpp"
+#include "../chess/position.hpp"
 
 namespace episteme::uci {
 using namespace tunable;
 
-auto uci() {
+void Listener::listen() {
+  std::string line;
+  while (std::getline(inputs, line)) {
+    if (!parse(line)) return;
+  }
+  engine.abort();
+}
+
+bool Listener::parse(const std::string& cmd) {
+  size_t space = cmd.find(' ');
+  std::string keyword = cmd.substr(0, space);
+  std::string args = (space != std::string::npos) ? cmd.substr(space + 1) : "";
+
+  if (keyword == "uci")
+    uci();
+  else if (keyword == "setoption")
+    setoption(args);
+  else if (keyword == "isready")
+    isready();
+  else if (keyword == "position")
+    position(args);
+  else if (keyword == "go")
+    go(args);
+  else if (keyword == "stop")
+    stop();
+  else if (keyword == "ucinewgame")
+    ucinewgame();
+  else if (keyword == "bench")
+    bench(args);
+  else if (keyword == "perft")
+    perft(args);
+  else if (keyword == "eval")
+    eval();
+  else if (keyword == "printob")
+    print_tunables();
+  else if (keyword == "fen")
+    fen();
+  else if (keyword == "quit") {
+    stop();
+    return false;
+  } else
+    std::println("invalid command");
+
+  return true;
+}
+
+void Listener::uci() {
   std::println("id name Episteme \nid author aletheia");
   std::println("option name Hash type spin default 32 min 1 max 128");
-  std::println("option name Threads type spin default 1 min 1 max 1");
+  std::println("option name Threads type spin default 1 min 1 max 16");
   for (int i = 0; i < Tunable<int>::registry.size(); i++) {
     Tunable<int>::registry[i]->print();
   }
   std::println("uciok");
 }
 
-auto setoption(const std::string& args, search::Config& cfg, search::Engine& engine) {
+void Listener::setoption(const std::string& args) {
   std::istringstream iss(args);
   std::string name, option_name, value, option_value;
 
@@ -45,11 +95,14 @@ auto setoption(const std::string& args, search::Config& cfg, search::Engine& eng
   }
 
   engine.set_hash(cfg);
+  engine.init_workers(cfg);
 }
 
-auto isready() { std::println("readyok"); }
+void Listener::isready() { std::println("readyok"); }
 
-auto position(const std::string& args, search::Config& cfg) {
+void Listener::stop() { engine.abort(); }
+
+void Listener::position(const std::string& args) {
   Position position;
   std::istringstream iss(args);
   std::string token;
@@ -80,7 +133,7 @@ auto position(const std::string& args, search::Config& cfg) {
   cfg.position = position;
 }
 
-auto go(const std::string& args, search::Config& cfg, search::Engine& engine) {
+void Listener::go(const std::string& args) {
   std::istringstream iss(args);
   std::string token;
 
@@ -112,30 +165,39 @@ auto go(const std::string& args, search::Config& cfg, search::Engine& engine) {
   engine.run(cfg.position);
 }
 
-auto ucinewgame(search::Config& cfg, search::Engine& engine) {
+void Listener::ucinewgame() {
   cfg.params = {};
   cfg.position = {};
+
   engine.reset_game();
 }
 
-auto eval(search::Config& cfg, search::Engine& engine) { engine.eval(cfg.position); }
+void Listener::eval() { engine.eval(cfg.position); }
 
-auto bench(const std::string& args, search::Config& cfg) {
+void Listener::bench(const std::string& args) {
   int depth = (args.empty()) ? 10 : std::stoi(args);
   if (!cfg.hash_size) cfg.hash_size = 32;
 
-  search::Engine engine(cfg);
+  cfg.params.depth = depth;
   engine.bench(depth);
 }
 
-auto perft(const std::string& args, search::Config& cfg) {
+void Listener::perft(const std::string& args) {
   int depth = (args.empty()) ? 6 : std::stoi(args);
   Position& position = cfg.position;
 
-  time_perft(position, depth);
+  perft_timed(position, depth);
 }
 
-auto datagen(const std::string& args) {
+void Listener::print_tunables() {
+  for (int i = 0; i < Tunable<int>::registry.size(); i++) {
+    Tunable<int>::registry[i]->print(true);
+  }
+}
+
+void Listener::fen() { std::println("{}", cfg.position.to_FEN()); }
+
+void datagen(const std::string& args) {
   std::istringstream iss(args);
   std::string token;
 
@@ -160,57 +222,5 @@ auto datagen(const std::string& args) {
   }
 
   datagen::run(params);
-}
-
-auto print_tunables() {
-  for (int i = 0; i < Tunable<int>::registry.size(); i++) {
-    Tunable<int>::registry[i]->print(true);
-  }
-}
-
-auto fen(search::Config& cfg) { std::println("{}", cfg.position.to_FEN()); }
-
-int parse(const std::string& cmd, search::Config& cfg, search::Engine& engine) {
-  std::string keyword = cmd.substr(0, cmd.find(' '));
-
-  if (keyword == "uci")
-    uci();
-  else if (keyword == "setoption")
-    setoption(cmd.substr(cmd.find(" ") + 1), cfg, engine);
-  else if (keyword == "isready")
-    isready();
-  else if (keyword == "position")
-    position(cmd.substr(cmd.find(" ") + 1), cfg);
-  else if (keyword == "go")
-    go(cmd.substr(cmd.find(" ") + 1), cfg, engine);
-  else if (keyword == "ucinewgame")
-    ucinewgame(cfg, engine);
-  else if (keyword == "quit") {
-    std::exit(0);
-  }
-
-  else if (keyword == "bench") {
-    size_t space = cmd.find(' ');
-    std::string arg = (space != std::string::npos) ? cmd.substr(space + 1) : "";
-    bench(arg, cfg);
-  } else if (keyword == "perft") {
-    size_t space = cmd.find(' ');
-    std::string arg = (space != std::string::npos) ? cmd.substr(space + 1) : "";
-    perft(arg, cfg);
-  }
-
-  else if (keyword == "eval")
-    eval(cfg, engine);
-  else if (keyword == "datagen")
-    datagen(cmd.substr(cmd.find(" ") + 1));
-  else if (keyword == "printob")
-    print_tunables();
-  else if (keyword == "fen")
-    fen(cfg);
-
-  else
-    std::println("invalid command");
-
-  return 0;
 }
 }  // namespace episteme::uci

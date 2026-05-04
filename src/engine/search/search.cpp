@@ -2,13 +2,15 @@
 
 #include <atomic>
 #include <cassert>
-#include <chrono>
-#include <cstdint>
+#include <mutex>
 #include <print>
 
+#include "../../engine/eval/eval.hpp"
 #include "../../utils/bench.hpp"
 #include "../../utils/tunable.hpp"
 #include "../eval/eval.hpp"
+#include "latch.hpp"
+#include "time.hpp"
 #include "ttable.hpp"
 
 namespace episteme::search {
@@ -20,6 +22,56 @@ void pick_move(ScoredList& scored_list, int start) {
     if (scored_list[i].score > scored_list[start].score) {
       scored_list.swap(start, i);
     }
+  }
+}
+
+Worker::Worker(
+  size_t idx, tt::Table& ttable, time::Limiter& lim, latch::Latch& l, std::vector<Report>& reports
+)
+  : ttable(ttable),
+    limiter(lim),
+    latch(l),
+    reports(reports),
+    id(idx),
+    nodes(0),
+    should_stop(false),
+    thread([this]() {
+      while (true) {
+        {
+          std::unique_lock<std::mutex> lock(mutex);
+          cond.wait(lock, [this] { return assigned || quit; });
+        }
+        if (quit) return;
+
+        assigned = false;
+        ScoredMove best = run(params, position);
+
+        if (id == 0) {
+          limiter.set_stop();
+          latch.wait_for(1);
+          std::println("bestmove {}", best.move.to_string());
+        }
+
+        latch.done();
+      }
+    }) {};
+
+Worker::~Worker() {
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    quit = true;
+    cond.notify_one();
+  }
+  thread.join();
+}
+
+void Worker::start(Position& pos, Parameters& p) {
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    position = pos;
+    params = p;
+    assigned = true;
+    cond.notify_one();
   }
 }
 
@@ -125,11 +177,10 @@ int32_t Worker::search(
   int32_t beta,
   bool cut_node
 ) {
-  if (nodes % 1024 == 0) {
-    if (limiter.time_exceeded()) {
-      should_stop = true;
-      return 0;
-    }
+  if ((id == 0 && nodes % 1024 == 0 && limiter.time_exceeded()) || limiter.abort()) {
+    limiter.set_stop();
+    should_stop = true;
+    return 0;
   }
 
   seldepth = std::max(seldepth, ply);
@@ -343,7 +394,7 @@ int32_t Worker::search(
     else
       explored_noisies.add(move);
 
-    if (limiter.nodes_exceeded(nodes)) {
+    if (limiter.nodes_exceeded(nodes) || limiter.abort()) {
       should_stop = true;
       position.unmake_move();
 
@@ -403,7 +454,7 @@ int32_t Worker::search(
 
     if (should_stop) return 0;
 
-    if (ply == 0) limiter.update_node_count(move, nodes - prev_nodes);
+    if (id == 0 && ply == 0) limiter.update_node_count(move, nodes - prev_nodes);
 
     if (score > best) {
       best = score;
@@ -490,7 +541,8 @@ int32_t Worker::search(
 
 template <bool PV_node>
 int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta) {
-  if (nodes % 1024 == 0 && limiter.time_exceeded()) {
+  if (id == 0 && nodes % 1024 == 0 && (limiter.time_exceeded() || limiter.abort())) {
+    limiter.set_stop();
     should_stop = true;
     return 0;
   };
@@ -549,7 +601,7 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
     nodes++;
     explored_noisies.add(move);
 
-    if (limiter.nodes_exceeded(nodes)) {
+    if (limiter.nodes_exceeded(nodes) || limiter.abort()) {
       should_stop = true;
       position.unmake_move();
       return 0;
@@ -608,43 +660,135 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
   return best;
 }
 
-Report Worker::run(
-  int32_t last_score, const Parameters& params, Position& position, bool is_absolute
-) {
-  accumulator = eval::reset(position);
-  accum_history.emplace_back(accumulator);
+ScoredMove Worker::run(const Parameters& params, Position& position) {
+  Move last_move = 0;
+  int32_t last_score = 0;
 
-  Line PV{};
-  int16_t depth = params.depth;
-  int32_t delta = DELTA;
+  reset_nodes();
 
-  int32_t alpha = (depth == 1) ? -MATE : last_score - delta;
-  int32_t beta = (depth == 1) ? MATE : last_score + delta;
+  for (int depth = 1; depth <= params.depth; depth++) {
+    reset_seldepth();
 
-  auto start = steady_clock::now();
-  int32_t score = search<true>(position, PV, depth, 0, alpha, beta, false);
+    accumulator = eval::reset(position);
+    accum_history.emplace_back(accumulator);
 
-  while (score <= alpha || score >= beta) {
-    delta *= 2;
-    alpha = last_score - delta;
-    beta = last_score + delta;
-    score = search<true>(position, PV, depth, 0, alpha, beta, false);
+    Line PV{};
+    int32_t delta = DELTA;
+    int32_t alpha = (depth == 1) ? -MATE : last_score - delta;
+    int32_t beta = (depth == 1) ? MATE : last_score + delta;
+
+    auto start = steady_clock::now();
+    int32_t score = search<true>(position, PV, depth, 0, alpha, beta, false);
+
+    while (score <= alpha || score >= beta) {
+      delta *= 2;
+      alpha = last_score - delta;
+      beta = last_score + delta;
+      score = search<true>(position, PV, depth, 0, alpha, beta, false);
+    }
+
+    if (stopped()) break;
+
+    int64_t elapsed = duration_cast<milliseconds>(steady_clock::now() - start).count();
+
+    Report report{
+      .depth = static_cast<int16_t>(depth),
+      .seldepth = seldepth,
+      .time = elapsed,
+      .nodes = nodes,
+      .score = score,
+      .hashfull = (id == 0) ? ttable.hashfull() : 0,
+      .line = PV,
+    };
+
+    reports[id] = report;
+    last_score = score;
+    last_move = PV.moves[0];
+
+    if (id == 0) {
+      bool is_mate = std::abs(score) >= MATE - MAX_SEARCH_PLY;
+      int32_t display_score = is_mate ? (1 + MATE - std::abs(score)) / 2 : score;
+
+      int64_t nodes = 0;
+      for (auto& rep : reports) {
+        nodes += rep.nodes;
+      }
+
+      int64_t nps = elapsed > 0 ? 1000 * nodes / elapsed : 0;
+
+      std::string pv;
+      for (size_t i = 0; i < PV.length; ++i) {
+        pv += PV.moves[i].to_string() + ' ';
+      }
+      std::println(
+        "info depth {} seldepth {} time {} nodes {} nps {} hashfull {} score {} {} pv {}",
+        depth,
+        report.seldepth,
+        elapsed,
+        nodes,
+        nps,
+        report.hashfull,
+        is_mate ? "mate" : "cp",
+        display_score,
+        pv
+      );
+    }
+
+    if (
+      limiter.time_approaching(PV.moves[0], node_count()) || limiter.time_exceeded() ||
+      limiter.abort()
+    )
+      break;
   }
 
-  int64_t elapsed = duration_cast<milliseconds>(steady_clock::now() - start).count();
+  return ScoredMove{.move = last_move, .score = last_score};
+}
 
-  score = (is_absolute) ? score * (!color_idx(position.STM()) ? 1 : -1) : score;
-
-  Report report{
-    .depth = params.depth,
-    .seldepth = seldepth,
-    .time = elapsed,
-    .nodes = nodes,
-    .score = score,
-    .line = PV
+ScoredMove Worker::datagen_search(const Parameters& params, Position& position) {
+  time::Config cfg{
+    .nodes = params.nodes,
+    .soft_nodes = params.soft_nodes,
   };
 
-  return report;
+  Move last_move;
+  int32_t last_score = 0;
+
+  reset_nodes();
+  limiter.set_config(cfg);
+  limiter.start();
+
+  for (int depth = 1; depth <= 10; depth++) {
+    accumulator = eval::reset(position);
+    accum_history.emplace_back(accumulator);
+
+    Line PV{};
+    int32_t delta = DELTA;
+    int32_t alpha = (depth == 1) ? -MATE : last_score - delta;
+    int32_t beta = (depth == 1) ? MATE : last_score + delta;
+
+    auto start = steady_clock::now();
+    int32_t score = search<true>(position, PV, depth, 0, alpha, beta, false);
+
+    while (score <= alpha || score >= beta) {
+      delta *= 2;
+      alpha = last_score - delta;
+      beta = last_score + delta;
+      score = search<true>(position, PV, depth, 0, alpha, beta, false);
+    }
+
+    if (stopped()) break;
+
+    int64_t elapsed = duration_cast<milliseconds>(steady_clock::now() - start).count();
+
+    score = score * (!color_idx(position.STM()) ? 1 : -1);
+
+    last_move = PV.moves[0];
+    last_score = score;
+
+    if (limiter.nodes_approaching(node_count())) break;
+  }
+
+  return {.move = last_move, .score = last_score};
 }
 
 int32_t Worker::eval(Position& position) {
@@ -677,104 +821,4 @@ void Worker::bench(int depth) {
   int64_t nps = elapsed.count() > 0 ? 1000 * total / elapsed.count() : 0;
   std::println("{} nodes {} nps", total, nps);
 }
-
-void Engine::run(Position& position) {
-  time::Config cfg{
-    .nodes = params.nodes,
-    .move_time = params.move_time,
-    .time_left = params.time[color_idx(position.STM())],
-    .increment = params.inc[color_idx(position.STM())],
-  };
-
-  Report last_report;
-  int32_t last_score = 0;
-
-  reset_nodes();
-
-  limiter.set_config(cfg);
-  limiter.start();
-
-  for (int depth = 1; depth <= params.depth; depth++) {
-    Parameters iter_params = params;
-    iter_params.depth = depth;
-
-    reset_seldepth();
-
-    Report report = workers[0]->run(last_score, iter_params, position, false);
-    if (workers[0]->stopped()) break;
-
-    last_report = report;
-    last_score = report.score;
-
-    report.hashfull = ttable.hashfull();
-
-    bool is_mate = std::abs(report.score) >= MATE - MAX_SEARCH_PLY;
-    int32_t display_score = is_mate ? (1 + MATE - std::abs(report.score)) / 2 : report.score;
-    int64_t nps = report.time > 0 ? 1000 * report.nodes / report.time : 0;
-
-    std::string pv;
-    for (size_t i = 0; i < report.line.length; ++i) {
-      pv += report.line.moves[i].to_string() + ' ';
-    }
-    std::println(
-      "info depth {} time {} nodes {} nps {} hashfull {} score {} {} pv {}",
-      report.depth,
-      report.time,
-      report.nodes,
-      nps,
-      report.hashfull,
-      is_mate ? "mate" : "cp",
-      display_score,
-      pv
-    );
-
-    if (
-      limiter.time_approaching(report.line.moves[0], workers[0]->node_count()) ||
-      limiter.time_exceeded()
-    )
-      break;
-  }
-
-  Move best = last_report.line.moves[0];
-  std::println("bestmove {}", best.to_string());
-}
-
-ScoredMove Engine::datagen_search(Position& position) {
-  time::Config cfg{
-    .nodes = params.nodes,
-    .soft_nodes = params.soft_nodes,
-  };
-
-  Report last_report;
-  int32_t last_score = 0;
-
-  reset_nodes();
-
-  limiter.set_config(cfg);
-  limiter.start();
-
-  for (int depth = 1; depth <= 10; depth++) {
-    Parameters iter_params = params;
-    iter_params.depth = depth;
-
-    Report report = workers[0]->run(last_score, iter_params, position, true);
-    if (workers[0]->stopped()) break;
-
-    last_report = report;
-    last_score = report.score;
-
-    if (limiter.nodes_approaching(workers[0]->node_count())) break;
-  }
-
-  ScoredMove best{.move = last_report.line.moves[0], .score = last_report.score};
-
-  return best;
-}
-
-void Engine::eval(Position& position) {
-  int32_t eval_cp = workers[0]->eval(position);
-  std::println("info score cp {}", eval_cp);
-}
-
-void Engine::bench(int depth) { workers[0]->bench(depth); }
 }  // namespace episteme::search

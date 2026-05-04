@@ -16,64 +16,19 @@ get_filename_component(NET_FILENAME "${DEFAULT_NET}" NAME)
 set(NET_URL "${NETS_REPO}/releases/latest/download/${NET_FILENAME}")
 
 if(NOT DEFINED ARCH)
-  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    execute_process(
-      COMMAND grep -q avx512_vnni /proc/cpuinfo
-      RESULT_VARIABLE HAS_AVX512_VNNI
-      OUTPUT_QUIET ERROR_QUIET
-    )
-    if(HAS_AVX512_VNNI EQUAL 0)
-      set(DETECTED_ARCH "avx512_vnni")
-    else()
-      execute_process(
-        COMMAND grep -q avx2 /proc/cpuinfo
-        RESULT_VARIABLE HAS_AVX2
-        OUTPUT_QUIET ERROR_QUIET
-      )
-      if(HAS_AVX2 EQUAL 0)
-        set(DETECTED_ARCH "avx2")
-      else()
-        execute_process(
-          COMMAND grep -q ssse3 /proc/cpuinfo
-          RESULT_VARIABLE HAS_SSSE3
-          OUTPUT_QUIET ERROR_QUIET
-        )
-        if(HAS_SSSE3 EQUAL 0)
-          set(DETECTED_ARCH "ssse3")
-        else()
-          set(DETECTED_ARCH "generic")
-        endif()
-      endif()
-    endif()
-  elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    execute_process(
-      COMMAND sh -c "sysctl -a | grep -q avx512_vnni"
-      RESULT_VARIABLE HAS_AVX512_VNNI
-      OUTPUT_QUIET ERROR_QUIET
-    )
-    if(HAS_AVX512_VNNI EQUAL 0)
-      set(DETECTED_ARCH "avx512_vnni")
-    else()
-      execute_process(
-        COMMAND sh -c "sysctl -a | grep -q avx2"
-        RESULT_VARIABLE HAS_AVX2
-        OUTPUT_QUIET ERROR_QUIET
-      )
-      if(HAS_AVX2 EQUAL 0)
-        set(DETECTED_ARCH "avx2")
-      else()
-        execute_process(
-          COMMAND sh -c "sysctl -a | grep -q ssse3"
-          RESULT_VARIABLE HAS_SSSE3
-          OUTPUT_QUIET ERROR_QUIET
-        )
-        if(HAS_SSSE3 EQUAL 0)
-          set(DETECTED_ARCH "ssse3")
-        else()
-          set(DETECTED_ARCH "generic")
-        endif()
-      endif()
-    endif()
+  set(_PROBE "${CMAKE_BINARY_DIR}/arch_probe.cpp")
+  file(WRITE "${_PROBE}" "")
+  execute_process(
+    COMMAND ${CMAKE_CXX_COMPILER} -march=native -dM -E -x c++ "${_PROBE}"
+    OUTPUT_VARIABLE _NATIVE_MACROS
+    ERROR_QUIET
+  )
+  if(_NATIVE_MACROS MATCHES "__AVX512VNNI__")
+    set(DETECTED_ARCH "avx512_vnni")
+  elseif(_NATIVE_MACROS MATCHES "__AVX2__")
+    set(DETECTED_ARCH "avx2")
+  elseif(_NATIVE_MACROS MATCHES "__SSSE3__")
+    set(DETECTED_ARCH "ssse3")
   else()
     set(DETECTED_ARCH "generic")
   endif()
@@ -100,7 +55,6 @@ else()
 endif()
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
-
 add_executable(episteme ${SOURCES})
 
 target_compile_options(episteme PRIVATE ${ARCH_FLAGS})
@@ -112,7 +66,7 @@ target_compile_definitions(episteme PRIVATE
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_options(episteme PRIVATE -g -O0)
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(episteme PRIVATE -fsanitize=address,undefined)
     target_link_options(episteme PRIVATE -fsanitize=address,undefined)
   endif()
@@ -127,26 +81,36 @@ else()
   endif()
 endif()
 
+if(MINGW)
+  target_link_libraries(episteme PRIVATE stdc++exp)
+endif()
+
 if(NOT EXISTS "${CMAKE_SOURCE_DIR}/${DEFAULT_NET}")
   message(STATUS "Network file ${DEFAULT_NET} not found. Downloading...")
 
-  find_program(WGET_EXECUTABLE wget)
   find_program(CURL_EXECUTABLE curl)
+  find_program(WGET_EXECUTABLE wget)
 
-  if(WGET_EXECUTABLE)
-    execute_process(
-      COMMAND ${WGET_EXECUTABLE} -O "${CMAKE_SOURCE_DIR}/${DEFAULT_NET}" "${NET_URL}"
-      RESULT_VARIABLE DOWNLOAD_RESULT
-      OUTPUT_QUIET
-    )
-  elseif(CURL_EXECUTABLE)
+  if(CURL_EXECUTABLE)
     execute_process(
       COMMAND ${CURL_EXECUTABLE} -L -o "${CMAKE_SOURCE_DIR}/${DEFAULT_NET}" "${NET_URL}"
       RESULT_VARIABLE DOWNLOAD_RESULT
-      OUTPUT_QUIET
+    )
+  elseif(WGET_EXECUTABLE)
+    execute_process(
+      COMMAND ${WGET_EXECUTABLE} -O "${CMAKE_SOURCE_DIR}/${DEFAULT_NET}" "${NET_URL}"
+      RESULT_VARIABLE DOWNLOAD_RESULT
+    )
+  elseif(WIN32)
+
+    execute_process(
+      COMMAND powershell -NoProfile -ExecutionPolicy Bypass -Command
+        "Invoke-WebRequest -Uri '${NET_URL}' -OutFile '${CMAKE_SOURCE_DIR}/${DEFAULT_NET}' -UseBasicParsing"
+      RESULT_VARIABLE DOWNLOAD_RESULT
     )
   else()
-    message(FATAL_ERROR "Neither wget nor curl found. Please install one of them or download ${NET_URL} manually to ${DEFAULT_NET}")
+    message(FATAL_ERROR
+      "Neither curl nor wget found. Please install one or download manually:\n  ${NET_URL}")
   endif()
 
   if(DOWNLOAD_RESULT EQUAL 0)
