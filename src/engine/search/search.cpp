@@ -26,11 +26,7 @@ void pick_move(ScoredList& scored_list, int start) {
 }
 
 Worker::Worker(
-  size_t idx,
-  tt::Table& ttable,
-  time::Limiter& lim,
-  latch::Latch& l,
-  std::vector<Report>& reports
+  size_t idx, tt::Table& ttable, time::Limiter& lim, latch::Latch& l, std::vector<Report>& reports
 )
   : ttable(ttable),
     limiter(lim),
@@ -181,11 +177,9 @@ int32_t Worker::search(
   int32_t beta,
   bool cut_node
 ) {
-  if (nodes % 1024 == 0) {
-    if (limiter.time_exceeded() || limiter.abort()) {
-      should_stop = true;
-      return 0;
-    }
+  if (id == 0 && nodes % 1024 == 0 && limiter.time_exceeded() || limiter.abort()) {
+    should_stop = true;
+    return 0;
   }
 
   seldepth = std::max(seldepth, ply);
@@ -459,7 +453,7 @@ int32_t Worker::search(
 
     if (should_stop) return 0;
 
-    if (ply == 0) limiter.update_node_count(move, nodes - prev_nodes);
+    if (id == 0 && ply == 0) limiter.update_node_count(move, nodes - prev_nodes);
 
     if (score > best) {
       best = score;
@@ -546,7 +540,7 @@ int32_t Worker::search(
 
 template <bool PV_node>
 int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta) {
-  if (nodes % 1024 == 0 && (limiter.time_exceeded() || limiter.abort())) {
+  if (id == 0 && nodes % 1024 == 0 && (limiter.time_exceeded() || limiter.abort())) {
     should_stop = true;
     return 0;
   };
