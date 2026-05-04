@@ -542,6 +542,7 @@ int32_t Worker::search(
 template <bool PV_node>
 int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha, int32_t beta) {
   if (id == 0 && nodes % 1024 == 0 && (limiter.time_exceeded() || limiter.abort())) {
+    limiter.set_stop();
     should_stop = true;
     return 0;
   };
