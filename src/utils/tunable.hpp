@@ -13,11 +13,11 @@
 #endif
 
 #define TUNABLE_INT(name, default_value, min_value, max_value, step_value, setter) \
-  inline Tunable<int> name{#name, default_value, min_value, max_value, step_value, setter};
+    inline Tunable<int> name{#name, default_value, min_value, max_value, step_value, setter};
 
 namespace episteme::tunable {
 static std::array<std::array<std::string, 2>, 2> type_names = {
-  {{"string", "spin"}, {"float", "int"}}
+    {{"string", "spin"}, {"float", "int"}}
 };
 
 extern std::array<std::array<int16_t, 64>, 64> lmr_table_noisy;
@@ -26,63 +26,63 @@ void init_lmr_table();
 
 template <typename F, bool Enabled = ENABLE_TUNING>
 struct Tunable {
-  std::string name;
-  F value;
-  F min;
-  F max;
-  F step;
-  std::function<void()> callable;
-  static inline std::vector<Tunable<F>*> registry;
+    std::string name;
+    F value;
+    F min;
+    F max;
+    F step;
+    std::function<void()> callable;
+    static inline std::vector<Tunable<F>*> registry;
 
-  Tunable(
-    std::string name,
-    F default_value,
-    F min_value,
-    F max_value,
-    F step_value,
-    std::function<void()> func
-  )
-    : value(default_value) {
-    if (default_value < min_value || default_value > max_value) {
-      std::println(stderr, "out of range for tunable {}", name);
+    Tunable(
+        std::string name,
+        F default_value,
+        F min_value,
+        F max_value,
+        F step_value,
+        std::function<void()> func
+    ) :
+        value(default_value) {
+        if (default_value < min_value || default_value > max_value) {
+            std::println(stderr, "out of range for tunable {}", name);
+        }
+        if constexpr (Enabled) {
+            this->name = std::move(name);
+            min = min_value;
+            max = max_value;
+            step = step_value;
+            callable = func;
+            registry.push_back(this);
+            if (callable) callable();
+        }
     }
-    if constexpr (Enabled) {
-      this->name = std::move(name);
-      min = min_value;
-      max = max_value;
-      step = step_value;
-      callable = func;
-      registry.push_back(this);
-      if (callable) callable();
-    }
-  }
 
-  void set(F new_value) {
-    if constexpr (Enabled) {
-      if (new_value < min || new_value > max) {
-        std::println(stderr, "Value out of range for tunable {}", name);
-        return;
-      }
-      value = new_value;
-      if (callable) callable();
+    void set(F new_value) {
+        if constexpr (Enabled) {
+            if (new_value < min || new_value > max) {
+                std::println(stderr, "Value out of range for tunable {}", name);
+                return;
+            }
+            value = new_value;
+            if (callable) callable();
+        }
     }
-  }
 
-  void print(bool use_type = false) const {
-    if constexpr (Enabled) {
-      constexpr bool is_int = std::is_same_v<F, int>;
-      std::println(
-        "option name {} type {} default {} min {} max {}",
-        name,
-        type_names[use_type][is_int],
-        value,
-        min,
-        max
-      );
+    void print(bool use_type = false) const {
+        if constexpr (Enabled) {
+            constexpr bool is_int = std::is_same_v<F, int>;
+            std::println(
+                "option name {} type {} default {} min {} max {}",
+                name,
+                type_names[use_type][is_int],
+                value,
+                min,
+                max
+            );
+        }
     }
-  }
 
-  constexpr operator F() const { return value; }
+    constexpr operator F() const { return value; }
 };
 
 TUNABLE_INT(lmr_table_quiet_base, 80, -128, 512, 8, init_lmr_table)

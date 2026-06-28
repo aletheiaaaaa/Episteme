@@ -4,42 +4,42 @@ namespace episteme::time {
 using namespace std::chrono;
 
 bool Limiter::time_approaching(Move move, uint64_t nodes) {
-  float nodes_prop =
-    nodes > 0
-      ? static_cast<float>(node_counts[move.data() & 0x0FFF].load(std::memory_order_relaxed)) /
-          static_cast<float>(nodes)
-      : 0.0f;
-  float node_scale = 2.5f - nodes_prop * 1.5f;
+    float nodes_prop = nodes > 0
+                           ? static_cast<float>(
+                                 node_counts[move.data() & 0x0FFF].load(std::memory_order_relaxed)
+                             ) / static_cast<float>(nodes)
+                           : 0.0f;
+    float node_scale = 2.5f - nodes_prop * 1.5f;
 
-  if (move != prev_best) {
-    prev_best = move;
-    move_stability = 0;
-  } else {
-    move_stability++;
-  }
+    if (move != prev_best) {
+        prev_best = move;
+        move_stability = 0;
+    } else {
+        move_stability++;
+    }
 
-  float move_scale = std::max(1.15f - (static_cast<float>(move_stability) / 20.0f), 0.85f);
+    float move_scale = std::max(1.15f - (static_cast<float>(move_stability) / 20.0f), 0.85f);
 
-  return (soft_limit != -1) &&
-         duration_cast<milliseconds>(steady_clock::now() - start_time).count() >=
-           static_cast<int32_t>(soft_limit * node_scale * move_scale);
+    return (soft_limit != -1) &&
+           duration_cast<milliseconds>(steady_clock::now() - start_time).count() >=
+               static_cast<int32_t>(soft_limit * node_scale * move_scale);
 }
 
 void Limiter::start() {
-  hard_limit = -1;
-  soft_limit = -1;
+    hard_limit = -1;
+    soft_limit = -1;
 
-  start_time = steady_clock::now();
+    start_time = steady_clock::now();
 
-  for (auto& c : node_counts) c.store(0, std::memory_order_relaxed);
-  prev_best = Move();
-  move_stability = 0;
+    for (auto& c : node_counts) c.store(0, std::memory_order_relaxed);
+    prev_best = Move();
+    move_stability = 0;
 
-  if (config.move_time) {
-    hard_limit = config.move_time;
-  } else if (config.time_left) {
-    hard_limit = std::max(1, config.time_left / 20 + config.increment / 2);
-    soft_limit = std::max(1, hard_limit * 6 / 10);
-  }
+    if (config.move_time) {
+        hard_limit = config.move_time;
+    } else if (config.time_left) {
+        hard_limit = std::max(1, config.time_left / 20 + config.increment / 2);
+        soft_limit = std::max(1, hard_limit * 6 / 10);
+    }
 }
 }  // namespace episteme::time

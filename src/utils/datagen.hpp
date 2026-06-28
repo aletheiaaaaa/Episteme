@@ -18,14 +18,14 @@ constexpr int32_t INITIAL_MAX = 300;
 inline std::atomic<bool> stop = false;
 
 struct Parameters {
-  uint32_t soft_limit = 5000;
-  uint32_t hard_limit = 1000000;
-  int32_t num_games = 100000;
+    uint32_t soft_limit = 5000;
+    uint32_t hard_limit = 1000000;
+    int32_t num_games = 100000;
 
-  uint16_t num_threads = 1;
-  uint32_t hash_size = 16;
+    uint16_t num_threads = 1;
+    uint32_t hash_size = 16;
 
-  std::string out_dir = "data";
+    std::string out_dir = "data";
 };
 
 void play_random(Position& position, int32_t num_moves);

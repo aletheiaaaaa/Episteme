@@ -64,94 +64,94 @@ enum class Color : uint16_t { White, Black, None };
 enum class BBIndex : uint16_t { Pawn, Knight, Bishop, Rook, Queen, King, White, Black, None };
 
 struct AllowedCastles {
-  struct RookPair {
-    Square kingside{Square::None};
-    Square queenside{Square::None};
+    struct RookPair {
+        Square kingside{Square::None};
+        Square queenside{Square::None};
 
-    inline bool is_kingside_set() const {
-      if (kingside != Square::None) return true;
-      return false;
+        inline bool is_kingside_set() const {
+            if (kingside != Square::None) return true;
+            return false;
+        };
+
+        inline bool is_queenside_set() const {
+            if (queenside != Square::None) return true;
+            return false;
+        };
+
+        inline void clear() {
+            kingside = Square::None;
+            queenside = Square::None;
+        };
+
+        inline void unset(bool is_kingside) {
+            if (is_kingside) {
+                kingside = Square::None;
+            } else {
+                queenside = Square::None;
+            }
+        };
     };
+    std::array<RookPair, 2> rooks{};
 
-    inline bool is_queenside_set() const {
-      if (queenside != Square::None) return true;
-      return false;
-    };
+    inline uint8_t as_mask() {
+        size_t mask = 0;
+        if (rooks[0].is_kingside_set()) mask |= WHITE_KINGSIDE;
+        if (rooks[0].is_queenside_set()) mask |= WHITE_QUEENSIDE;
+        if (rooks[1].is_kingside_set()) mask |= BLACK_KINGSIDE;
+        if (rooks[1].is_queenside_set()) mask |= BLACK_QUEENSIDE;
 
-    inline void clear() {
-      kingside = Square::None;
-      queenside = Square::None;
-    };
+        return mask;
+    }
 
-    inline void unset(bool is_kingside) {
-      if (is_kingside) {
-        kingside = Square::None;
-      } else {
-        queenside = Square::None;
-      }
-    };
-  };
-  std::array<RookPair, 2> rooks{};
-
-  inline uint8_t as_mask() {
-    size_t mask = 0;
-    if (rooks[0].is_kingside_set()) mask |= WHITE_KINGSIDE;
-    if (rooks[0].is_queenside_set()) mask |= WHITE_QUEENSIDE;
-    if (rooks[1].is_kingside_set()) mask |= BLACK_KINGSIDE;
-    if (rooks[1].is_queenside_set()) mask |= BLACK_QUEENSIDE;
-
-    return mask;
-  }
-
-  bool is_castling(Square square) {
-    if (
-      rooks[0].kingside == square || rooks[0].queenside == square || rooks[1].kingside == square ||
-      rooks[1].queenside == square
-    )
-      return true;
-    return false;
-  }
+    bool is_castling(Square square) {
+        if (rooks[0].kingside == square || rooks[0].queenside == square ||
+            rooks[1].kingside == square || rooks[1].queenside == square)
+            return true;
+        return false;
+    }
 };
 
 static const std::unordered_map<char, std::pair<PieceType, Color>> piece_map = {
-  {'P', {PieceType::Pawn, Color::White}},
-  {'N', {PieceType::Knight, Color::White}},
-  {'B', {PieceType::Bishop, Color::White}},
-  {'R', {PieceType::Rook, Color::White}},
-  {'Q', {PieceType::Queen, Color::White}},
-  {'K', {PieceType::King, Color::White}},
-  {'p', {PieceType::Pawn, Color::Black}},
-  {'n', {PieceType::Knight, Color::Black}},
-  {'b', {PieceType::Bishop, Color::Black}},
-  {'r', {PieceType::Rook, Color::Black}},
-  {'q', {PieceType::Queen, Color::Black}},
-  {'k', {PieceType::King, Color::Black}}
+    {'P', {PieceType::Pawn, Color::White}},
+    {'N', {PieceType::Knight, Color::White}},
+    {'B', {PieceType::Bishop, Color::White}},
+    {'R', {PieceType::Rook, Color::White}},
+    {'Q', {PieceType::Queen, Color::White}},
+    {'K', {PieceType::King, Color::White}},
+    {'p', {PieceType::Pawn, Color::Black}},
+    {'n', {PieceType::Knight, Color::Black}},
+    {'b', {PieceType::Bishop, Color::Black}},
+    {'r', {PieceType::Rook, Color::Black}},
+    {'q', {PieceType::Queen, Color::Black}},
+    {'k', {PieceType::King, Color::Black}}
 };
 
 inline PieceType piece_type(Piece piece) {
-  return static_cast<PieceType>(static_cast<uint16_t>(piece) >> 1);
+    return static_cast<PieceType>(static_cast<uint16_t>(piece) >> 1);
 };
 
 inline Color color(Piece piece) { return static_cast<Color>(static_cast<uint16_t>(piece) & 0b1); };
 
 inline Color flip(Color color) { return static_cast<Color>(!static_cast<bool>(color)); }
 
-inline Square flip(Square square) { return static_cast<Square>(static_cast<int16_t>(square) ^ 56); }
+inline Square flip(Square square) {
+    return static_cast<Square>(static_cast<uint16_t>(square) ^ 56);
+}
 
 inline Piece piece_type_with_color(PieceType piece_type, Color color) {
-  return static_cast<Piece>(2 * static_cast<uint16_t>(piece_type) + static_cast<uint16_t>(color));
+    return static_cast<Piece>(2 * static_cast<uint16_t>(piece_type) + static_cast<uint16_t>(color));
 }
 
 inline int16_t piecesquare(Piece piece, Square square, bool flip_color) {
-  if (piece == Piece::None) {
-    return -1;
-  };
+    if (piece == Piece::None) {
+        return -1;
+    };
 
-  Color stm = flip_color ? flip(color(piece)) : color(piece);
-  Square location = flip_color ? flip(square) : square;
+    Color stm = flip_color ? flip(color(piece)) : color(piece);
+    Square location = flip_color ? flip(square) : square;
 
-  return static_cast<int16_t>(stm) * 384 + static_cast<int16_t>(piece_type(piece)) * 64 +
-         static_cast<int16_t>(location);
+    return static_cast<int16_t>(stm) * 384 + static_cast<int16_t>(piece_type(piece)) * 64 +
+           static_cast<int16_t>(location);
 }
 
 inline Piece pc_from_idx(uint16_t index) { return static_cast<Piece>(index); }
