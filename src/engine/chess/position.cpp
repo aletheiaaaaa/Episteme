@@ -79,83 +79,89 @@ void Position::from_FEN(const std::string& FEN) {
 }
 
 void Position::from_startpos() {
-    history.clear();
-    history.shrink_to_fit();
-
-    current.bitboards[piece_type_idx(PieceType::Pawn)] = 0x00FF00000000FF00;
-    current.bitboards[piece_type_idx(PieceType::Knight)] = 0x4200000000000042;
-    current.bitboards[piece_type_idx(PieceType::Bishop)] = 0x2400000000000024;
-    current.bitboards[piece_type_idx(PieceType::Rook)] = 0x8100000000000081;
-    current.bitboards[piece_type_idx(PieceType::Queen)] = 0x0800000000000008;
-    current.bitboards[piece_type_idx(PieceType::King)] = 0x1000000000000010;
-
-    current.bitboards[color_idx(Color::White) + COLOR_OFFSET] = 0x000000000000FFFF;
-    current.bitboards[color_idx(Color::Black) + COLOR_OFFSET] = 0xFFFF000000000000;
-
-    current.mailbox.fill(Piece::None);
-
-    auto setup_rank = [&](int rank, Color color) {
-        current.mailbox[sq_idx(static_cast<Square>(rank * 8 + 0))] =
-            piece_type_with_color(PieceType::Rook, color);
-        current.mailbox[sq_idx(static_cast<Square>(rank * 8 + 1))] =
-            piece_type_with_color(PieceType::Knight, color);
-        current.mailbox[sq_idx(static_cast<Square>(rank * 8 + 2))] =
-            piece_type_with_color(PieceType::Bishop, color);
-        current.mailbox[sq_idx(static_cast<Square>(rank * 8 + 3))] =
-            piece_type_with_color(PieceType::Queen, color);
-        current.mailbox[sq_idx(static_cast<Square>(rank * 8 + 4))] =
-            piece_type_with_color(PieceType::King, color);
-        current.mailbox[sq_idx(static_cast<Square>(rank * 8 + 5))] =
-            piece_type_with_color(PieceType::Bishop, color);
-        current.mailbox[sq_idx(static_cast<Square>(rank * 8 + 6))] =
-            piece_type_with_color(PieceType::Knight, color);
-        current.mailbox[sq_idx(static_cast<Square>(rank * 8 + 7))] =
-            piece_type_with_color(PieceType::Rook, color);
-    };
-
-    setup_rank(0, Color::White);
-    setup_rank(7, Color::Black);
-
-    for (int file = 0; file < 8; ++file) {
-        current.mailbox[sq_idx(static_cast<Square>(8 + file))] = Piece::WhitePawn;
-        current.mailbox[sq_idx(static_cast<Square>(48 + file))] = Piece::BlackPawn;
-    }
-
-    current.allowed_castles.rooks[color_idx(Color::White)].kingside = Square::H1;
-    current.allowed_castles.rooks[color_idx(Color::White)].queenside = Square::A1;
-    current.allowed_castles.rooks[color_idx(Color::Black)].kingside = Square::H8;
-    current.allowed_castles.rooks[color_idx(Color::Black)].queenside = Square::A8;
-
-    current.stm = 0;
-    current.half_move_clock = 0;
-    current.full_move_number = 1;
-    current.ep_square = Square::None;
-
-    current.hashes = explicit_hashes();
-
-    history.push_back(current);
+    from_FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
 void Position::make_move(const Move& move) {
-    Square sq_src = move.from_square();
-    Square sq_dst = move.to_square();
+    const Square sq_src = move.from_square();
+    const Square sq_dst = move.to_square();
 
-    Piece& src = current.mailbox[sq_idx(sq_src)];
-    Piece& dst = current.mailbox[sq_idx(sq_dst)];
+    const Piece mover = current.mailbox[sq_idx(sq_src)];
+    const Piece captured = current.mailbox[sq_idx(sq_dst)];
 
-    uint64_t bb_src = (uint64_t)1 << sq_idx(sq_src);
-    uint64_t bb_dst = (uint64_t)1 << sq_idx(sq_dst);
+    const Color side = STM();
+    const Color xside = flip(side);
+    const auto us = color_idx(side);
 
-    Color side = STM();
-    auto us = color_idx(side);
-    auto them = color_idx(flip(side));
+    auto toggle_hashes = [&](Piece piece, Square square) {
+        const uint64_t h = hash::piecesquares[piecesquare(piece, square, false)];
+        Hashes& hashes = current.hashes;
+        hashes.full_hash ^= h;
+
+        const PieceType type = piece_type(piece);
+        if (type == PieceType::Pawn) {
+            hashes.pawn_hash ^= h;
+        } else if (color(piece) == Color::Black) {
+            hashes.non_pawn_black_hash ^= h;
+        } else {
+            hashes.non_pawn_white_hash ^= h;
+        }
+
+        if (type == PieceType::Rook || type == PieceType::Queen || type == PieceType::King)
+            hashes.major_hash ^= h;
+        if (type == PieceType::Knight || type == PieceType::Bishop || type == PieceType::King)
+            hashes.minor_hash ^= h;
+    };
+
+    auto toggle_bitboards = [&](Piece piece, Square square) {
+        const uint64_t bb = (uint64_t)1 << sq_idx(square);
+        current.bitboards[piece_type_idx(piece_type(piece))] ^= bb;
+        current.bitboards[color_idx(piece) + COLOR_OFFSET] ^= bb;
+    };
+
+    auto add_piece = [&](Piece piece, Square square) {
+        toggle_bitboards(piece, square);
+        toggle_hashes(piece, square);
+        current.mailbox[sq_idx(square)] = piece;
+    };
+
+    auto remove_piece = [&](Piece piece, Square square) {
+        toggle_bitboards(piece, square);
+        toggle_hashes(piece, square);
+        current.mailbox[sq_idx(square)] = Piece::None;
+    };
+
+    auto move_piece = [&](Piece piece, Square from, Square to) {
+        remove_piece(piece, from);
+        add_piece(piece, to);
+    };
+
+    auto edit_castling = [&](auto&& edit) {
+        current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
+        edit();
+        current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
+    };
+
+    auto revoke_rook_right = [&](Color for_side, Square square) {
+        auto& rooks = current.allowed_castles.rooks[color_idx(for_side)];
+        if (square == rooks.kingside)
+            rooks.unset(true);
+        else if (square == rooks.queenside)
+            rooks.unset(false);
+    };
+
+    auto capture_on = [&](Piece victim, Square square) {
+        remove_piece(victim, square);
+        if (piece_type(victim) == PieceType::Rook)
+            edit_castling([&] { revoke_rook_right(xside, square); });
+    };
 
     if (current.ep_square != Square::None) {
         current.hashes.full_hash ^= hash::ep_files[file(current.ep_square)];
         current.ep_square = Square::None;
     }
 
-    if (piece_type(src) == PieceType::Pawn || dst != Piece::None) {
+    if (piece_type(mover) == PieceType::Pawn || captured != Piece::None) {
         current.half_move_clock = 0;
     } else {
         current.half_move_clock++;
@@ -165,229 +171,53 @@ void Position::make_move(const Move& move) {
         current.full_move_number++;
     }
 
-    uint64_t attacker_src_hash = hash::piecesquares[piecesquare(src, sq_src, false)];
-    uint64_t attacker_dst_hash = hash::piecesquares[piecesquare(src, sq_dst, false)];
-    uint64_t victim_hash =
-        (dst == Piece::None) ? 0 : hash::piecesquares[piecesquare(dst, sq_dst, false)];
-
-    current.hashes.full_hash ^= attacker_src_hash;
-
     switch (move.move_type()) {
         case MoveType::Normal: {
-            if (dst != Piece::None) {
-                current.hashes.full_hash ^= victim_hash;
-                current.bitboards[piece_type_idx(piece_type(dst))] ^= bb_dst;
-                current.bitboards[them + COLOR_OFFSET] ^= bb_dst;
+            if (captured != Piece::None) capture_on(captured, sq_dst);
 
-                if (piece_type(dst) == PieceType::Rook) {
-                    current.hashes.full_hash ^=
-                        hash::castling_rights[current.allowed_castles.as_mask()];
-                    auto& rooks = current.allowed_castles.rooks[them];
-                    if (sq_dst == rooks.kingside)
-                        rooks.unset(true);
-                    else if (sq_dst == rooks.queenside)
-                        rooks.unset(false);
-                    current.hashes.full_hash ^=
-                        hash::castling_rights[current.allowed_castles.as_mask()];
-                }
+            if (piece_type(mover) == PieceType::King) {
+                edit_castling([&] { current.allowed_castles.rooks[us].clear(); });
+            } else if (piece_type(mover) == PieceType::Rook) {
+                edit_castling([&] { revoke_rook_right(side, sq_src); });
             }
 
-            if (piece_type(src) == PieceType::King) {
-                current.hashes.full_hash ^=
-                    hash::castling_rights[current.allowed_castles.as_mask()];
-                current.allowed_castles.rooks[us].clear();
-                current.hashes.full_hash ^=
-                    hash::castling_rights[current.allowed_castles.as_mask()];
-            } else if (piece_type(src) == PieceType::Rook) {
-                current.hashes.full_hash ^=
-                    hash::castling_rights[current.allowed_castles.as_mask()];
-                auto& rooks = current.allowed_castles.rooks[us];
-                if (sq_src == rooks.kingside)
-                    rooks.unset(true);
-                else if (sq_src == rooks.queenside)
-                    rooks.unset(false);
-                current.hashes.full_hash ^=
-                    hash::castling_rights[current.allowed_castles.as_mask()];
-            }
-
-            if (piece_type(src) == PieceType::Pawn &&
+            if (piece_type(mover) == PieceType::Pawn &&
                 std::abs(sq_idx(sq_src) - sq_idx(sq_dst)) == DOUBLE_PUSH) {
                 current.ep_square = sq_from_idx(sq_idx(sq_dst) + ((side == Color::White) ? -8 : 8));
                 current.hashes.full_hash ^= hash::ep_files[file(sq_dst)];
             }
 
-            current.hashes.full_hash ^= attacker_dst_hash;
-            current.bitboards[piece_type_idx(piece_type(src))] ^= bb_src ^ bb_dst;
-            current.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;
-
-            auto update_hash = [&](Piece piece, uint64_t hash) {
-                switch (piece_type(piece)) {
-                    case PieceType::Pawn:
-                        current.hashes.pawn_hash ^= hash;
-                        break;
-                    case PieceType::Knight:
-                    case PieceType::Bishop:
-                        current.hashes.minor_hash ^= hash;
-                        break;
-                    case PieceType::Rook:
-                    case PieceType::Queen:
-                        current.hashes.major_hash ^= hash;
-                        break;
-                    case PieceType::King:
-                        current.hashes.major_hash ^= hash;
-                        current.hashes.minor_hash ^= hash;
-                        break;
-                    default:
-                        break;
-                }
-                if (piece_type(piece) != PieceType::Pawn) {
-                    if (color(piece) == Color::Black)
-                        current.hashes.non_pawn_black_hash ^= hash;
-                    else
-                        current.hashes.non_pawn_white_hash ^= hash;
-                }
-            };
-
-            update_hash(src, attacker_src_hash ^ attacker_dst_hash);
-            if (dst != Piece::None) update_hash(dst, victim_hash);
-
-            dst = src;
+            move_piece(mover, sq_src, sq_dst);
             break;
         }
 
         case MoveType::Castling: {
-            bool king_side = bb_dst > bb_src;
-            Square rook_src = king_side ? current.allowed_castles.rooks[us].kingside
-                                        : current.allowed_castles.rooks[us].queenside;
-            Square rook_dst = static_cast<Square>(sq_idx(sq_dst) + (king_side ? -1 : 1));
-            uint64_t bb_rook_src = (uint64_t)1 << sq_idx(rook_src);
-            uint64_t bb_rook_dst = (uint64_t)1 << sq_idx(rook_dst);
+            const bool king_side = sq_idx(sq_dst) > sq_idx(sq_src);
+            const Square rook_src = king_side ? current.allowed_castles.rooks[us].kingside
+                                              : current.allowed_castles.rooks[us].queenside;
+            const Square rook_dst = sq_from_idx(sq_idx(sq_dst) + (king_side ? -1 : 1));
 
-            Piece rook_piece = piece_type_with_color(PieceType::Rook, side);
+            move_piece(mover, sq_src, sq_dst);
+            move_piece(piece_type_with_color(PieceType::Rook, side), rook_src, rook_dst);
 
-            current.hashes.full_hash ^=
-                hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-                hash::piecesquares[piecesquare(rook_piece, rook_dst, false)] ^
-                hash::piecesquares[piecesquare(src, sq_dst, false)];
-
-            current.bitboards[piece_type_idx(PieceType::Rook)] ^= bb_rook_src ^ bb_rook_dst;
-            current.bitboards[piece_type_idx(PieceType::King)] ^= bb_src ^ bb_dst;
-            current.bitboards[us + COLOR_OFFSET] ^= bb_rook_src ^ bb_rook_dst ^ bb_src ^ bb_dst;
-
-            current.mailbox[sq_idx(rook_src)] = Piece::None;
-            current.mailbox[sq_idx(rook_dst)] = rook_piece;
-
-            current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
-            current.allowed_castles.rooks[us].clear();
-            current.hashes.full_hash ^= hash::castling_rights[current.allowed_castles.as_mask()];
-
-            current.hashes.major_hash ^=
-                attacker_src_hash ^ attacker_dst_hash ^
-                hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-                hash::piecesquares[piecesquare(rook_piece, rook_dst, false)];
-            current.hashes.minor_hash ^= attacker_src_hash ^ attacker_dst_hash;
-
-            if (current.stm)
-                current.hashes.non_pawn_black_hash ^=
-                    attacker_src_hash ^ attacker_dst_hash ^
-                    hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-                    hash::piecesquares[piecesquare(rook_piece, rook_dst, false)];
-            else
-                current.hashes.non_pawn_white_hash ^=
-                    attacker_src_hash ^ attacker_dst_hash ^
-                    hash::piecesquares[piecesquare(rook_piece, rook_src, false)] ^
-                    hash::piecesquares[piecesquare(rook_piece, rook_dst, false)];
-
-            dst = src;
+            edit_castling([&] { current.allowed_castles.rooks[us].clear(); });
             break;
         }
 
         case MoveType::EnPassant: {
-            int capture_idx = sq_idx(sq_dst) + ((side == Color::White) ? -8 : 8);
-            uint64_t bb_cap = (uint64_t)1 << capture_idx;
-            Piece captured_pawn = piece_type_with_color(PieceType::Pawn, flip(side));
+            const Square capture_sq =
+                sq_from_idx(sq_idx(sq_dst) + ((side == Color::White) ? -8 : 8));
 
-            current.hashes.full_hash ^=
-                hash::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)] ^
-                hash::piecesquares[piecesquare(src, sq_dst, false)];
-            current.hashes.pawn_hash ^=
-                attacker_src_hash ^ attacker_dst_hash ^
-                hash::piecesquares[piecesquare(captured_pawn, sq_from_idx(capture_idx), false)];
-
-            current.bitboards[piece_type_idx(PieceType::Pawn)] ^= bb_src ^ bb_dst ^ bb_cap;
-            current.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;
-            current.bitboards[them + COLOR_OFFSET] ^= bb_cap;
-            current.mailbox[capture_idx] = Piece::None;
-            dst = src;
-
+            move_piece(mover, sq_src, sq_dst);
+            remove_piece(piece_type_with_color(PieceType::Pawn, xside), capture_sq);
             break;
         }
 
         case MoveType::Promotion: {
-            if (dst != Piece::None) {
-                current.hashes.full_hash ^= victim_hash;
-                current.bitboards[piece_type_idx(piece_type(dst))] ^= bb_dst;
-                current.bitboards[them + COLOR_OFFSET] ^= bb_dst;
+            if (captured != Piece::None) capture_on(captured, sq_dst);
 
-                if (piece_type(dst) == PieceType::Rook) {
-                    current.hashes.full_hash ^=
-                        hash::castling_rights[current.allowed_castles.as_mask()];
-                    auto& rooks = current.allowed_castles.rooks[them];
-                    if (sq_dst == rooks.kingside)
-                        rooks.unset(true);
-                    else if (sq_dst == rooks.queenside)
-                        rooks.unset(false);
-                    current.hashes.full_hash ^=
-                        hash::castling_rights[current.allowed_castles.as_mask()];
-                }
-
-                switch (piece_type(dst)) {
-                    case PieceType::Pawn:
-                        current.hashes.pawn_hash ^= victim_hash;
-                        break;
-                    case PieceType::Knight:
-                    case PieceType::Bishop:
-                        current.hashes.minor_hash ^= victim_hash;
-                        break;
-                    case PieceType::Rook:
-                    case PieceType::Queen:
-                        current.hashes.major_hash ^= victim_hash;
-                        break;
-                    case PieceType::King:
-                        current.hashes.major_hash ^= victim_hash;
-                        current.hashes.minor_hash ^= victim_hash;
-                        break;
-                    default:
-                        break;
-                }
-
-                if (!current.stm)
-                    current.hashes.non_pawn_black_hash ^= victim_hash;
-                else
-                    current.hashes.non_pawn_white_hash ^= victim_hash;
-            }
-
-            PieceType promo_type = move.promo_piece_type();
-            Piece promo_piece = piece_type_with_color(promo_type, side);
-            uint64_t promo_hash = hash::piecesquares[piecesquare(promo_piece, sq_dst, false)];
-
-            current.hashes.full_hash ^= promo_hash;
-            current.hashes.pawn_hash ^= attacker_src_hash;
-
-            if (promo_type <= PieceType::Bishop)
-                current.hashes.minor_hash ^= promo_hash;
-            else
-                current.hashes.major_hash ^= promo_hash;
-
-            if (current.stm)
-                current.hashes.non_pawn_black_hash ^= promo_hash;
-            else
-                current.hashes.non_pawn_white_hash ^= promo_hash;
-
-            current.bitboards[piece_type_idx(promo_type)] ^= bb_dst;
-            current.bitboards[piece_type_idx(PieceType::Pawn)] ^= bb_src;
-            current.bitboards[us + COLOR_OFFSET] ^= bb_src ^ bb_dst;
-            dst = promo_piece;
+            remove_piece(mover, sq_src);
+            add_piece(piece_type_with_color(move.promo_piece_type(), side), sq_dst);
             break;
         }
 
@@ -395,7 +225,6 @@ void Position::make_move(const Move& move) {
             break;
     }
 
-    src = Piece::None;
     current.stm = !current.stm;
     current.hashes.full_hash ^= hash::stm;
 
@@ -428,7 +257,7 @@ void Position::unmake_move() {
 
 bool Position::is_threefold() {
     uint8_t rep_counter = 1;
-    for (PositionState prev_state : history) {
+    for (const PositionState& prev_state : history) {
         if (prev_state.hashes.full_hash == current.hashes.full_hash) {
             rep_counter++;
             if (rep_counter == 3) return true;

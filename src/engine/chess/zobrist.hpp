@@ -3,8 +3,6 @@
 #include <array>
 #include <cstdint>
 
-#include "core.hpp"
-
 namespace episteme::hash {
 extern std::array<uint64_t, 768> piecesquares;
 extern std::array<uint64_t, 16> castling_rights;
