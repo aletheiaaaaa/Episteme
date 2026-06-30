@@ -212,7 +212,7 @@ int32_t Worker::search(
                 return 0;
         }
 
-        if (position.is_threefold()) return 0;
+        if (position.is_repetition()) return 0;
     }
 
     if (depth <= 0) {

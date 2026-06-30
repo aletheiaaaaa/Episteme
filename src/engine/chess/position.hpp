@@ -118,7 +118,7 @@ public:
     void make_null();
     void unmake_move();
 
-    bool is_threefold();
+    bool is_repetition(int rep_count = 2);
     bool is_insufficient();
 
     std::string to_FEN() const;

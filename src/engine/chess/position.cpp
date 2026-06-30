@@ -255,12 +255,11 @@ void Position::unmake_move() {
     current = prev;
 }
 
-bool Position::is_threefold() {
-    uint8_t rep_counter = 1;
+bool Position::is_repetition(int rep_count) {
+    int reps = 0;
     for (const PositionState& prev_state : history) {
         if (prev_state.hashes.full_hash == current.hashes.full_hash) {
-            rep_counter++;
-            if (rep_counter == 3) return true;
+            if (++reps == rep_count) return true;
         }
     }
     return false;

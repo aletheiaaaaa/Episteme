@@ -113,7 +113,7 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
 
             position.make_move(scored_move.move);
 
-            if (position.is_threefold() || position.is_insufficient()) {
+            if (position.is_repetition(3) || position.is_insufficient()) {
                 formatter.push(scored_move.move, 0);
                 wdl = 1;
                 break;
