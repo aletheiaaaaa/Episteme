@@ -270,16 +270,22 @@ bool Position::is_insufficient() {
     if (current.bitboards[piece_type_idx(PieceType::Queen)] |
         current.bitboards[piece_type_idx(PieceType::Rook)])
         return false;
-    if ((current.bitboards[piece_type_idx(PieceType::Bishop)] &
-         current.bitboards[color_idx(Color::White) + COLOR_OFFSET]) &&
-        (current.bitboards[piece_type_idx(PieceType::Bishop)] &
-         current.bitboards[color_idx(Color::Black) + COLOR_OFFSET]))
+
+    constexpr uint64_t LIGHT_SQUARES = 0x55AA55AA55AA55AAULL;
+    constexpr uint64_t DARK_SQUARES = ~LIGHT_SQUARES;
+
+    auto can_force_mate = [&](Color side) {
+        const uint64_t us = current.bitboards[color_idx(side) + COLOR_OFFSET];
+        const uint64_t bishops = current.bitboards[piece_type_idx(PieceType::Bishop)] & us;
+        const uint64_t knights = current.bitboards[piece_type_idx(PieceType::Knight)] & us;
+
+        if ((bishops & LIGHT_SQUARES) && (bishops & DARK_SQUARES)) return true;
+        if (bishops && knights) return true;
+        if (std::popcount(knights) >= 3) return true;
         return false;
-    if (current.bitboards[piece_type_idx(PieceType::Bishop)] &&
-        current.bitboards[piece_type_idx(PieceType::Knight)])
-        return false;
-    if (std::popcount(current.bitboards[piece_type_idx(PieceType::Knight)])) return false;
-    return true;
+    };
+
+    return !can_force_mate(Color::White) && !can_force_mate(Color::Black);
 }
 
 std::string Position::to_FEN() const {
