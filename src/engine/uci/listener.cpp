@@ -44,6 +44,8 @@ bool Listener::parse(const std::string& cmd) {
         bench(args);
     else if (keyword == "perft")
         perft(args);
+    else if (keyword == "datagen")
+        datagen(args);
     else if (keyword == "eval")
         eval();
     else if (keyword == "printob")
@@ -197,7 +199,7 @@ void Listener::print_tunables() {
 
 void Listener::fen() { std::println("{}", cfg.position.to_FEN()); }
 
-void datagen(const std::string& args) {
+void Listener::datagen(const std::string& args) {
     std::istringstream iss(args);
     std::string token;
 

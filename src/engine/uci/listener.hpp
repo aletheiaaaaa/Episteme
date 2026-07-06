@@ -38,8 +38,8 @@ private:
     void eval();
     void bench(const std::string& args);
     void perft(const std::string& args);
+    void datagen(const std::string& args);
     void print_tunables();
     void fen();
 };
-void datagen(const std::string& args);
 }  // namespace episteme::uci

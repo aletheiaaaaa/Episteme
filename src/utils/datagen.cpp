@@ -70,7 +70,7 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
         formatter.init(position);
 
         search::ScoredMove initial = engine.datagen_search(position);
-        if (initial.score >= INITIAL_MAX) {
+        if (std::abs(initial.score) >= INITIAL_MAX) {
             i--;
             position.from_startpos();
             continue;
@@ -122,6 +122,8 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
             formatter.push(scored_move.move, scored_move.score);
             engine.reset_go();
         }
+
+        if (!wdl) break;
 
         games++;
         positions += formatter.write(stream, static_cast<uint8_t>(*wdl));
