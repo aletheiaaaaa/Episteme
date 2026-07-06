@@ -52,7 +52,7 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
     search::Config cfg{
         .params = search_params,
         .hash_size = params.hash_size,
-        .num_threads = params.num_threads,
+        .num_threads = 1,
         .position = {}
     };
 
