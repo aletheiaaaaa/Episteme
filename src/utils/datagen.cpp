@@ -5,6 +5,7 @@
 #include <csignal>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <optional>
 #include <sstream>
@@ -50,10 +51,7 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
     };
 
     search::Config cfg{
-        .params = search_params,
-        .hash_size = params.hash_size,
-        .num_threads = 1,
-        .position = {}
+        .params = search_params, .hash_size = params.hash_size, .num_threads = 1, .position = {}
     };
 
     Engine engine(cfg);
@@ -62,6 +60,7 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
     time_point start = steady_clock::now();
     size_t positions = 0;
     size_t games = 0;
+    size_t last_games = 0;
 
     int workload = params.num_games / params.num_threads;
     for (int i = 0; i < workload && !stop; i++) {
@@ -132,13 +131,17 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
 
         if ((i + 1) % 16 == 0 || (i + 1) == workload) {
             time_point end = steady_clock::now();
-            int32_t elapsed = duration_cast<milliseconds>(end - start).count() / 1000;
+            double elapsed = duration_cast<milliseconds>(end - start).count() / 1000.0;
+            double secs = elapsed > 0.0 ? elapsed : 1.0;
+
             std::cout << "Thread " << id << ": " << games << "/" << workload
-                      << " games completed at " << (positions / (elapsed > 0 ? elapsed : 1))
-                      << " pos/sec\n";
+                      << " games completed at " << static_cast<int64_t>(positions / secs)
+                      << " pos/sec, " << std::fixed << std::setprecision(1)
+                      << ((games - last_games) / secs) << " games/sec\n";
 
             start = steady_clock::now();
             positions = 0;
+            last_games = games;
         }
     }
 }

@@ -155,13 +155,16 @@ ScoredMove Worker::score_move(
         if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
 
     } else {
-        if (stack[ply.value()].killer == move) {
-            scored_move.score = 800000;
-            return scored_move;
+        if (ply) {
+            if (stack[*ply].killer == move) {
+                scored_move.score = 800000;
+                return scored_move;
+            }
+
+            scored_move.score += cont_hist_mult * history.get_cont_hist(stack, src, move, *ply);
         }
 
         scored_move.score += quiet_hist_mult * history.get_quiet_hist(position.STM(), move);
-        scored_move.score += cont_hist_mult * history.get_cont_hist(stack, src, move, *ply);
         scored_move.score +=
             pawn_hist_mult * history.get_pawn_hist(position.STM(), position.pawn_hash(), src, move);
     }
