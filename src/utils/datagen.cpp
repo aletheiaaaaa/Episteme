@@ -149,11 +149,13 @@ void game_loop(const Parameters& params, std::ostream& stream, uint32_t id) {
 void run(Parameters& params) {
     std::cout << "Beginning datagen.\n";
 
-    std::signal(SIGINT, []([[maybe_unused]] int signum) {
-        stop = true;
-        std::cout << "Datagen interrupted.\n";
-        return;
-    });
+    // The handler must only touch async-signal-safe state: setting the atomic
+    // flag is fine, but doing I/O here (e.g. std::cout) is undefined behaviour
+    // and can deadlock against a worker thread that holds the stream lock,
+    // hanging the process on Ctrl-C. The interrupt message is printed below,
+    // back in normal control flow, once the workers have joined.
+    stop = false;
+    std::signal(SIGINT, []([[maybe_unused]] int signum) { stop = true; });
 
     params.num_games = params.num_threads * (params.num_games / params.num_threads);
 
@@ -184,6 +186,10 @@ void run(Parameters& params) {
     }
 
     for (auto& thread : threads) thread.join();
+
+    std::signal(SIGINT, SIG_DFL);
+
+    if (stop) std::cout << "Datagen interrupted; saving partial data.\n";
 
     std::cout << "Generated " << params.num_threads << " data files. Concatenating.\n";
 
