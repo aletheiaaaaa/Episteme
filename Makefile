@@ -16,7 +16,7 @@ DEFAULT_NET := 512_v0_05.bin
 EVALFILE    ?= $(DEFAULT_NET)
 NETS_REPO   := https://github.com/aletheiaaaaa/episteme-nets
 NET_FILENAME := $(notdir $(DEFAULT_NET))
-NET_URL     := $(NETS_REPO)/releases/tags/episteme_v1/$(NET_FILENAME)
+NET_URL     := $(NETS_REPO)/releases/download/episteme_v1/$(NET_FILENAME)
 
 ifeq ($(OS),Windows_NT)
     EXE_EXT := .exe
