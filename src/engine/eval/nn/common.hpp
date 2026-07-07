@@ -12,7 +12,7 @@ constexpr int16_t QA = 255;
 constexpr int16_t QB = 64;
 constexpr int16_t EVAL_SCALE = 400;
 
-constexpr int L1_WIDTH = 512;
+constexpr int L1_WIDTH = 1024;
 
 #if defined(USE_AVX512) && defined(USE_VNNI)
 constexpr int ALIGNMENT = 64;
