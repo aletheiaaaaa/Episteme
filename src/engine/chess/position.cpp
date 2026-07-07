@@ -11,6 +11,8 @@ void Position::from_FEN(const std::string& FEN) {
     history.clear();
     history.shrink_to_fit();
 
+    current = PositionState{};
+
     std::array<std::string, 6> tokens;
     size_t i = 0;
 
