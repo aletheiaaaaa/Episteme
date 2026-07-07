@@ -12,13 +12,13 @@ namespace episteme::uci {
     auto setoption(const std::string& args, search::Config& cfg, search::Engine& engine) {
         std::istringstream iss(args);
         std::string name, option_name, value, option_value;
-    
+
         iss >> name >> option_name >> value >> option_value;
-    
+
         if (name != "name" || value != "value") {
             std::cout << "invalid command" << std::endl;
         }
-    
+
         if (option_name == "Hash") {
             cfg.hash_size = std::stoi(option_value);
         } else if (option_name == "Threads") {
