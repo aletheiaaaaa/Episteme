@@ -11,7 +11,7 @@ EVALFILE    ?= $(DEFAULT_NET)
 # Network repository configuration
 NETS_REPO := https://github.com/aletheiaaaaa/episteme-nets
 NET_FILENAME := $(notdir $(DEFAULT_NET))
-NET_URL := $(NETS_REPO)/releases/latest/download/$(NET_FILENAME)
+NET_URL := $(NETS_REPO)/releases/tag/episteme_v1/download/$(NET_FILENAME)
 
 CXXFLAGS  += -DEVALFILE=\"$(EVALFILE)\"
 
