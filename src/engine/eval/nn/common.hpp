@@ -8,7 +8,6 @@
 #include "../../chess/position.hpp"
 
 namespace episteme::eval::nn {
-
 constexpr int16_t QA = 255;
 constexpr int16_t QB = 64;
 constexpr int16_t EVAL_SCALE = 400;
