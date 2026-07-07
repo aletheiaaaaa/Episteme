@@ -126,7 +126,6 @@ public:
     void reset_accum() {
         accumulator = {};
         accum_history.clear();
-        accum_history.shrink_to_fit();
     }
 
     void reset_history() { history.reset(); }
