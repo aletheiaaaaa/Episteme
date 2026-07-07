@@ -1,14 +1,14 @@
+#include <string>
+
 #include "engine/chess/movegen.h"
 #include "engine/chess/perft.h"
-#include "engine/search/search.h"
 #include "engine/search/bench.h"
+#include "engine/search/search.h"
 #include "engine/uci/uci.h"
-
-#include <string>
 
 using namespace episteme;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     zobrist::init();
     search::init_lmr_table();
 
@@ -26,10 +26,9 @@ int main(int argc, char *argv[]) {
     } else {
         std::string line;
         while (std::getline(std::cin, line)) {
-            uci::parse(line, cfg, engine);    
+            uci::parse(line, cfg, engine);
         }
     }
 
     return 0;
 }
-
