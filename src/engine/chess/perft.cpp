@@ -3,6 +3,8 @@
 #include <chrono>
 #include <iostream>
 
+#include "movegen.hpp"
+
 namespace episteme {
 Position fen_to_position(const std::string& FEN) {
     Position position;
