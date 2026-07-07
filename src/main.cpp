@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
         std::string line;
         while (std::getline(std::cin, line)) {
             uci::parse(line, cfg, engine);    
-        }    
+        }
     }
 
     return 0;
