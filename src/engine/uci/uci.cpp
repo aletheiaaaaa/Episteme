@@ -106,7 +106,7 @@ namespace episteme::uci {
     }
 
     auto perft(const std::string& args, search::Config& cfg) {
-        int depth = (args.empty()) ? 6 : std::stoi(args);
+        int depth = (args.empty()) ? 10 : std::stoi(args);
         Position& position = cfg.position;
 
         time_perft(position, depth);
