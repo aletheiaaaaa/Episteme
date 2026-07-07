@@ -152,7 +152,7 @@ ScoredMove Worker::score_move(
                               : dst
                       );
 
-        if (eval::SEE(position, move, 0)) scored_move.score += 1000000;
+        if (eval::SEE(position, move, 0)) scored_move.score += 128 * 1000000;
 
     } else {
         if (ply) {
