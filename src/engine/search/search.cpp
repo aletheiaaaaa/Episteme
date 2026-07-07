@@ -40,10 +40,10 @@ Worker::Worker(
             {
                 std::unique_lock<std::mutex> lock(mutex);
                 cond.wait(lock, [this] { return assigned || quit; });
+                if (quit) return;
+                assigned = false;
             }
-            if (quit) return;
 
-            assigned = false;
             ScoredMove best = run(params, position);
 
             if (id == 0) {
@@ -669,6 +669,7 @@ ScoredMove Worker::run(const Parameters& params, Position& position) {
         reset_seldepth();
 
         accumulator = eval::reset(position);
+        accum_history.clear();
         accum_history.emplace_back(accumulator);
 
         Line PV{};
@@ -757,6 +758,7 @@ ScoredMove Worker::datagen_search(const Parameters& params, Position& position) 
 
     for (int depth = 1; depth <= 10; depth++) {
         accumulator = eval::reset(position);
+        accum_history.clear();
         accum_history.emplace_back(accumulator);
 
         Line PV{};
@@ -804,6 +806,7 @@ void Worker::bench(int depth) {
 
         position.from_FEN(fen);
         accumulator = eval::reset(position);
+        accum_history.clear();
         accum_history.emplace_back(accumulator);
 
         nodes = 0;

@@ -54,7 +54,6 @@ public:
             .move_time = params.move_time,
             .time_left = params.time[color_idx(position.STM())],
             .increment = params.inc[color_idx(position.STM())],
-            .stop = false,
         };
 
         limiter.set_config(cfg);

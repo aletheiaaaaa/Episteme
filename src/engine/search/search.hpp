@@ -188,7 +188,6 @@ public:
     void bench(int depth);
 
 private:
-    std::thread thread;
     std::mutex mutex;
     std::condition_variable cond;
     bool assigned = false;
@@ -215,5 +214,7 @@ private:
 
     std::atomic<uint64_t> nodes;
     std::atomic<bool> should_stop;
+
+    std::thread thread;
 };
 }  // namespace episteme::search

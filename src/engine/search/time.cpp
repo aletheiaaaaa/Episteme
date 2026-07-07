@@ -26,6 +26,8 @@ bool Limiter::time_approaching(Move move, uint64_t nodes) {
 }
 
 void Limiter::start() {
+    stop.store(false, std::memory_order_relaxed);
+
     hard_limit = -1;
     soft_limit = -1;
 
