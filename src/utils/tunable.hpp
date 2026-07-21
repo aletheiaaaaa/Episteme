@@ -24,22 +24,22 @@ extern std::array<std::array<int16_t, 64>, 64> lmr_table_noisy;
 extern std::array<std::array<int16_t, 64>, 64> lmr_table_quiet;
 void init_lmr_table();
 
-template <typename F, bool Enabled = ENABLE_TUNING>
+template <typename T, bool Enabled = ENABLE_TUNING>
 struct Tunable {
     std::string name;
-    F value;
-    F min;
-    F max;
-    F step;
+    T value;
+    T min;
+    T max;
+    T step;
     std::function<void()> callable;
-    static inline std::vector<Tunable<F>*> registry;
+    static inline std::vector<Tunable<T>*> registry;
 
     Tunable(
         std::string name,
-        F default_value,
-        F min_value,
-        F max_value,
-        F step_value,
+        T default_value,
+        T min_value,
+        T max_value,
+        T step_value,
         std::function<void()> func
     ) :
         value(default_value) {
@@ -57,7 +57,7 @@ struct Tunable {
         }
     }
 
-    void set(F new_value) {
+    void set(T new_value) {
         if constexpr (Enabled) {
             if (new_value < min || new_value > max) {
                 std::println(stderr, "Value out of range for tunable {}", name);
@@ -70,7 +70,7 @@ struct Tunable {
 
     void print(bool use_type = false) const {
         if constexpr (Enabled) {
-            constexpr bool is_int = std::is_same_v<F, int>;
+            constexpr bool is_int = std::is_same_v<T, int>;
             std::println(
                 "option name {} type {} default {} min {} max {}",
                 name,
@@ -82,7 +82,7 @@ struct Tunable {
         }
     }
 
-    constexpr operator F() const { return value; }
+    constexpr operator T() const { return value; }
 };
 
 TUNABLE_INT(lmr_table_quiet_base, 80, -128, 512, 8, init_lmr_table)

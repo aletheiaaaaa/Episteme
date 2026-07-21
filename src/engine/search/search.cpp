@@ -572,6 +572,7 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
     MoveList explored_noisies;
     ScoredList captures_list = generate_scored_captures(position, tt_entry);
     tt::NodeType node_type = tt::NodeType::AllNode;
+    int32_t num_legal = 0;
 
     for (size_t i = 0; i < captures_list.count; i++) {
         pick_move(captures_list, i);
@@ -583,6 +584,7 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
                           : position.mailbox(move.to_square());
 
         if (!eval::SEE(position, move, 0)) continue;
+        if (num_legal >= 4) break;
 
         accumulator = eval::update(position, move, accumulator);
         accum_history.emplace_back(accumulator);
@@ -597,6 +599,7 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
         }
 
         nodes++;
+        num_legal++;
         explored_noisies.add(move);
 
         if (limiter.nodes_exceeded(nodes) || limiter.abort()) {
