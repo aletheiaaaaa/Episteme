@@ -584,7 +584,7 @@ int32_t Worker::quiesce(Position& position, Line& PV, int16_t ply, int32_t alpha
                           : position.mailbox(move.to_square());
 
         if (!eval::SEE(position, move, 0)) continue;
-        if (num_legal >= 4) break;
+        if (num_legal >= 4 && !in_check(position, position.STM())) break;
 
         accumulator = eval::update(position, move, accumulator);
         accum_history.emplace_back(accumulator);
