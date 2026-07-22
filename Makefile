@@ -144,5 +144,4 @@ show-arch:
 	@echo "Detected architecture: $(DETECTED_ARCH)"
 	@echo "Compiler flags: $(ARCH_FLAGS) $(ARCH_DEF)"
 
-.PHONY: all clean clean-all rebuild rebuild-all download-net \
-        avx2 avx512_vnni ssse3 generic show-arch debug
+.PHONY: all clean clean-all rebuild rebuild-all download-net avx2 avx512_vnni ssse3 generic show-arch debug
