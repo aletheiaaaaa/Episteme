@@ -13,7 +13,7 @@ set(DEFAULT_NET "1024_simple_v3.bin" CACHE STRING "Default network file")
 set(EVALFILE "${DEFAULT_NET}" CACHE STRING "Evaluation file to use")
 set(NETS_REPO "https://github.com/aletheiaaaaa/episteme-nets")
 get_filename_component(NET_FILENAME "${DEFAULT_NET}" NAME)
-set(NET_URL "${NETS_REPO}/releases/latest/download/${NET_FILENAME}")
+set(NET_URL "${NETS_REPO}/releases/latest/download/1024_simple_v3/${NET_FILENAME}")
 
 if(NOT DEFINED ARCH)
   set(_PROBE "${CMAKE_BINARY_DIR}/arch_probe.cpp")
