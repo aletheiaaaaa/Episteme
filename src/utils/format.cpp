@@ -6,8 +6,6 @@ Format::Format() { moves.reserve(256); }
 void Format::init(const Position& position) {
     initial = PackedBoard::pack(position, 0);
     moves.clear();
-    moves.shrink_to_fit();
-    moves.reserve(256);
 }
 
 void Format::push(Move move, int32_t score) {
